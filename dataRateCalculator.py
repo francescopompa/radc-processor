@@ -13,14 +13,16 @@ variables = {
             "writeSmallF": bitmath.MiB(500),
             "writeMin": bitmath.MiB(80),
             "writeMax": bitmath.MiB(160),
-            "size": bitmath.TB(8).to_TiB(),
+            "4size": bitmath.TB(4).to_TiB(),
+            "8size": bitmath.TB(8).to_TiB(),
         },
         "SSD": {
             "readMin": bitmath.MiB(2500),
             "readMax": bitmath.MiB(3500),
             "writeMin": bitmath.MiB(1500),
             "writeMin": bitmath.MiB(3000),
-            "size": bitmath.TB(2).to_TiB(),
+            "1size": bitmath.TB(1).to_TiB(),
+            "2size": bitmath.TB(2).to_TiB(),
         },
         "USB32G1x1": {
             "callName": "USB3.1 Gen1 (USB3.0)",
@@ -143,7 +145,7 @@ scenarios = {
             "snippetSize": bitmath.Byte(100), # Bytes
         },
     },
-    "neutronCalibration": {
+    "Full-neutronCalibration": {
         "worstCase": {
             "eventRate": variables["neutronRate"]["highCalibration"],
             "timeWindow": variables["lookTime"]["backAndForw"],
@@ -172,8 +174,8 @@ def meas_raw_event_size(
     snippetCount,# Snippets
     snippetSize, # Bytes
 ):
-    size = snippetCount * snippetSize
-    return size, eventRate*size
+    eventSize = snippetCount * snippetSize
+    return eventSize, eventRate*eventSize
 
 def cali_raw_event_size(
     eventRate,
@@ -186,11 +188,11 @@ def cali_raw_event_size(
     samples = math.ceil(timeWindow / sampleTime)
     # print("n_Samples:", samples, "per sampleTime")
 
-    size = channels * (
+    eventSize = channels * (
         bitmath.Byte(2)*samples
         + packageHeader*math.ceil(samples/packageSamplesMax)
     )
-    return size, eventRate*size
+    return eventSize, eventRate*eventSize
 
 
 def raw_data_volume(
@@ -208,7 +210,7 @@ def raw_data_volume(
     return duration * dataRate
 
 
-def format_rate(rate, pct = "", eventRate = None):
+def format_rate(rate, pct = "", eventRate = None, buildup=""):
     rate_B = rate.best_prefix()
     rate_b = rate_B.to_Gib().format('{value:.3g} {unit}')
 
@@ -216,6 +218,7 @@ def format_rate(rate, pct = "", eventRate = None):
     rate_2b = rate_2B.to_Gib().format('{value:.3g} {unit}')
 
     maxEventRate = eventRate / pct
+    halfEventRate = f"--> {maxEventRate/2:.0f}Hz"
     maxEventRate = f"--> {maxEventRate:.0f}Hz"
 
     if pct > 1:
@@ -227,35 +230,68 @@ def format_rate(rate, pct = "", eventRate = None):
         warning = ""
     # return f"Data rate: {rate_B.format('{value:.4g} {unit}')}/s ({pct*100:.3g}% of the bandwidth: {rate_b}/s) ({rate}/s)"
     return f"""Data rate: {rate_B.format('{value:.4g} {unit}')}/s ({pct*100:.3g}% of the bandwidth: {rate_b}/s){maxEventRate}
-Data transfer: {rate_2B.format('{value:.4g} {unit}')} ({rate_2b}/s)/s{warning}"""
+Data transfer: {rate_2B.format('{value:.4g} {unit}')}/s ({rate_2b}/s){halfEventRate }{buildup}{warning}"""
 
-def format_chunks(size, dataRate, eventRate):
+
+def format_buildup(dataRate, bandwidth, duration):
+    free_bandwidth = bandwidth - dataRate
+    volume = raw_data_volume(duration, dataRate)
+
+    buildup = volume - raw_data_volume(duration, min(dataRate, free_bandwidth))
+    buildup_time = buildup / bandwidth
+    timePct = 100*buildup_time/duration
+
+    if buildup_time > 3600:
+        buildup_time = f"{buildup_time/3600:.0f}h"
+    elif buildup_time > 60:
+        buildup_time = f"{buildup_time/60:.0f}m"
+    else:
+        buildup_time = f"{buildup_time}s"
+    buildup = buildup.best_prefix().format('{value:.3g} {unit}')
+
+
+    return f"""
+Data buildup 📦: {buildup} (requires an additional {buildup_time}, ~{timePct:.3g}%)"""
+
+
+def format_many_events(eventSize, dataRate, eventRate, many=10000):
+    format = '{value:.2f} {unit}'
+
+    events_second = dataRate / eventSize
+    hours_many = many / events_second / variables["duration"]["oneHour"]
+    many_days = eventRate / many * variables["duration"]["oneDay"]
+    many_Bytes = many*eventSize
+
+    if hours_many < 0.5:
+        hours_many = f"{hours_many * 60:.3g} minutes"
+    else:
+        hours_many = f"{hours_many:.3g} hours"
+
+    return f"{hours_many} for {many_Bytes.best_prefix().format(format)} ({many_days:.3f} event chunks per day)."
+
+
+def format_chunks(eventSize, dataRate, eventRate):
     format = '{value:.2f} {unit}'
 
     oneGB = bitmath.GiB(1)
     hours_oneGB = oneGB / dataRate / variables["duration"]["oneHour"]
     oneGB_days = dataRate * variables["duration"]["oneDay"]
 
-    oneGB_events = int(oneGB / size)
+    oneGB_events = int(oneGB / eventSize)
 
-    events_second = dataRate / size
-    hours_tenThousand = 10000 / events_second / variables["duration"]["oneHour"]
-    tenThousand_days = eventRate / 10000 * variables["duration"]["oneDay"]
-    tenThousand_Bytes = 10000*size
 
     if hours_oneGB < 0.5:
         hours_oneGB = f"{hours_oneGB * 60:.3g} minutes"
     else:
         hours_oneGB = f"{hours_oneGB:.3g} hours"
-    if hours_tenThousand < 0.5:
-        hours_tenThousand = f"{hours_tenThousand * 60:.3g} minutes"
-    else:
-        hours_tenThousand = f"{hours_tenThousand:.3g} hours"
 
     return f"""Chunksizes:
-  Single Event: {size.best_prefix().format(format)}
+  Single Event: {eventSize.best_prefix().format(format)}
   1 Gigabyte time: {hours_oneGB} for {oneGB_events} events ({oneGB_days.best_prefix().format(format)} chunks per day).
-  10000 Events time: {hours_tenThousand} for {tenThousand_Bytes.best_prefix().format(format)} ({tenThousand_days} event chunks per day)"""
+  10000 Events time: {format_many_events(eventSize, dataRate, eventRate)}
+  1M Events time: {format_many_events(eventSize, dataRate, eventRate, many=1000000)}
+  10M Events time: {format_many_events(eventSize, dataRate, eventRate, many=10000000)}
+  20M Events time: {format_many_events(eventSize, dataRate, eventRate, many=20000000)}"""
 
 
 def format_volume(volume):
@@ -263,8 +299,8 @@ def format_volume(volume):
     # return f"Total volume: {v.format('{value:.3g} {unit}')} ({volume})"
     return f"Total volume: {v.format('{value:.3g} {unit}')}"
 
-def compare_drive(drive, rate, volume):
-    Capacity = int(drive["size"] / volume)
+def compare_drive(drive, rate, volume, size="size"):
+    Capacity = int(drive[size] / volume)
     Read = "min" if rate <= drive["readMin"] else "max" if rate <= drive["readMax"] else "no"
     Write = "min" if rate <= drive["writeMin"] else "max" if rate <= drive["writeMax"] else "no"
 
@@ -296,9 +332,11 @@ def format_comparison_table(rate, volume):
     vars = variables["driveSpeeds"]
 
     header = ["Capacity", "Read", "Write", "WriteSmallFiles", "Transfer (read+write)"]
-    HDDSize = variables['driveSpeeds']['HDD']['size'].format("{value:.1f} {unit}")
-    SSDSize = variables['driveSpeeds']['SSD']['size'].format("{value:.1f} {unit}")
-    index = ["Type", f"HDD {HDDSize}", f"SSD {SSDSize}",
+    HDD4Size = variables['driveSpeeds']['HDD']['4size'].format("{value:.1f} {unit}")
+    HDD8Size = variables['driveSpeeds']['HDD']['8size'].format("{value:.1f} {unit}")
+    SSD1Size = variables['driveSpeeds']['SSD']['1size'].format("{value:.1f} {unit}")
+    SSD2Size = variables['driveSpeeds']['SSD']['2size'].format("{value:.1f} {unit}")
+    index = ["Type", f"HDD {HDD4Size}", f"HDD {HDD8Size}", f"SSD {SSD1Size}", f"SSD {SSD2Size}",
         vars["USB32G1x1"]["callName"],
         vars["USB32G2x1"]["callName"],
         vars["USB32G1x2"]["callName"],
@@ -307,8 +345,10 @@ def format_comparison_table(rate, volume):
         vars["Thunderbolt1"]["callName"],
         ]
 
-    HDD = compare_drive(vars["HDD"], rate, volume)
-    SSD = compare_drive(vars["SSD"], rate, volume)
+    HDD4 = compare_drive(vars["HDD"], rate, volume, size="4size")
+    HDD8 = compare_drive(vars["HDD"], rate, volume, size="8size")
+    SSD1 = compare_drive(vars["SSD"], rate, volume, size="1size")
+    SSD2 = compare_drive(vars["SSD"], rate, volume, size="2size")
     USB32G1x1 = compare_cable(vars["USB32G1x1"], rate)
     USB32G2x1 = compare_cable(vars["USB32G2x1"], rate)
     USB32G1x2 = compare_cable(vars["USB32G1x2"], rate)
@@ -317,7 +357,7 @@ def format_comparison_table(rate, volume):
     USB4 = compare_cable(vars["USB4"], rate)
     Thunderbolt1 = compare_cable(vars["Thunderbolt1"], rate)
 
-    for i, row in enumerate([header, HDD, SSD, USB32G1x1, USB32G2x1, USB32G1x2, USB32G2x2, USB4, Thunderbolt1]):
+    for i, row in enumerate([header, HDD4, HDD8, SSD1, SSD2, USB32G1x1, USB32G2x1, USB32G1x2, USB32G2x2, USB4, Thunderbolt1]):
         print('| {:{i1}} | {:{h0}} | {:{h1}} | {:{h2}} | {:{h3}} | {:{h4}} |'.format(
             index[i], *row,
             i1 = max([len(x) for x in index]),
@@ -334,54 +374,62 @@ def process_scenario(durationName, scenarioName, variantName="worstCase"):
     duration = variables["duration"][durationName]
     scenario = scenarios[scenarioName][variantName]
     eventRate = scenario['eventRate']
+    buildup = ""
 
     if scenarioName.endswith("Calibration"):
-        size, rate = cali_raw_event_size(**scenario)
+        eventSize, dataRate = cali_raw_event_size(**scenario)
         icon = "🎇"
     elif scenarioName.endswith("Measurement"):
-        size, rate = meas_raw_event_size(**scenario)
+        eventSize, dataRate = meas_raw_event_size(**scenario)
         icon = "🔎"
     else:
-        size, rate = meas_raw_event_size(**scenario)
+        eventSize, dataRate = meas_raw_event_size(**scenario)
         icon = "🔌"
 
-    ratePct = rate / variables["bandwidth"]["max"].to_Byte()
+    bandwidth = variables["bandwidth"]["max"].to_Byte()
+    ratePct = dataRate / bandwidth
 
     if ratePct > 1:
         # volume = volume / ratePct
-        rate = variables["bandwidth"]["max"].to_Byte()
+        dataRate = bandwidth
     if scenarioName.endswith("10Gbps"):
         icon += "✨"
-        ratePct = rate / variables["bandwidth"]["extreme"].to_Byte()
-        rate = variables["bandwidth"]["extreme"].to_Byte()
+        bandwidth = variables["bandwidth"]["extreme"].to_Byte()
+        ratePct = dataRate / bandwidth
+        dataRate = dataRate if ratePct < 1 else bandwidth
 
+    if ratePct > 0.5:
+        buildup = format_buildup(dataRate, bandwidth, duration)
 
-    volume = raw_data_volume(duration, rate)
+    volume = raw_data_volume(duration, dataRate)
 
 
     print(f"\nScenario: {icon} {durationName} {scenarioName} - {variantName} ({eventRate} Hz)")
     # print(rate, volume, ratePct)
-    print(format_rate(rate, ratePct, eventRate))
-    print(format_chunks(size, rate, eventRate))
+    print(format_rate(dataRate, ratePct, eventRate, buildup))
+    print(format_chunks(eventSize, dataRate, eventRate))
     print(format_volume(volume))
 
-    format_comparison_table(rate, volume)
+    format_comparison_table(dataRate, volume)
 
 
 def main():
     # print("Bandwidth limitations")
     process_scenario("threeMonths", "fullBandwidth1Gbps", variantName="max")
     process_scenario("oneHour", "fullBandwidth1Gbps", variantName="max")
-    process_scenario("threeMonths", "fullBandwidth10Gbps", variantName="max")
-    process_scenario("oneHour", "fullBandwidth10Gbps", variantName="max")
+    # process_scenario("threeMonths", "fullBandwidth10Gbps", variantName="max")
+    # process_scenario("oneHour", "fullBandwidth10Gbps", variantName="max")
 
     # print("Scenarios limitations")
-    process_scenario("threeMonths", "neutronMeasurement", variantName="extreme")
-    process_scenario("oneHour", "neutronMeasurement", variantName="extreme")
     process_scenario("threeMonths", "neutronMeasurement", variantName="maxEstimate")
     process_scenario("threeMonths", "neutronMeasurement", variantName="estimatedAverage")
-    process_scenario("oneHour", "neutronCalibration")
-    process_scenario("oneHour", "neutronCalibration", variantName="estimatedAverage")
+    # process_scenario("oneHour", "neutronCalibration")
+    # process_scenario("oneDay", "Full-neutronCalibration", variantName="estimatedAverage")
+    process_scenario("oneHour", "Full-neutronCalibration", variantName="estimatedAverage")
+
+    process_scenario("oneDay", "neutronMeasurement", variantName="extreme")
+    process_scenario("oneHour", "neutronMeasurement", variantName="extreme")
+
     process_scenario("oneHour", "gammaCalibration")
 
 
