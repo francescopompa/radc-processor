@@ -1,12 +1,13 @@
 import socket
 import sys
-
+import time
 
 # Do Arguments
 
 def readout(s, buffer):
     count = 0
     total_data = 0
+    start_time = time.time()
 
     while True:
         recv_data_volume = s.recv_into(buffer, 1400)
@@ -16,8 +17,10 @@ def readout(s, buffer):
 
         count += 1
         total_data += recv_data_volume
+        run_time = time.time() - start_time
+        total_rate = total_data / run_time
 
-        print(f"Received: {count} packages for {total_data} Bytes in total.",
+        print(f"Received: {count} packages in {int(run_time)}s for {total_data} Bytes in total. ({total_rate}B/s)",
             end="\r",
             # file=sys.stdout, # Necessary`?`
             flush = True
@@ -48,7 +51,7 @@ def manage_socket():
         print("Connected by", addr)
         read_to_file(s)
 
-    s.shutdown(SHUT_RD)
+    s.shutdown(socket.SHUT_RD)
     s.close()
 
 
