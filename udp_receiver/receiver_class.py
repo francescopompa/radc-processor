@@ -3,9 +3,12 @@ import sys
 import os
 import time
 import multiprocessing as mp
+import signal
 
-
-
+#
+# Todo:
+# - Migrate to threading and queue modules? (more lightweight and IO focused)
+#
 
 class Receiver():
 
@@ -13,11 +16,16 @@ class Receiver():
         target_file="testreadoutfile.bin",
         host="", port=50007,
         chunk_max_events=None, chunk_max_volume=None, chunk_max_time=None,
-        split=False
+        overwrite=True,
+        split=False,
+        duration=None,
         ) -> None:
         self.target_file = target_file
+        self.do_overwrite = overwrite
         self.host = host
         self.port = port
+        self._duration = duration
+
 
         # self.chunk_size_bytes = chunk_size
         self.chunk_max_events = chunk_max_events # Event number
@@ -52,13 +60,15 @@ class Receiver():
             self.target_file = f"{self.target_file}.wfm.{self.current_split:0{self.split_suffix_length}}"
 
     def __del__(self):
-        self.stop()
+        if self.__do_readout is True:
+            self.stop()
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type,exc_value, exc_traceback):
-        self.stop()
+        if self.__do_readout is True:
+            self.stop()
 
     def __getstate__(self):
         # SOURCE: https://stackoverflow.com/questions/62830911/typeerror-cannot-pickle-weakref-object
@@ -72,54 +82,76 @@ class Receiver():
 
         return state
 
+    def _signal_handler(self, signal, frame):
+        print("")
+        print("Catched Keyboard Interrupt")
+        self.stop()
 
-    def start(self):
+
+    def start(self, duration=None):
+        self.__start(duration=duration)
+
+        # signal.signal(signal.SIGINT, self._signal_handler)
+        # forever = mp.Event()
+        # forever.wait()
+
+    def __start(self, duration=None):
         # mp.set_start_method('spawn')
 
         self.__start_socket()
-
         self.__do_readout = True
 
-        # pipe_rec, pipe_send = mp.Pipe(duplex=False)
         self.__data_queue = mp.Queue() # maxsize is 2147483647
         self.__update_queue = mp.Queue() # maxsize is 2147483647
 
-        # p_readout = mp.Process(target=self._read_to_file)#, args=(pipe_send))
-        self.__update = mp.Process(target=self.update_received_data)#, args=(pipe_rec))
-        self.__update.start()
+        self.__p_update = mp.Process(name="p_update", target=self._update_received_data)#, args=(pipe_rec))
+        self.__p_update.start()
 
-        self.__p_readout = self.__new_readout_process()
+        self.__p_readout = mp.Process(name="p_readout", target=self._readout)
+        self.__p_readout.start()
 
-        # conn, addr = self.__sock.accept()
-        # with conn:
-        #     print("Connected by", addr)
-        #     # self._read_to_file()
-        #     # p_readout.start()
-        #     p_readout = self.__new_readout_process()
+        self.__new_writer_process()
 
-        # self.stop()
+
+        duration = duration if duration is not None else self._duration if self._duration is not None else None
+        if duration is not None:
+            time.sleep(duration)
+            print("Reached end of timer")
+            print("Reached end of timer")
+            print("Reached end of timer")
+            self.stop()
+
 
     def stop(self):
-        print(mp.active_children())
+        # print(mp.active_children())
         self.__do_readout = False
 
-        # if pipe_send is not None:
-        #     pipe_send.close()
-        for p in self.__readouts:
-            # p.stop()
-            p.join()
-
-        if self.__queue is not None:
-            self.__queue.close()
+        while self.__data_queue.empty() is False or self.__update_queue.empty() is False:
+            # print("Waiting for queues to be emptied...")
+            time.sleep(1)
 
         if self.__sock is not None:
+            # print("Shutting down socket")
             self.__sock.shutdown(socket.SHUT_RD)
             self.__sock.close()
 
-        while self.__update is not None and self.__update.is_alive():
-            pass
+        for p in mp.active_children():
+            # print(f"Terminating {p}")
+            p.terminate()
+            p.join()
 
-        print(mp.active_children())
+        if self.__update_queue is not None:
+            # print("Closing update queue")
+            self.__update_queue.close()
+        if self.__data_queue is not None:
+            # print("Closing data queue")
+            self.__data_queue.close()
+
+        if len(mp.active_children()) > 0:
+            print(mp.active_children())
+        else:
+            print("Receiver: Subprocesses, queues and sockets closed succesfullly.")
+
         return self.results
 
 
@@ -149,7 +181,7 @@ class Receiver():
         return False
 
     def __change_target_file(self, mode=None, new_target=None):
-        old_readout = self.__readouts.pop(0) # first item -> oldest
+        old_writer = self.__p_writers.pop(0) # first item -> oldest
 
         if mode == "split":
             self.current_split += 1
@@ -157,22 +189,40 @@ class Receiver():
         elif mode == "chunk":
             self.current_chunk += 1
             new_target = f"{self.target_file}.chunk.{self.current_chunk:0{self.chunk_suffix_length}}"
+        elif mode == "overwrite":
+            old_target = new_target
+            target_folder = os.path.dirname(os.path.abspath(old_target))
+            suffixes = []
+            with os.scandir(target_folder) as sd:
+                for entry in sd:
+                    if entry.startswith(old_target) and entry.is_file():
+                        try:
+                            suffixes.append(int(entry.split('.')[-1]))
+                        except:
+                            continue
+            if max(suffixes) > 0:
+                new_target = f"old_target.{max(suffixes)}"
+            else:
+                new_target = "old_target.1"
+
         elif new_target is not None:
             pass
         else:
             raise ValueError(f"Enter new target for {self.target_file}.")
 
-        new_readout = self.__new_readout_process(filename=new_target)
-        old_readout.stop()
+        old_writer.stop()
+        self.__new_writer_process(filename=new_target)
+
+        return new_target
 
 
-    def __new_readout_process(self, target=None, **kwargs):
+    def __new_writer_process(self, target=None, **kwargs):
         if target is None:
-            target = self._readout
+            target = self._write_to_file
 
         print("new readout process", kwargs)
-        p = mp.Process(target=target, args=(kwargs))
-        self.__readouts.append(p)
+        p = mp.Process(name=f"p_writer_{len(self.__p_writers    )}",target=target, args=(kwargs))
+        self.__p_writers.append(p)
         p.start()
         print(mp.active_children())
         return p
@@ -182,59 +232,44 @@ class Receiver():
         self.__sock.bind((self.host, self.port))
         # self.__sock.listen()
 
-        print(f"Started socket at {self.__sock.getsockname()} to {self.__sock.getpeername()}.")
+        # print(f"Started socket at {self.__sock.getsockname()} to {self.__sock.getpeername()}.")
+        print(f"Started UDP socket at {self.__sock.getsockname()}.")
         return self.__sock
 
-    def _read_to_file(self, filename=None):
+    def _write_to_file(self, filename=None):
         if filename is None:
             filename = self.target_file
 
+        if self.do_overwrite is False and  os.exists(filename):
+            filename = self.__change_target_file(mode="overwrite", new_target=filename)
+
         with open(filename, "wb") as file:
-            self.__readout(file)
+            while self.__do_readout is True or self.__data_queue.empty() is False:
+                file.write(self.__data_queue.get())
 
     def __read_to_stdout(self):
         self.__readout(sys.stdout)
 
-
-    # def __old_readout(self, buffer):
-
-    #     while self.__do_readout is True:
-    #         recv_data_volume = self.__sock.recv_into(buffer, self.__split_size)
-    #         self.__queue.put(recv_data_volume, block=False)
-    #     else:
-    #         self.stop()
-
     def _readout(self):
-
         while self.__do_readout is True:
             data = self.__sock.recv(self.__split_size)
             self.__data_queue.put_nowait(data)
             self.__update_queue.put_nowait(len(data))
-        else:
-            self.stop()
-
-    # def __readout_with_split(self):
-    #     file_count = 0
-    #     while self.__do_readout is True:
-    #         filename = f"{self.target_file}.wfm.{file_count:0{self.split_suffix_length}}"
-    #         with open(filename, "wb") as file:
-    #             recv_data_volume = self.__sock.recv_into(file, self.__split_size)
-    #             # pipe_send.send(recv_data_volume)
-    #             self.__queue.put(recv_data_volume, block=False)
-    #             file_count += 1
-    #     else:
-    #         self.stop()
+        # else:
+        #     self.stop()
 
 
-    def update_received_data(self):
+    def _update_received_data(self):
         count = 0
         total_data = 0
         start_time = time.time()
 
-        while self.__do_readout is True or self.__queue.empty() is False:
+        print(f"Waiting for packages.")
+
+        while self.__do_readout is True or self.__update_queue.empty() is False:
 
             # recv_data_volume = pipe_rec.recv() # Blocks until reception
-            recv_data_volume = self.__queue.get()
+            recv_data_volume = self.__update_queue.get()
 
             count += 1
             total_data += recv_data_volume
@@ -244,13 +279,14 @@ class Receiver():
 
             total_rate = total_data / run_time
 
-            print(f"Received: {count} packages in {int(run_time)}s for {total_data} Bytes in total. ({total_rate}B/s) Chunks: {self.current_chunk}, Splits:{self.current_split}",
+            print(f"Received: {count} packages in {int(run_time)}s for {total_data} Bytes in total. ({total_rate:.2}B/s) Chunks: {self.current_chunk}, Splits:{self.current_split}",
                 end="\r",
                 # file=sys.stdout, # Necessary?
                 flush = True
             )
         else:
-            if self.__queue.empty() is True:
+            if self.__update_queue.empty() is True:
+                print(f"Received: {count} packages in {int(run_time)}s for {total_data} Bytes in total. ({total_rate:.2}B/s) Chunks: {self.current_chunk}, Splits:{self.current_split-1}")
                 self.results = {
                     "received_packages": count,
                     "received_bytes": total_data,
@@ -262,7 +298,7 @@ class Receiver():
                     "host": self.host,
                     "port": self.port,
                 }
-                self.__update.stop()
+                self.__p_update.stop()
             else:
                 self.update_received_data()
 
