@@ -10,14 +10,18 @@ testfile_bin = "radc_nd.bin" # len(filecontents):
 testfile_bin = "radc.bin.3" # len(filecontents):
 testfiles = ["radc_nd.bin", "radc_nd.bin.1", "radc.bin.3"]
 
-subfolder = "2023-01-20_UDP" # Enthält viele mehrfache Trigger ❌
-testfile_bin = "test.bin" # len(filecontents): 11 597 140 Bytes = 8167 * 1420
-testfile_wfm = "ND00000000.wfm"
-testfiles = ["test.bin"]
+# subfolder = "2023-01-20_UDP" # Enthält viele mehrfache Trigger ❌
+# testfile_bin = "test.bin" # len(filecontents): 11 597 140 Bytes = 8167 * 1420
+# testfile_wfm = "ND00000000.wfm"
+# testfiles = ["test.bin"]
 
-# subfolder = "2023-02-07_PulsTrigger" # Enthält keine mehrfachen Trigger ✔️
-# testfile_bin = "2023-02-07.bin" # len(filecontents):
-# testfiles = ["2023-02-07.bin", "2023-02-07.bin.3", "2023-02-07.bin.4", "radc_nd.bin"]
+subfolder = "2023-02-07_PulsTrigger" # Enthält keine mehrfachen Trigger ✔️
+testfile_bin = "2023-02-07.bin" # len(filecontents):
+testfiles = ["2023-02-07.bin", "2023-02-07.bin.3", "2023-02-07.bin.4", "radc_nd.bin"]
+
+subfolder = "2023-03-01_PulseGen"
+testfile_bin = "radc.1.bin" # len(filecontents):
+#testfiles = ["2023-02-07.bin", "2023-02-07.bin.3", "2023-02-07.bin.4", "radc_nd.bin"]
 
 
 # Format of a single UDP-Package:
@@ -30,17 +34,13 @@ NUM_BYTES= TRACE_LENGTH * 2 + RADC_HEADER_SIZE + RADC_PKG_HEADER_SIZE
 # https://docs.python.org/3/library/struct.html
 # NeuDet36.pdf page 7
 SAMPLE_BYTES = 2
-# f_sample = 'c' # 1 Byte (has to be split)
 f_sample = 'h' # 2 Bytes per sample (has to be split)
-# f_sample = 'H' # 2 Bytes per sample (has to be split)
-# f_samples = f'{TRACE_LENGTH*SAMPLE_BYTES}{f_sample}'
 f_samples = TRACE_LENGTH * f_sample
-f_pkgheader = 'cb 2s' # 1+1+2 Bytes: Type, Number, unknown rest
-# f_radc_header = 'BBH 3sB II' # 16 = 1+1+2+3+1+4+4 Bytes (Event header)
-f_radc_header = 'bbh 3sb ii' # 16 = 1+1+2+3+1+4+4 Bytes (Event header)
+f_pkgheader = 'cB 2s' # 1+1+2 Bytes: Type, Number, unknown rest
+f_radc_header = 'BBH 3sB II' # 16 = 1+1+2 + 3+1 4+4 Bytes (Event header)
 
-f_file = f"<{f_pkgheader} {f_radc_header} {f_samples}"
 # ! Requires Little-Endian! (<)
+f_file = f"<{f_pkgheader} {f_radc_header} {f_samples}"
 
 wfm_dict = {
     "channel":  None,
@@ -94,11 +94,13 @@ def ununpack_package(unpacked):
         "PKG_REST": unpacked[2],
     }
 
+    tmp = unpacked[6]
+
     wfm_dict = {
         "chan.":  unpacked[3],
         "trigg_inf": unpacked[4],
         "event_ID": unpacked[5],
-        "energy": unpacked[6],
+        "energy": int.from_bytes(bytes([tmp[2], tmp[1], tmp[0]])),
         "mult.": unpacked[7],
         "subsecs": unpacked[8],
         "seconds": unpacked[9],
@@ -130,13 +132,13 @@ def ununpack_package(unpacked):
 
 def format_unpacked(pkgheader, wfm_dict, samples):
 
-    # print("Package:", pkgheader)
+    print("Package:", pkgheader)
 
     maxi = {"value": 0}
     mini = {"value": 0}
     triggers = {"count": 0, "sample_IDs": []}
 
-    # print(wfm_dict)
+    print(wfm_dict)
     # print("first_sample: (1=True)", samples[0])
     for id, sample in enumerate(samples):
         # if id == 0:
@@ -170,6 +172,8 @@ def read_file(testfile):
     lengf = struct.calcsize(f_file)
     count = len(filecontents) / lengf
     print(f"> File {testfile}: {len(filecontents)} Bytes ({count} times {lengf})")
+    if len(filecontents) == 0:
+        return
 
     if testfile.endswith("wfm"):
         unpacked = unpack_waveform(filecontents)
@@ -179,24 +183,34 @@ def read_file(testfile):
     # print(len(unpacked), type(unpacked))
     # print(type(unpacked))
     if not isinstance(unpacked, tuple):
+
         # unpacked = extract_from_binary(unpacked)
+        # pkgheader, wfm_dict, samples =  ununpack_package(unpacked)
+        # format_unpacked(pkgheader, wfm_dict, samples)
+
         for npckd in unpacked:
+            show_binary(npckd)
             pkgheader, wfm_dict, samples =  ununpack_package(npckd)
             format_unpacked(pkgheader, wfm_dict, samples)
+
+            yield [pkgheader, wfm_dict, samples]
     else:
         show_binary(unpacked)
 
         pkgheader, wfm_dict, samples =  ununpack_package(unpacked)
         format_unpacked(pkgheader, wfm_dict, samples)
 
+        return [pkgheader, wfm_dict, samples]
+
+
 
 
 if __name__ == "__main__":
     # read_file(testfile_wfm)
-    # read_file(testfile_bin)
+    read_file(testfile_bin)
 
-    for file in testfiles:
-        read_file(file)
+    # for file in testfiles:
+    #     read_file(file)
 
 
 
