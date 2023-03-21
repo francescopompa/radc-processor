@@ -6,19 +6,23 @@ import threading as thr
 import queue
 import signal
 
-
+#
+# Todo: implement dummy write
+#
 class Receiver():
 
     def __init__(self,
         target_file="testreadoutfile.bin",
-        target_dir="",
-        host="", port=50008,
+        target_dir=time.strftime("%Y-%m-%d"),
+        host="192.168.1.200", port=5000,
+        # host="", port=5000,
         chunk_max_events=None, chunk_max_volume=None, chunk_max_time=None,
         overwrite=True,
         split=False,
         duration=None,
         timeout=5,
         ) -> None:
+        self.target_dir = target_dir
         self.target_file = target_file
         self.do_overwrite = overwrite
         self.host = host
@@ -39,6 +43,9 @@ class Receiver():
         self.__do_split = split
         self.current_split = 0
         self.split_suffix_length = 4
+        #
+        # Todo: implement Calculation like in radc_nd_readout.sh
+        #
         self.__split_size = 1420
 
         self.__do_readout = False
@@ -171,7 +178,10 @@ class Receiver():
         """Shadowed function to create a new UDP socket bound to the
         given host and port."""
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.__sock.bind((self.host, self.port))
+        # self.__sock.bind((self.host, self.port))
+        self.__sock.bind(("", 0))
+        self.__sock.connect((self.host, self.port))
+        self.__sock.send('W_00000001 00000000\r'.encode())
 
         self.host, self.port = self.__sock.getsockname()
 
@@ -199,7 +209,10 @@ class Receiver():
         If the stop_event is set, the function closes the file.
         When a file gets closed it's name is appended to .files_written."""
         if filename is None:
-            filename = self.target_file
+            filename = os.path.join(self.target_dir, self.target_file)
+
+        if not os.path.exists(self.target_dir):
+            os.makedirs(self.target_dir)
 
         if self.do_overwrite is False and  os.exists(filename):
             filename = self.__change_target_file(mode="overwrite", new_target=filename)
@@ -249,7 +262,7 @@ class Receiver():
         update the counters and print the received data volume."""
 
         run_time = 0
-        total_rate = 0
+        total_rate = 0.
         timeout = socket.getdefaulttimeout()
         print(f"Waiting for packages...")
 
