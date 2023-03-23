@@ -14,8 +14,7 @@ class Receiver():
     def __init__(self,
         target_file="testreadoutfile.bin",
         target_dir=time.strftime("%Y-%m-%d"),
-        host="192.168.1.200", port=5000,
-        # host="", port=5000,
+        host="192.168.1.200", port=4000,
         chunk_max_events=None, chunk_max_volume=None, chunk_max_time=None,
         overwrite=True,
         split=False,
@@ -25,8 +24,9 @@ class Receiver():
         self.target_dir = target_dir
         self.target_file = target_file
         self.do_overwrite = overwrite
-        self.host = host
-        self.port = port
+        self.host = host    # IP-Adress of the DQ Board
+        self.port = port    # Target port through which the board sends data.
+                            # Must be identical to the content of register "UdpPort"
         self._duration = duration
 
         self.files_written = []
@@ -183,9 +183,9 @@ class Receiver():
         self.__sock.connect((self.host, self.port))
         self.__sock.send('W_00000001 00000000\r'.encode())
 
-        self.host, self.port = self.__sock.getsockname()
+        # self.host, self.port = self.__sock.getsockname()
 
-        print(f"Started UDP socket at {self.host}:{self.port}.")
+        print(f"Started UDP socket at {self.__sock.getsockname()} listening to {self.__sock.getpeername()}.")
         return self.__sock
 
     def __new_writer_thread(self, target=None, **kwargs):
