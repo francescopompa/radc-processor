@@ -20,6 +20,7 @@ class Receiver():
         split=False,
         duration=None,
         timeout=5,
+        keep_alive_time=300, # 5 min
         ) -> None:
         self.target_dir = target_dir
         self.target_file = target_file
@@ -28,6 +29,8 @@ class Receiver():
         self.port = port    # Target port through which the board sends data.
                             # Must be identical to the content of register "UdpPort"
         self._duration = duration
+        self._keep_alive_time = keep_alive_time # Length of the shortest timeout
+                                                # involved in the network connection
 
         self.files_written = []
 
@@ -181,12 +184,17 @@ class Receiver():
         # self.__sock.bind((self.host, self.port))
         self.__sock.bind(("", 0))
         self.__sock.connect((self.host, self.port))
-        self.__sock.send('W_00000001 00000000\r'.encode())
 
-        # self.host, self.port = self.__sock.getsockname()
+        self.catch_board()
 
         print(f"Started UDP socket at {self.__sock.getsockname()} listening to {self.__sock.getpeername()}.")
         return self.__sock
+
+    def catch_board(self):
+        """Dummy write to the RADC board to inform it of the target laptop-port
+        to send data to.
+        """
+        self.__sock.send('W_00000001 00000000\r'.encode())
 
     def __new_writer_thread(self, target=None, **kwargs):
         """Shadowed function to create a new thread writing to a file."""
