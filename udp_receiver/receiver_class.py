@@ -40,6 +40,7 @@ class Receiver():
                                                 # involved in the network connection
 
         self.files_written = []
+        self.__suffixes = [0]
 
         self.chunk_max_events = chunk_max_events # Event number
         self.chunk_max_volume = chunk_max_volume # Bytes
@@ -283,8 +284,8 @@ class Receiver():
         if not os.path.exists(self.target_dir):
             os.makedirs(self.target_dir)
 
-        if self.do_overwrite is False and  os.exists(filename):
-            filename = self.__change_target_file(mode="overwrite", new_target=filename)
+        if self.do_overwrite is False and  os.path.exists(filename):
+            filename = self.__do_not_overwrite_file(old_target=filename)
 
         timeout = socket.getdefaulttimeout()
 
@@ -375,7 +376,7 @@ class Receiver():
         forceful interruption and easying the backup process."""
 
         if self.__do_split is True:
-            self.__change_target_file(mode="split")
+            self.__switch_target_file(mode="split")
             return True
 
         chunk_count = (count - self.__chunk_count_offset)
@@ -388,7 +389,7 @@ class Receiver():
             (self.chunk_max_time is not None and chunk_time >= self.chunk_max_time)
             ):
             # End of a chunk
-            self.__change_target_file(mode="chunk")
+            self.__switch_target_file(mode="chunk")
 
             self.__chunk_count_offset += chunk_count
             self.__chunk_volume_offset += chunk_volume
@@ -397,7 +398,7 @@ class Receiver():
 
         return False
 
-    def __change_target_file(self, mode=None, new_target=None):
+    def __switch_target_file(self, mode=None, new_target=None):
         """Shadowed function to switch to a new file and start a
         corresponding writer-thread.
         Mode `split` appends the suffix `.wfm.<count>` to the filename.
@@ -411,22 +412,6 @@ class Receiver():
         elif mode == "chunk":
             self.current_chunk += 1
             new_target = f"{self.target_file}.chunk.{self.current_chunk:0{self.chunk_suffix_length}}"
-        elif mode == "overwrite":
-            old_target = new_target
-            target_folder = os.path.dirname(os.path.abspath(old_target))
-            suffixes = []
-            with os.scandir(target_folder) as sd:
-                for entry in sd:
-                    if entry.startswith(old_target) and entry.is_file():
-                        try:
-                            suffixes.append(int(entry.split('.')[-1]))
-                        except:
-                            continue
-            if max(suffixes) > 0:
-                new_target = f"{old_target}.{max(suffixes)+1}"
-            else:
-                new_target = f"{old_target}.1"
-
         elif new_target is not None:
             pass
         else:
@@ -437,6 +422,30 @@ class Receiver():
         self.__new_writer_thread(filename=new_target)
 
         return new_target
+
+    def __do_not_overwrite_file(self, old_target):
+        # "overwrite" is called by a writer-thread which cannot join() itself.
+        target_folder = os.path.dirname(os.path.abspath(old_target))
+        suffixes = self.__suffixes
+        with os.scandir(target_folder) as sd:
+            for entry in sd:
+                if entry.path.startswith(old_target) and entry.is_file():
+                    try:
+                        suffixes.append(int(entry.split('.')[-1]))
+                    except:
+                        continue
+        if max(suffixes) > 0:
+            new_suffix = max(suffixes)+1
+            suffixes.append(new_suffix)
+            new_target = f"{old_target}.{new_suffix}"
+            self.__suffixes = suffixes
+        else:
+            new_target = f"{old_target}.1"
+        print(f"Replaced {old_target} with {new_target} to avoid overwrite. ({self.__suffixes})")
+        return new_target
+
+
+
 
 
 
