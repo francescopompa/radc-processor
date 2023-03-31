@@ -5,24 +5,31 @@ import time
 import threading as thr
 import queue
 import signal
+import json
+
+RADC_HEADER_SIZE=16
+RADC_PKG_HEADER_SIZE=4
 
 #
-# Todo: implement dummy write
+# Todo: Move logging from print to logger/stderr
 #
 class Receiver():
 
     def __init__(self,
-        target_file="testreadoutfile.bin",
+        host="192.168.1.200",
+        port=4000,
+        target_root="C:/Users/utrfh/WS22-23 (MA) Masterarbeit/RADC_testData",
         target_dir=time.strftime("%Y-%m-%d"),
-        host="192.168.1.200", port=4000,
+        target_file="testreadoutfile.bin",
         chunk_max_events=None, chunk_max_volume=None, chunk_max_time=None,
-        overwrite=True,
+        overwrite=False,
         split=False,
         duration=None,
         timeout=5,
+        tracelength=700,
         keep_alive_time=300, # 5 min
         ) -> None:
-        self.target_dir = target_dir
+        self.target_dir = os.path.join(target_root, target_dir)
         self.target_file = target_file
         self.do_overwrite = overwrite
         self.host = host    # IP-Adress of the DQ Board
@@ -46,10 +53,7 @@ class Receiver():
         self.__do_split = split
         self.current_split = 0
         self.split_suffix_length = 4
-        #
-        # Todo: implement Calculation like in radc_nd_readout.sh
-        #
-        self.__split_size = 1420
+        self.__split_size = 2*tracelength + RADC_HEADER_SIZE + RADC_PKG_HEADER_SIZE
 
         self.__do_readout = False
         self.__sock = None
@@ -82,6 +86,7 @@ class Receiver():
             self.stop()
 
     def __getstate__(self):
+        """Shadowed method to prepare state for pickling."""
         # SOURCE: https://stackoverflow.com/questions/62830911/typeerror-cannot-pickle-weakref-object
         # capture what is normally pickled
         state = self.__dict__.copy()
@@ -97,7 +102,7 @@ class Receiver():
     def __signal_handler(self, signal, frame):
         """Shadowed method to catch keyboard interrupt signal."""
         print("")
-        print("Receiver caught Keyboard Interrupt")
+        print("Receiver caught Keyboard Interrupt: stopping...")
         self.stop()
 
     def start(self, duration=None):
@@ -181,7 +186,6 @@ class Receiver():
         """Shadowed function to create a new UDP socket bound to the
         given host and port."""
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        # self.__sock.bind((self.host, self.port))
         self.__sock.bind(("", 0))
         self.__sock.connect((self.host, self.port))
 
@@ -237,8 +241,12 @@ class Receiver():
                 except queue.Empty:
                     pass
 
+        # if os.path.getsize(filename) > 0:
         self.files_written.append(filename)
         print(f"Writer has closed {filename}")
+        # else:
+        #     os.remove(filename)
+        #     print(f"Writer has not written to {filename}: no data to write.")
 
     # def _write_to_stdout(self):
         # self.__readout(sys.stdout)
@@ -302,12 +310,18 @@ class Receiver():
                     "received_packages": count,
                     "received_bytes": total_data,
                     "reception_time": run_time,
-                    "produced_chunks": self.current_chunk + 1,
-                    "produced_splits": self.current_split * self.__do_split,
-                    "default_target_file": self.target_file,
-                    "used_splitting": self.__do_split,
+                    "duration": self._duration,
+
                     "host": self.host,
                     "port": self.port,
+                    "receiving_socket": self.__sock.getsockname(),
+                    "timeout": socket.getdefaulttimeout(),
+
+                    "default_target_file": self.target_file,
+                    "target_dir": self.target_dir,
+                    "used_splitting": self.__do_split,
+                    "produced_chunks": self.current_chunk + 1,
+                    "produced_splits": self.current_split * self.__do_split,
                     "files_written": self.files_written,
                 }
             else:
