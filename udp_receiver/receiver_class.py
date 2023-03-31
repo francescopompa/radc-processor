@@ -205,6 +205,16 @@ class Receiver():
 
         return self.results
 
+    def dump_results(self):
+        filename = os.path.join(self.target_dir, f"receiver_results.json")
+
+        if self.do_overwrite is False and  os.path.exists(filename):
+            filename = self.__do_not_overwrite_file(old_target=filename)
+
+        with open(filename, 'a', encoding="utf-8") as file:
+            json.dump(self.results, file, indent=4)
+        print(f"Dumped results to {filename}")
+
 
     def __start_socket(self):
         """Shadowed function to create a new UDP socket bound to the
@@ -375,7 +385,9 @@ class Receiver():
                     "produced_chunks": self.current_chunk + 1,
                     "produced_splits": self.current_split * self.__do_split,
                     "files_written": self.files_written,
+                    # "class_params": self.__dict__(),
                 }
+                self.dump_results()
             else:
                 self.update_received_data(count=count, total_data=total_data, start_time=start_time)
 
