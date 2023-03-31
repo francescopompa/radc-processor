@@ -62,6 +62,7 @@ class Receiver():
         self.__t_writers = []   # Stores writer threads
         self.__t_readout = None # Stores readout thread
         self.__t_update = None  # Stores output updating thread
+        self.__t_keep_alive = None # Stores keep-alive thread
 
         self.results = {}
 
@@ -95,6 +96,7 @@ class Receiver():
         state['_Receiver__t_writers'] = []
         state['_Receiver__t_readout'] = None
         state['_Receiver__t_update'] = None
+        state['_Receiver__t_keep_alive'] = None
 
         return state
 
@@ -124,10 +126,21 @@ class Receiver():
         self.__data_queue = queue.Queue() # maxsize is 2147483647
         self.__update_queue = queue.Queue() # maxsize is 2147483647
 
-        self.__t_update = thr.Thread(name="p_update", target=self._update_received_data)#, args=(pipe_rec))
+        recv_event = thr.Event()
+        self.__t_keep_alive = thr.Thread(
+            name="t_keep_alive",
+            target=self._keep_alive,
+            kwargs=({"recv_event": recv_event})
+            )
+        self.__t_keep_alive.start()
+
         self.__t_update.start()
 
-        self.__t_readout = thr.Thread(name="p_readout", target=self._readout)
+        self.__t_readout = thr.Thread(
+            name="t_readout",
+            target=self._readout,
+            kwargs=({"recv_event": recv_event})
+            )
         self.__t_readout.start()
 
         self.__new_writer_thread()
@@ -200,6 +213,50 @@ class Receiver():
         """
         self.__sock.send('W_00000001 00000000\r'.encode())
 
+    def _keep_alive(self, recv_event=thr.Event()):
+        """The task for the keep-alive thread.
+        It ensures that timeouts some OSes or devices may have, are not
+        triggered.
+        If no data was received after 0.8*_keep_alive_time seconds,
+        it repeats the dummy write.
+        This is handled by the recv_event set by the _readout() thread.
+        """
+        if self._keep_alive_time is None:
+            return
+        else:
+            timeout=self._keep_alive_time * 0.8
+            last_time = time.time()
+
+        while self.__do_readout is True:
+            if recv_event.wait(timeout=socket.getdefaulttimeout()):
+                # Using the _keep_alive_time as timeout causes the thread
+                # to idle that long on close, which is annoying.
+                recv_event.clear()  # Acknowledge that data was received.
+                last_time = time.time()
+            else:
+                if time.time() - last_time > timeout:
+                    print(f"Keep-Alive detected no data the in last {timeout} seconds.")
+                    self.catch_board()
+                    last_time = time.time()
+
+
+    def _readout(self, recv_event=thr.Event()):
+        """The task function for the readout-thread.
+        It appends received datagrams to the data queue, and appends
+        their length to the update queue."""
+
+        while self.__do_readout is True:
+            try:
+                data = self.__sock.recv(self.__split_size)
+                if len(data) > 0:
+                    self.__data_queue.put_nowait(data)
+                    self.__update_queue.put_nowait(len(data))
+                    recv_event.set()    # Signal that data was received.
+            except TimeoutError:
+                pass
+        else:
+            print("Stopped readout")
+
     def __new_writer_thread(self, target=None, **kwargs):
         """Shadowed function to create a new thread writing to a file."""
         if target is None:
@@ -251,22 +308,6 @@ class Receiver():
     # def _write_to_stdout(self):
         # self.__readout(sys.stdout)
         # pass
-
-    def _readout(self):
-        """The task function for the readout-thread.
-        It appends received datagrams to the data queue, and appends
-        their length to the update queue."""
-
-        while self.__do_readout is True:
-            try:
-                data = self.__sock.recv(self.__split_size)
-                if len(data) > 0:
-                    self.__data_queue.put_nowait(data)
-                    self.__update_queue.put_nowait(len(data))
-            except TimeoutError:
-                pass
-        else:
-            print("Stopped readout")
 
     def _update_received_data(self,
         count = 0,
