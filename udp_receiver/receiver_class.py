@@ -118,6 +118,14 @@ class Receiver():
         If you pass a duration, the receiver will .stop() itself after
         `duration` seconds have passed.
         """
+        if self.__do_readout is True:
+            print("Receiver is already running.")
+            return
+
+        duration = (duration if duration is not None else
+                    self._duration if self._duration is not None else
+                    None)
+        print(f"Starting receiver{' for {} seconds'.format(duration) if duration is not None else ''}.")
 
         signal.signal(signal.SIGINT, self.__signal_handler)
 
@@ -135,6 +143,7 @@ class Receiver():
             )
         self.__t_keep_alive.start()
 
+        self.__t_update = thr.Thread(name="t_update", target=self._update_received_data)#, args=(pipe_rec))
         self.__t_update.start()
 
         self.__t_readout = thr.Thread(
@@ -146,9 +155,6 @@ class Receiver():
 
         self.__new_writer_thread()
 
-        duration = (duration if duration is not None else
-                    self._duration if self._duration is not None else
-                    None)
         if duration is not None:
             time.sleep(duration)
             print("Reached end of timer")
@@ -165,6 +171,10 @@ class Receiver():
         # socket.socket(socket.AF_INET, socket.SOCK_DGRAM).sendto("".encode(), ("localhost", self.port))
         # (Commit seppuku)
         #
+
+        if self.__do_readout is False:
+            print("Receiver has already stopped, or was never started.")
+            return self.results
 
         print(thr.enumerate())
         self.__do_readout = False
