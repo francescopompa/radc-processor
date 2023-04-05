@@ -12,6 +12,7 @@ RADC_PKG_HEADER_SIZE=4
 
 #
 # Todo: Move logging from print to logger/stderr
+# Todo: Implement sanity check every X packages (completeness of data, shape of data)
 #
 class Receiver():
 
