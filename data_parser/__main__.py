@@ -3,6 +3,8 @@
 from configuration import CONFIG
 import struct_conversion
 import data_io
+import plotting
+
 #
 # Todo:
 # - [ ] Define folders to load
@@ -27,6 +29,10 @@ def main():
         )
 
     pdf = data_io.total_dataFrame([df])
+
+    plotting.plot_rows(pdf.iloc[0])
+    # plotting.plot_rows(pdf)
+
 
 
 
