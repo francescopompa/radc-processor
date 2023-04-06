@@ -57,6 +57,8 @@ def parse_arguments(args):
             argsdict[keyval[0]] = int(keyval[1]) if keyval[1].isdigit() else keyval[1]
         elif keyval[0].isdigit():
             argsdict["duration"] = int(keyval[0])
+        else:
+            print_usage()
 
     print("Parsed args:", argsdict)
     return argsdict
