@@ -365,32 +365,32 @@ class Receiver():
                 self.__update_queue.task_done()
             except queue.Empty:
                 pass
+        # else:
+        if self.__update_queue.empty() is True:
+            print("Summary:")
+            print(f"Received: {count} packages in {int(run_time)}s for {total_data} Bytes in total. ({total_rate:.2}B/s) Chunks: {self.current_chunk}, Splits:{self.current_split}")
+            self.results = {
+                "received_packages": count,
+                "received_bytes": total_data,
+                "reception_time": run_time,
+                "duration": self._duration,
+
+                "host": self.host,
+                "port": self.port,
+                "receiving_socket": self.__sock.getsockname(),
+                "timeout": socket.getdefaulttimeout(),
+
+                "default_target_file": self.target_file,
+                "target_dir": self.target_dir,
+                "used_splitting": self.__do_split,
+                "produced_chunks": self.current_chunk + 1,
+                "produced_splits": self.current_split * self.__do_split,
+                "files_written": self.files_written,
+                # "class_params": self.__dict__(),
+            }
+            self.dump_results()
         else:
-            if self.__update_queue.empty() is True:
-                print("Summary:")
-                print(f"Received: {count} packages in {int(run_time)}s for {total_data} Bytes in total. ({total_rate:.2}B/s) Chunks: {self.current_chunk}, Splits:{self.current_split}")
-                self.results = {
-                    "received_packages": count,
-                    "received_bytes": total_data,
-                    "reception_time": run_time,
-                    "duration": self._duration,
-
-                    "host": self.host,
-                    "port": self.port,
-                    "receiving_socket": self.__sock.getsockname(),
-                    "timeout": socket.getdefaulttimeout(),
-
-                    "default_target_file": self.target_file,
-                    "target_dir": self.target_dir,
-                    "used_splitting": self.__do_split,
-                    "produced_chunks": self.current_chunk + 1,
-                    "produced_splits": self.current_split * self.__do_split,
-                    "files_written": self.files_written,
-                    # "class_params": self.__dict__(),
-                }
-                self.dump_results()
-            else:
-                self.update_received_data(count=count, total_data=total_data, start_time=start_time)
+            self._update_received_data(count=count, total_data=total_data, start_time=start_time)
 
 
     def _check_chunk_condition(self, count=0, total_data=0, run_time=0):
