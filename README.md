@@ -1,0 +1,64 @@
+# RADC Processor
+
+> ⚠️ The software is still in development, please see #current_caveats.
+
+This project provides the necessary software for receiving and processing data captured with the FPGA on the DAQ-board ("board").
+For now, it is composed of two python packages:
+- `udp_receiver`: Receives data from the board and writes it to disk as binary files.
+- `data_parser`: unpacks the stored binary files and stores them as a **pandas DataFrame**. Also provides plot-methods.
+
+It is meant to be used together with [RADC Commander](https://git.scc.kit.edu/lngs-neutron-detector-project/radc-commander).
+Various tools are also included.
+
+## Dependencies
+
+### Python modules
+> ⚠️ A virtual environment is not implemented yet (NIY).
+
+Python >= 3.10 is required.
+The project itself was developed in Python 3.11.
+
+The required python modules and their version limitations are listed in `requirements.txt`. You can install them with
+```
+python -m pip install -r requirements.txt
+```
+
+### Network and Ports
+The requirements from *RADC Commander* apply also here.
+
+## Installation
+Once the project has been cloned locally and the dependencies are fulfilled or installed, the packages can be used as-is (⚠️ Notice caveats in ###Configuration).
+
+
+## `udp_receiver`
+
+This package receives data sent by the board and writes it to disk.
+It uses multiple threads and queues to ensure that no package gets lost.
+
+### Configuration
+> ⚠️ For now, configuration is only done via arguments and default values of parameters. **It is imperative that you read the source code to be aware of which parameters you have to provide!** (`udp_receiver/receiver_class.py:20-31`)
+
+### Usage
+The simplest package execution is done with:
+```bash
+# cd path/to/radc-processor
+python udp_receiver
+```
+This will start the receiver and show you the usage explanation. It will then wait for commands on the command-line (STDIN).
+
+You can pass non-default parameters in the form of `key=value`-pairs.
+
+#### Available Commands
+- `help`: Prints help (usage explanation)
+- `start`: starts the receiver using the configured settings.
+- `stop`: stops the receiver and closes the file(s) and connection(s).
+- `exit`: exits the receiver.
+- `catch`: Fetches the "attention" of the board again. Use it in case you do not receive any more data even if the board *should* send some.
+
+
+## `data_parser`
+> ⚠️ W.I.P. --> not ready for production use yet.
+> If You want to read the source code, you can use it in a live interpreter.
+
+
+
