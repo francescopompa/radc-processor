@@ -1,4 +1,12 @@
+"""
+Package data_parser
 
+Package written to extract measured data out of collected data-files and
+convert it to a pandas DataFrame storeable to disk, as well as to
+generate and handle plots out of the data sets.
+
+Usage: Tbd.
+"""
 
 from configuration import CONFIG
 import struct_conversion
@@ -26,9 +34,9 @@ import plotting
 def main():
     df = struct_conversion.DataFile(
         r"C:\Users\utrfh\WS22-23 (MA) Masterarbeit\RADC_testData\2023-03-20_UdpReceiverClass_tests\radc.4.bin"
-        )
+    )
 
-    pdf = data_io.total_dataFrame([df])
+    pdf = data_io.make_total_dataFrame([df])
 
     plotting.plot_rows(pdf.iloc[0])
     # plotting.plot_rows(pdf)

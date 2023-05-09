@@ -14,7 +14,7 @@ field_struct_mapping = collections.OrderedDict({
     "Snippet_Trigger_info": "B",    # 1 Byte unsigned char integer
     "Snippet_Event_ID": "H",    # 2 Bytes unsigned short integer
     "Snippet_Energy": "3s",     # 3 Bytes arbitrary char
-    "Snippet_Multiplicity": "B", # 1 Byte unsigned char integer
+    "Snippet_Multiplicity": "B",  # 1 Byte unsigned char integer
     "Snippet_Subsecs": "I",     # 4 Bytes unsigned integer
     "Snippet_Seconds": "I",     # 4 Bytes unsigned integer
 
@@ -28,16 +28,20 @@ endianness_struct_mapping = {
     "native_standardized": "=",
     "little-endian": "<",
     "big-endian": ">",
-    "network": "@", # (big endian)
+    "network": "@",  # (big endian)
 }
 
 
 class DataFile():
 
-    def __init__(self, path, tracelength=CONFIG["udp_package_structure"]["default_trace_length"], endianness="little-endian") -> None:
+    def __init__(self,
+                 path,
+                 tracelength=CONFIG["udp_package_structure"]["default_trace_length"],
+                 endianness="little-endian"
+                 ) -> None:
         self.path = path
         self.tracelength = tracelength
-        self.snippets = [] # iter(())
+        self.snippets = []  # iter(())
         self.snippet_size_bytes = None
 
         self.__endianness = endianness
@@ -45,32 +49,36 @@ class DataFile():
 
     def __validate_format_string(self, string, size):
         if struct.calcsize(string) != size:
-            raise ValueError(f"Struct Format string \"{string}\" does not match size {size} bytes.")
+            raise ValueError(
+                f"Struct Format string \"{string}\" does not match size {size} bytes.")
 
     def __calculate_format_string(self, endianness=None):
-            if endianness is None:
-                endianness = self.__endianness
+        if endianness is None:
+            endianness = self.__endianness
 
-            fsm = CONFIG["struct_fields_mapping"]
-            package_header = ''.join([
-                fsm["UDP_header"][key] for key in fsm["UDP_header"].keys()
-            ])
+        fsm = CONFIG["struct_fields_mapping"]
+        package_header = ''.join([
+            fsm["UDP_header"][key] for key in fsm["UDP_header"].keys()
+        ])
 
-            snippet_header = ''.join([
-                fsm["Snippet_header"][key] for key in fsm["Snippet_header"].keys()
-            ])
+        snippet_header = ''.join([
+            fsm["Snippet_header"][key] for key in fsm["Snippet_header"].keys()
+        ])
 
-            samples = self.tracelength * fsm["Sample"]
+        samples = self.tracelength * fsm["Sample"]
 
-            self.__validate_format_string(package_header, CONFIG["udp_package_structure"]["udp_header_size_bytes"])
-            self.__validate_format_string(snippet_header, CONFIG["udp_package_structure"]["snippet_header_size_bytes"])
-            self.__validate_format_string(fsm["Sample"], CONFIG["udp_package_structure"]["sample_size_bytes"])
+        self.__validate_format_string(
+            package_header, CONFIG["udp_package_structure"]["udp_header_size_bytes"])
+        self.__validate_format_string(
+            snippet_header, CONFIG["udp_package_structure"]["snippet_header_size_bytes"])
+        self.__validate_format_string(
+            fsm["Sample"], CONFIG["udp_package_structure"]["sample_size_bytes"])
 
-            string = f"{endianness_struct_mapping[endianness]} {package_header} {snippet_header} {samples}"
+        string = f"{endianness_struct_mapping[endianness]} {package_header} {snippet_header} {samples}"
 
-            self.snippet_size_bytes = struct.calcsize(string)
+        self.snippet_size_bytes = struct.calcsize(string)
 
-            return string
+        return string
 
     def unpack(self):
         with open(self.path, "rb") as file:
@@ -92,7 +100,6 @@ class DataFile():
 
         for snippet in self.snippets:
             yield snippet.get_record()
-
 
 
 class Snippet():
@@ -166,7 +173,3 @@ class Snippet():
             "trigger_IDs": self.trigger_IDs,
             "samples": self.samples
         }
-
-
-
-

@@ -13,7 +13,10 @@ RADC_PKG_HEADER_SIZE=4
 #
 # Todo: Move logging from print to logger/stderr
 # Todo: Implement sanity check every X packages (completeness of data, shape of data)
+# Todo: Set target file at each measurement start, requiring no exit between takes.
+# Todo: Increment file-number correctly when avoiding overwriting
 #
+
 class Receiver():
 
     def __init__(self,

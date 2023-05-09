@@ -58,7 +58,7 @@ You can pass non-default parameters in the form of `key=value`-pairs.
 
 ## `data_parser`
 > ⚠️ W.I.P. --> not ready for production use yet.
-> If You want to read the source code, you can use it in a live interpreter.
+> If You want to read the source code first, you can then use it in a live interpreter.
 
-
+- [ ] Todo: Make color of each event consistent accross different plots (different selections).
 

@@ -21,7 +21,7 @@ def load_files_to_df(files):
             yield datafile_to_df(DataFile(file))
 
 
-def total_dataFrame(files):
+def make_total_dataFrame(files):
 
     if not isinstance(files, list):
         files = [files]
