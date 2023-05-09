@@ -1,8 +1,11 @@
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
-from configuration import CONFIG
+# from configuration import CONFIG
+# import configuration #.CONFIG as CONFIG
+from .configuration import CONFIG
 
+# CONFIG = configuration.CONFIG
 
 
 

@@ -1,5 +1,5 @@
 import pandas as pd
-from struct_conversion import DataFile, Snippet
+from .struct_conversion import DataFile
 
 
 

@@ -1,7 +1,7 @@
 import struct
 import collections
 
-from configuration import CONFIG
+from .configuration import CONFIG
 
 field_struct_mapping = collections.OrderedDict({
     # UDP Header

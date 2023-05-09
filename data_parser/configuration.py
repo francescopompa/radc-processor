@@ -1,9 +1,7 @@
 
-import yaml
-import time
 import os
-
-global CONFIG
+import time
+import yaml
 
 path_map = {
     "radc_processor": "data_parser/configuration.yml",
