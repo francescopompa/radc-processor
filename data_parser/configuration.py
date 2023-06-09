@@ -4,12 +4,13 @@ import time
 import yaml
 
 path_map = {
-    "radc_processor": "data_parser/configuration.yml",
-    "data_parser": "configuration.yml",
+    "radc-processor": "data_parser/configuration.yaml",
+    "notebooks": "../data_parser/configuration.yaml",
+    "data_parser": "configuration.yaml",
 }
 config_path = path_map[os.getcwd().split('\\')[-1].split('/')[-1]]
 
-with open(config_path, "r") as file:
+with open(config_path, "r", encoding="utf-8") as file:
     CONFIG = yaml.safe_load(file)
 
 
@@ -20,21 +21,21 @@ def _insert_variable_value(string=""):
         return time.strftime("%Y-%m-%d")
 
 
-def _loop_through_dict(CONFIG, dpath=None):
+def _loop_through_dict(config, dpath=None):
     if dpath is None:
-        dpath = CONFIG
+        dpath = config
 
-    for key, value in CONFIG.items():
+    for key, value in config.items():
         if isinstance(value, dict):
             _loop_through_dict(value, dpath=dpath[key])
         elif isinstance(value, str) and value.startswith("$"):
-                dpath[key] = _insert_variable_value(value)
+            dpath[key] = _insert_variable_value(value)
 
 
 def validate_config():
-    global CONFIG
+    # global CONFIG
     _loop_through_dict(CONFIG)
 
 validate_config()
 
-print(CONFIG)
+print("Loaded CONFIG", CONFIG)

@@ -104,7 +104,7 @@ class DataFile():
 
 class Snippet():
 
-    def __init__(self, tuple) -> None:
+    def __init__(self, tup) -> None:
         self.udp_header = {}
         self.header = {}
         self.samples = []
@@ -116,40 +116,43 @@ class Snippet():
             "trigger_count": 0,
         }
 
-        self.__init_with_tuple(tuple)
+        self.__init_with_tuple(tup)
         self.__calculate_stats()
 
+    def __init_with_tuple(self, tup):
+        # if ["UDP_header"] is empty, i is not declared. Set to -1 as backup
+        i = -1
 
-    def __init_with_tuple(self, tuple):
-        for i,key in enumerate(CONFIG["struct_fields_mapping"]["UDP_header"], 0):
-            self.udp_header[key] = tuple[i]
+        for i, key in enumerate(CONFIG["struct_fields_mapping"]["UDP_header"], 0):
+            self.udp_header[key] = tup[i]
 
-        # Use previous counter as offset:
-        for i,key in enumerate(CONFIG["struct_fields_mapping"]["Snippet_header"], i+1):
-            self.header[key] = self.__convert_types(key, tuple[i])
+        # Use previous counter (or -1) as offset:
+        for i, key in enumerate(CONFIG["struct_fields_mapping"]["Snippet_header"], i+1):
+            self.header[key] = self.__convert_types(key, tup[i])
 
-        self.samples = list(self.__convert_samples(tuple[i+1:]))
+        self.samples = list(self.__convert_samples(tup[i+1:]))
 
     def __convert_types(self, key, entry):
         if key == "Energy":
             # Reverse the Byte order
             return int.from_bytes(
                 bytes([entry[2], entry[1], entry[0]])
-                )
+            )
         else:
             return entry
 
-    def __convert_samples(self, tuple):
-        for id, sample in enumerate(tuple):
+    def __convert_samples(self, tup):
+        for ID, sample in enumerate(tup):
             # SOURCE https://realpython.com/python-bitwise-operators/#bitmasks
-            t = bool((sample >> 15) & 1) # Trigger flag
-            i = bool((sample >> 14) & 1) # Inhibit flag
-            unsigned_val = sample & 0b0011111111111111  # 16 bits incl. 14 ones.
+            t = bool((sample >> 15) & 1)  # Trigger flag
+            i = bool((sample >> 14) & 1)  # Inhibit flag
+            # 16 bits incl. 14 ones.
+            unsigned_val = sample & 0b0011111111111111
             s = unsigned_val >> 13  # 1: negative, 0:positive
 
             if (t and not i):
                 # Real trigger case that wasn't inhibited:
-                self.trigger_IDs.append(id)
+                self.trigger_IDs.append(ID)
 
             # Considering the ADC to use two's-complement signed values
             yield -s*2**14 + unsigned_val

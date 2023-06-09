@@ -24,7 +24,7 @@ class Receiver():
         port=4000,
         target_root="C:/Users/utrfh/WS22-23 (MA) Masterarbeit/RADC_testData",
         target_dir=time.strftime("%Y-%m-%d"),
-        target_file="testreadoutfile.bin",
+        target_file=f"{time.strftime('%Y-%m-%d_%H-%M-%S')}_readout.bin",
         chunk_max_events=None, chunk_max_volume=None, chunk_max_time=None,
         overwrite=False,
         split=False,
@@ -210,7 +210,7 @@ class Receiver():
         return self.results
 
     def dump_results(self):
-        filename = os.path.join(self.target_dir, f"receiver_results.json")
+        filename = os.path.join(self.target_dir, self.target_file.replace("_readout.bin", "_results.json"))
 
         if self.do_overwrite is False and  os.path.exists(filename):
             filename = self.__do_not_overwrite_file(old_target=filename)

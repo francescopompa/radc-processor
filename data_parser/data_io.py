@@ -27,5 +27,6 @@ def make_total_dataFrame(files):
         files = [files]
 
     return pd.concat(
-        load_files_to_df(files)
+        load_files_to_df(files),
+        ignore_index=True
         )

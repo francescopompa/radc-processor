@@ -43,13 +43,13 @@ def _plot_row(row, ax_flags, ax_samples, color=None):
     ax_flags.plot(
         index,
         flags,
-        label=row.Event_ID,
+        # label=row.Event_ID,
         color=color, linewidth=1, alpha=0.7)
     ax_samples.plot(
         index,
         row.samples,
         label=row.Event_ID,
-        color=color, linewidth=2, alpha=0.7)
+        color=color, linewidth=1, alpha=0.7)
 
 
 def _plot_dataFrame(df, axs, cmap):
@@ -62,7 +62,7 @@ def _plot_dataFrame(df, axs, cmap):
         _plot_row(row, axs[0], axs[1], color)
 
     # srange = (0, max(df["samples"].map(len)))
-    srange = (min(rows['Event_ID']), max(rows['Event_ID']))
+    srange = (min(df['Event_ID']), max(df['Event_ID']))
 
     suptitle = f"Plots of events {srange[0]}-{srange[1]}"
     title = ""
@@ -76,9 +76,9 @@ def _plot_series(series, axs, cmap):
 
     eid = series.Event_ID
     suptitle = f"Event {eid}"
-    udp_str =
-    eve_str =
-    sta_str =
+    udp_str = f"UDP-Infos: Type {series['Type']}\n      # {series['Number']}\n      Rest {series['Rest']}"
+    eve_str = f"Event-Infos: Energy {series['Energy']}\n        Multiplicity {series['Multiplicity']}\n       Time {series['Seconds']}.{series['Subsecs']}"
+    sta_str = f"Trigger count: {series['trigger_count']}\n      Min {series['min']}\n       Max {series['max']}"
     title = ', '.join(
         f"{key}: {series[key]}" for key in series.keys()
         if key not in ["trigger_IDs", "samples", "Event_ID"]
@@ -96,7 +96,7 @@ def plot_rows(rows):
         gridspec_kw={'height_ratios': [1, 3]},
         figsize=(7.2, 4.8)
         )
-    cmap = plt.colormaps["plasma"]
+    cmap = plt.colormaps["copper"]  # See also: viridis, brg, winter, copper, plasma
 
     if isinstance(rows, pd.core.frame.DataFrame):
         nrows, srange, title, suptitle = _plot_dataFrame(rows, axs, cmap)
@@ -139,7 +139,9 @@ def plot_rows(rows):
             y=1.05,
             )
     # fig.tight_layout()
-    plt.show()
+    # plt.show()
+    return fig
+
 
 
 
