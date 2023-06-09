@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
+from collections.abc import Iterable
 # from configuration import CONFIG
 # import configuration #.CONFIG as CONFIG
 from .configuration import CONFIG
@@ -35,10 +36,17 @@ def plot_data(index, data, ax):
 #         return rows.itertuples(), rows.shape[0]
 
 
-def _plot_row(row, ax_flags, ax_samples, color=None):
+def _plot_row(row, ax_flags, ax_samples, color=None, xlim=None):
 
     index = range(len(row.samples))
     flags = [1 if i in row.trigger_IDs else 0 for i in index]
+
+    if isinstance(xlim, Iterable):
+        ax_flags.set_xlim(*xlim)
+        ax_samples.set_xlim(*xlim)
+    elif isinstance(xlim, (int, float)) and not isinstance(xlim, bool):
+        ax_flags.set_xlim(xlim)
+        ax_samples.set_xlim(xlim)
 
     ax_flags.plot(
         index,
@@ -52,14 +60,14 @@ def _plot_row(row, ax_flags, ax_samples, color=None):
         color=color, linewidth=1, alpha=0.7)
 
 
-def _plot_dataFrame(df, axs, cmap):
+def _plot_dataFrame(df, axs, cmap, xlim=None):
     # iterrows, nrows = _get_rows(rows)
     iterrows = df.itertuples()
     nrows = df.shape[0]
 
     for row in iterrows:
         color = cmap(row.Index/nrows)
-        _plot_row(row, axs[0], axs[1], color)
+        _plot_row(row, axs[0], axs[1], color, xlim)
 
     # srange = (0, max(df["samples"].map(len)))
     srange = (min(df['Event_ID']), max(df['Event_ID']))
@@ -70,9 +78,9 @@ def _plot_dataFrame(df, axs, cmap):
     return nrows, srange, title, suptitle
 
 
-def _plot_series(series, axs, cmap):
+def _plot_series(series, axs, cmap, xlim=None):
 
-    _plot_row(series, axs[0], axs[1], cmap(0))
+    _plot_row(series, axs[0], axs[1], cmap(0), xlim)
 
     eid = series.Event_ID
     suptitle = f"Event {eid}"
@@ -89,7 +97,7 @@ def _plot_series(series, axs, cmap):
 
 
 
-def plot_rows(rows):
+def plot_rows(rows, xlim=None):
 
     fig, axs = plt.subplots(
         2,1,
@@ -99,9 +107,9 @@ def plot_rows(rows):
     cmap = plt.colormaps["copper"]  # See also: viridis, brg, winter, copper, plasma
 
     if isinstance(rows, pd.core.frame.DataFrame):
-        nrows, srange, title, suptitle = _plot_dataFrame(rows, axs, cmap)
+        nrows, srange, title, suptitle = _plot_dataFrame(rows, axs, cmap, xlim)
     elif isinstance(rows, pd.core.series.Series):
-        nrows, srange, title, suptitle = _plot_series(rows, axs, cmap)
+        nrows, srange, title, suptitle = _plot_series(rows, axs, cmap, xlim)
     # List of lists
     # List of samples
     else:
