@@ -11,7 +11,7 @@ RADC_HEADER_SIZE=16
 RADC_PKG_HEADER_SIZE=4
 
 #
-# Todo: Move logging from print to logger/stderr
+# Todo: Move logging from print to logger/stderr or to sys.stdout.write()?
 # Todo: Implement sanity check every X packages (completeness of data, shape of data)
 # Todo: Set target file at each measurement start, requiring no exit between takes.
 # Todo: Increment file-number correctly when avoiding overwriting
@@ -33,8 +33,9 @@ class Receiver():
         tracelength=700,
         keep_alive_time=300, # 5 min
         ) -> None:
+
         self.target_dir = os.path.join(target_root, target_dir)
-        self.target_file = target_file
+        self.target_file = target_file + "" if target_file.endswith(".bin") else "_readout.bin"
         self.do_overwrite = overwrite
         self.host = host    # IP-Adress of the DQ Board
         self.port = port    # Target port through which the board sends data.
@@ -157,7 +158,7 @@ class Receiver():
             )
         self.__t_readout.start()
 
-        self.__new_writer_thread()
+        self.__new_writer_thread() # filename=filename)
 
         if duration is not None:
             time.sleep(duration)
@@ -232,11 +233,20 @@ class Receiver():
         print(f"Started UDP socket at {self.__sock.getsockname()} listening to {self.__sock.getpeername()}.")
         return self.__sock
 
+    def state(self):
+        return self.results, self.__dict__
+
     def catch_board(self):
         """Dummy write to the RADC board to inform it of the target laptop-port
         to send data to.
         """
-        self.__sock.send('W_00000001 00000000\r'.encode())
+        if self.__do_readout is True:
+            self.__sock.send('W_00000001 00000000\r'.encode())
+        else:
+            print("Skipped catch command: socket is currently closed. Please start receiver first.")
+
+    def switch_file(self, filename):
+        self.__switch_target_file(new_target=filename)
 
     def _keep_alive(self, recv_event=thr.Event()):
         """The task for the keep-alive thread.

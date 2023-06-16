@@ -28,6 +28,9 @@ The receiver can be commanded using the following commands:
                 Stops readout for the receiver.
     catch:      Receiver.catch_board()
                 Sends a dummy write to the board to set it's target port.
+    switch file:Receiver.switch_file(file)
+                Closes the current file and starts writing to file instead.
+                file must be provided!
     help:       Print this help message.
     exit:       Closes receiver and exits Programm.
 """)
@@ -42,12 +45,22 @@ def parse_stdin(line, rec):
     elif line[0] == "catch":
         rec.catch_board()
         print(line)
+    elif line[0] == "switch":
+        if len(line)==2:
+            rec.switch_file(filename=line[1])
+        else:
+            print("Missing name or path to new file. Ignoring.")
+        print(line)
+    elif line[0] == "status":
+        print(rec.state())
     elif line[0] == "exit":
         print(line)
         # automatically closes the Receiver (see __del__() and __exit__()).
         exit()
     elif line[0] in ["h", "-h", "help", "--help"]:
         print_usage()
+    else:
+        print("Unknown command given. Please retry. Print help with \"help\".")
 
 def parse_arguments(args):
     argsdict = {}
@@ -58,6 +71,7 @@ def parse_arguments(args):
         elif keyval[0].isdigit():
             argsdict["duration"] = int(keyval[0])
         else:
+            print(f"Wrong argument {arg} given.")
             print_usage()
 
     print("Parsed args:", argsdict)
@@ -66,7 +80,7 @@ def parse_arguments(args):
 def main(runtime=None):
     print_usage()
     # print(sys.argv)
-    argsdict = parse_arguments(sys.argv)
+    argsdict = parse_arguments(sys.argv[1:])    # First argument is the script name
     with Receiver(**argsdict) as rec:
         # print(rec.__dict__)
         while True:
