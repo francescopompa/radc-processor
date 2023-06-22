@@ -7,8 +7,13 @@ path_map = {
     "radc-processor": "data_parser/configuration.yaml",
     "notebooks": "../data_parser/configuration.yaml",
     "data_parser": "configuration.yaml",
+    "else": r"C:\Users\utrfh\WS22-23 (MA) Masterarbeit\Codes\radc-processor\data_parser\configuration.yaml"
 }
-config_path = path_map[os.getcwd().split('\\')[-1].split('/')[-1]]
+try:
+    config_path = path_map[os.getcwd().split('\\')[-1].split('/')[-1]]
+except KeyError:
+    config_path = path_map["else"]
+
 
 with open(config_path, "r", encoding="utf-8") as file:
     CONFIG = yaml.safe_load(file)
