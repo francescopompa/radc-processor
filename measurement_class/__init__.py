@@ -195,7 +195,7 @@ class Measurement():
                     val = self._increment_number(self.suffixes[idx])
                 except ValueError:
                     val = self._increment_letter(self.suffixes[idx])
-            self.suffixes[idx] = val
+            self.suffixes[idx] = str(val)
         else:
             raise ValueError(f"Key unknown: {key}")
 
