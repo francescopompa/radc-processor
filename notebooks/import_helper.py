@@ -8,7 +8,7 @@ path_to_data_parser = ".."
 sys.path.append(path_to_data_parser)
 from data_parser.configuration import CONFIG
 from data_parser import struct_conversion, data_io, plotting
-
+from measurement_class import Measurement
 
 path_to_meas_interfaces = "../../nd-measurement-interfaces/"
 sys.path.append(path_to_meas_interfaces)
