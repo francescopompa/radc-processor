@@ -110,10 +110,12 @@ class Measurement():
 
         self._update_property("suffixes", suffixes)
 
-        self._update_property("group_desc", default="")
-        self._update_property("subgroup_desc", default="")
+    def _reset_children(self, key):
+        keys = ["group", "date", "subgroup", "measurement_number", "attempt_number"]
+        start = keys.index(key) if key in keys else len(keys)
 
-        self._update_property("suffixes", suffixes, [])
+        for key in keys[start+1:]:
+            setattr(self, key, self.key_defaults[key])
 
     def _validate_keys(self):
         for key, func in self._validation_functions.items():
@@ -190,34 +192,42 @@ class Measurement():
             new_letters = self._increment_letter(new_letters, idx-1)
         return new_letters
 
-    def increment(self, key, desc=None, subdesc=None, val=None, idx=0):
-        if key == "group":
-            self.group = self._increment_letter(self.group)
-
-            if desc is not None:
-                    self.group_desc = desc
-            if subdesc is not None:
-                    self.subgroup_desc = subdesc
-
-        elif key == "subgroup":
-            self.subgroup = self._increment_letter(self.subgroup)
-
-            if desc is not None or subdesc is not None:
-                self.subgroup_desc = desc if desc is not None else subdesc
-
-        elif key in ["meas", "measurement"]:
-            self.measurement_number = self._increment_number(self.measurement_number)
+    def increment(self, key, val=None, desc=None, subdesc=None, idx=0):
+        if key in ["meas", "measurement"]:
+            key = "measurement_number"
         elif key in ["att", "attempt"]:
-            self.measurement_number = self._increment_number(self.measurement_number)
-        elif key in ["suffix", "suffixes"]:
-            if val is None:
-                try:
-                    val = self._increment_number(self.suffixes[idx])
-                except ValueError:
-                    val = self._increment_letter(self.suffixes[idx])
-            self.suffixes[idx] = str(val)
-        else:
-            raise ValueError(f"Key unknown: {key}")
+            key = "attempt_number"
+        elif key == "suffix":
+            key = "suffixes"
 
+        match key:
+            case "group":
+                self.group = self._increment_letter(self.group)
+                if desc is not None:
+                        self.group_desc = desc
+                if subdesc is not None:
+                        self.subgroup_desc = subdesc
+
+            case "subgroup":
+                self.subgroup = self._increment_letter(self.subgroup)
+
+                if desc is not None or subdesc is not None:
+                    self.subgroup_desc = desc if desc is not None else subdesc
+
+            case "measurement_number":
+                self.measurement_number = self._increment_number(self.measurement_number)
+            case "attempt_number":
+                self.attempt_number = self._increment_number(self.attempt_number)
+            case "suffixes":
+                if val is None:
+                    try:
+                        val = self._increment_number(self.suffixes[idx])
+                    except ValueError:
+                        val = self._increment_letter(self.suffixes[idx])
+                self.suffixes[idx] = str(val)
+            case _:
+                raise ValueError(f"Key unknown: {key}")
+
+        self._reset_children(key)
         self._validate_keys()
         print("New id:", self.id)
