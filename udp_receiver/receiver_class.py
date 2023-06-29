@@ -246,6 +246,7 @@ class Receiver():
             print("Skipped catch command: socket is currently closed. Please start receiver first.")
 
     def switch_file(self, filename):
+        filename += "" if filename.endswith(".bin") else "_readout.bin"
         if not os.path.isabs(filename):
             filename = os.path.join(self.target_dir, filename)
         self.__switch_target_file(new_target=filename)
