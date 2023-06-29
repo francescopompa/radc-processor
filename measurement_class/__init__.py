@@ -25,7 +25,6 @@ class Measurement():
     }
 
     _validation_functions = {
-        # "id": ,
         "group": lambda x: x.isalpha() and x.isupper() and len(x)==2 and x.isascii(),
         "date": lambda x: x.isdigit() and len(x) == 6 and time.strptime(x, "%y%m%d"),
         "subgroup": lambda x: x.isalpha() and x.islower() and len(x)==1 and x.isascii(),
@@ -33,7 +32,6 @@ class Measurement():
         "attempt_number": lambda x: x.isdigit() and len(x)==1,
         "group_desc": lambda x: x is None or x.isascii(),
         "subgroup_desc": lambda x: x is None or x.isascii(),
-        # "point_number": lambda x: (x is None) or (x.isdigit() and len(x)>=1),
         "suffixes": lambda x: all([i.isascii() for i in x])
     }
 
@@ -63,6 +61,7 @@ class Measurement():
             self._init_with_id(id)
 
         self._validate_keys()
+        print("New id:", self.id)
 
     def _update_property(self, propname, value=None): #, default=None):
         default = (
@@ -70,8 +69,6 @@ class Measurement():
             else self.key_defaults[propname]
             )
 
-
-    def _update_property(self, propname, value=None, default=None):
         prop = getattr(self, propname)
         setattr(self,
                 propname,
@@ -120,7 +117,6 @@ class Measurement():
     def _validate_keys(self):
         for key, func in self._validation_functions.items():
             val = getattr(self, key)
-            # print(key, val)
             if not func(val):
                 raise ValueError(
                     f"Wrong value for {key}: {val}"
@@ -135,6 +131,9 @@ class Measurement():
             ] + self.suffixes
         )
 
+    @property
+    def groupid(self):
+        return self.id.split('_')[0]
 
     @property
     def path(self, key=None):
@@ -147,9 +146,12 @@ class Measurement():
         return group_path, subgroup_path
 
     @property
-    def groupid(self):
-        return self.id.split('_')[0]
+    def group_path(self):
+        return self.path[0]
 
+    @property
+    def subgroup_path(self):
+        return self.path[1]
 
     def _increment_number(self, numberstr):
         return f"{int(numberstr)+1:0{len(numberstr)}}"
