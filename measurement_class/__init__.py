@@ -13,6 +13,17 @@ class Measurement():
 
     base_path = "C:/Users/utrfh/WS22-23 (MA) Masterarbeit/Measurements/"
 
+    key_defaults = {
+        # "group" has no default as it has to be set explicitely.
+        "date": time.strftime("%y%m%d"),
+        "subgroup": "a",
+        "measurement_number": "01",
+        "attempt_number": "1",
+        "group_desc": "",
+        "subgroup_desc": "",
+        "suffixes": [],
+    }
+
     _validation_functions = {
         # "id": ,
         "group": lambda x: x.isalpha() and x.isupper() and len(x)==2 and x.isascii(),
@@ -53,7 +64,11 @@ class Measurement():
 
         self._validate_keys()
 
-        self.group_path, self.subgroup_path = self.path
+    def _update_property(self, propname, value=None): #, default=None):
+        default = (
+            None if propname not in self.key_defaults
+            else self.key_defaults[propname]
+            )
 
 
     def _update_property(self, propname, value=None, default=None):
@@ -84,11 +99,16 @@ class Measurement():
                 anum = numbers.split("-")[1]
 
         self._update_property("group", fullgroup[0:2])
-        self._update_property("date", date, time.strftime("%y%m%d"))
-        self._update_property("subgroup", fullgroup[8:], "a")
+        self._update_property("date", date)
+        self._update_property("subgroup", fullgroup[8:])
 
-        self._update_property("measurement_number", mnum, "01")
-        self._update_property("attempt_number", anum, "1")
+        self._update_property("measurement_number", mnum)
+        self._update_property("attempt_number", anum)
+
+        self._update_property("group_desc")
+        self._update_property("subgroup_desc")
+
+        self._update_property("suffixes", suffixes)
 
         self._update_property("group_desc", default="")
         self._update_property("subgroup_desc", default="")
