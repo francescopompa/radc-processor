@@ -284,9 +284,13 @@ class Receiver():
 
 
     def _readout(self, recv_event=thr.Event()):
-        """The task function for the readout-thread.
-        It appends received datagrams to the data queue, and appends
-        their length to the update queue."""
+        """
+        The task function for the readout-thread.
+        It appends received datagrams to the data queue, and appends their length to the
+        update queue.
+        If the queue is full, an exception is raised and the program crashes.
+        Should that happen too often, replace put_nowait() with put().
+        """
 
         while self.__do_readout is True:
             try:
