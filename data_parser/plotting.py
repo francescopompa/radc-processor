@@ -95,6 +95,7 @@ def _plot_series(series, axs, cmap, xlim=None):
     return 1, (eid,eid), title, suptitle
 
 
+# def plot_compare(*args, xlim=None):
 
 
 def plot_rows(rows, xlim=None):

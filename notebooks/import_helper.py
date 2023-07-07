@@ -20,7 +20,7 @@ path_to_meas_interfaces = pjoin("../../nd-measurement-interfaces/")
 sys.path.append(path_to_meas_interfaces)
 from KeysightAgilent_3220A.pulse_emulation import pGen_pulse_class
 
-from KeysightAgilent_3220A import Agilent3220A
+from KeysightAgilent_3220A import Agilent3220A, pulse_emulation
 from Tektronix_DPO4104B import TektronixDPO4104B
 
 import pyvisa
