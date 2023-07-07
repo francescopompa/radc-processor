@@ -31,6 +31,8 @@ The receiver can be commanded using the following commands:
     switch file:Receiver.switch_file(file)
                 Closes the current file and starts writing to file instead.
                 file must be provided!
+    trigger:    Release a software-trigger signal to receive the current
+                waveforms without filtering.
     help:       Print this help message.
     exit:       Closes receiver and exits Programm.
 """)
@@ -53,6 +55,8 @@ def parse_stdin(line, rec):
         print(line)
     elif line[0] == "status":
         print(rec.state())
+    elif line[0] == "trigger":
+        print(rec.trigger())
     elif line[0] == "exit":
         print(line)
         # automatically closes the Receiver (see __del__() and __exit__()).

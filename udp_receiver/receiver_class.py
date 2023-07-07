@@ -245,6 +245,11 @@ class Receiver():
         else:
             print("Skipped catch command: socket is currently closed. Please start receiver first.")
 
+    def trigger(self):
+        """Send a software-trigger signal to the board. Making it send the
+        current waveforms without pulse-filtering."""
+        self.__sock.send('W_00000001 00000001\r'.encode())
+
     def switch_file(self, filename):
         filename += "" if filename.endswith(".bin") else "_readout.bin"
         if not os.path.isabs(filename):
