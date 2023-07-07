@@ -3,7 +3,7 @@ Class representing a single - or a suite of - measurements.
 """
 import os
 import time
-
+import pickle
 
 #
 # Todo: replace point_number with suffix of variable length
@@ -233,3 +233,47 @@ class Measurement():
         self._reset_children(key)
         self._validate_keys()
         print("New id:", self.id)
+
+
+    def get_path(self, key, subkey):
+        path_keys = {
+            "tek": {
+                "set": f"\"E:{self.groupid}/{self.id}_tek.set\"",
+                "img": f"\"E:{self.groupid}/{self.id}_tek.png\"",
+                "wfm": f"\"E:{self.groupid}/{self.id}_tek.isf\"",
+            },
+            "pgen": {
+                "file": os.path.join(self.subgroup_path, f"{self.id}_pgen.json")
+            },
+            "commander": {
+                "pbk": os.path.join(self.subgroup_path, "radc_playbook.txt"),
+                "conf": os.path.join(self.subgroup_path, "radc_config.yaml"),
+            },
+            "receiver": {
+                "root": self.group_path,
+                "dir": f"{self.date}{self.subgroup} {self.subgroup_desc}",
+                "file": f"{self.id}_readout.bin",
+                "test": f"{self.id}_readout_test.bin",
+            },
+            "df": {
+                "save": f"{self.subgroup_path}/{self.groupid}_DataFrame.{pickle.HIGHEST_PROTOCOL}pickle"
+            }
+        }
+
+        return path_keys[key][subkey]
+
+    def get_command(self, key):
+        command_keys = {
+            "commander": (
+                f"python -m radc_commander"
+                +f" -p \"{self.get_path('commander', 'pbk')}\""
+                +f" -c \"{self.get_path('commander', 'conf')}\""
+                ),
+            "receiver": (
+                f"python udp_receiver"
+                +f" target_root=\"{self.group_path}\""
+                +f" target_dir=\"{self.get_path('receiver', 'dir')}\""
+                +f" target_file=\"{self.get_path('receiver', 'file')}\""
+            )
+        }
+        return command_keys[key]
