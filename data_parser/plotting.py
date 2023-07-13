@@ -38,8 +38,8 @@ def plot_data(index, data, ax):
 
 def _plot_row(row, ax_flags, ax_samples, color=None, xlim=None):
 
-    index = range(len(row.samples))
-    flags = [1 if i in row.trigger_IDs else 0 for i in index]
+    x_array = range(len(row.samples))
+    flags = [1 if i in row.trigger_IDs else 0 for i in x_array]
 
     if isinstance(xlim, Iterable):
         ax_flags.set_xlim(*xlim)
@@ -49,12 +49,12 @@ def _plot_row(row, ax_flags, ax_samples, color=None, xlim=None):
         ax_samples.set_xlim(xlim)
 
     ax_flags.plot(
-        index,
+        x_array,
         flags,
         # label=row.Event_ID,
         color=color, linewidth=1, alpha=0.7)
     ax_samples.plot(
-        index,
+        x_array,
         row.samples,
         label=row.Event_ID,
         color=color, linewidth=1, alpha=0.7)
@@ -62,7 +62,7 @@ def _plot_row(row, ax_flags, ax_samples, color=None, xlim=None):
 
 def _plot_dataFrame(df, axs, cmap, xlim=None):
     # iterrows, nrows = _get_rows(rows)
-    iterrows = df.itertuples()
+    iterrows = df.reset_index().itertuples()
     nrows = df.shape[0]
 
     for row in iterrows:
