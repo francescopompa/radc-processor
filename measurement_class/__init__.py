@@ -4,6 +4,7 @@ Class representing a single - or a suite of - measurements.
 import os
 import time
 import pickle
+import json
 
 #
 # Todo: replace point_number with suffix of variable length
@@ -37,6 +38,7 @@ class Measurement():
 
     def __init__(
         self,
+        file = None,
         id: str = None,
         group=None,
         date=None,
@@ -59,6 +61,8 @@ class Measurement():
 
         if id is not None:
             self._init_with_id(id)
+        elif file is not None:
+            self._init_with_file(file)
 
         self._validate_keys()
         print("New id:", self.id)
@@ -72,8 +76,8 @@ class Measurement():
         prop = getattr(self, propname)
         setattr(self,
                 propname,
-                (   prop if prop is not None
-                    else value if value is not None and value != ""
+                (   prop if prop is not None and prop != default
+                    else value if value is not None and value != default
                     else default
                 )
         )
@@ -106,6 +110,21 @@ class Measurement():
         self._update_property("subgroup_desc")
 
         self._update_property("suffixes", suffixes)
+
+    def _init_with_file(self, file):
+        if not os.path.exists(file):
+            self._init_with_id(file)
+            return
+
+        with open(file, mode="r", encoding="utf-8") as file:
+            data = json.load(file)
+
+        for key, val in data.items():
+            if key == "id":
+                self._init_with_id(val)
+                continue
+            self._update_property(key, val)
+
 
     def _reset_children(self, key):
         keys = ["group", "date", "subgroup", "measurement_number", "attempt_number"]
