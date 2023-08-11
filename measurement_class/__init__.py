@@ -13,6 +13,7 @@ import json
 class Measurement():
 
     base_path = "C:/Users/utrfh/WS22-23 (MA) Masterarbeit/Measurements/"
+    radc_commander_config_file = "radc_config.yaml"
 
     key_defaults = {
         # "group" has no default as it has to be set explicitely.
@@ -255,6 +256,11 @@ class Measurement():
 
 
     def get_path(self, key, subkey):
+
+        if (key, subkey) == ("commander", "conf"):
+            if not os.path.exists(self.radc_commander_config_file):
+                self.make_radc_commander_config()
+
         path_keys = {
             "tek": {
                 "set": f"\"E:{self.groupid}/{self.id}_tek.set\"",
@@ -296,3 +302,26 @@ class Measurement():
             )
         }
         return command_keys[key]
+
+    def make_radc_commander_config(self):
+        d = {
+            "paths":{
+                "output_settings":{
+                    "temp_root": "$temp",
+                    "temp_dir": "radc_commander",
+                    "data_root": self.subgroup_path,
+                    "log_root": self.subgroup_path,
+                    "data_dir": "data",
+                    "log_dir": "",
+                    "file_name_structure": f"{self.groupid}_%basename",
+                    "data_file_basename": "readout.bin",
+                    "register_db_basename": "register_db.json",
+                }
+            }
+        }
+
+        filename = self.radc_commander_config_file
+        with open(filename, 'w', encoding="utf-8") as file:
+            json.dump(d, file)
+        print(f"Created {filename}")
+        print(json.dumps(d, indent=4))
