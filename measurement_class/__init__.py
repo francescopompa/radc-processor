@@ -273,6 +273,7 @@ class Measurement():
             "commander": {
                 "pbk": os.path.join(self.subgroup_path, "radc_playbook.txt"),
                 "conf": os.path.join(self.subgroup_path, "radc_config.yaml"),
+                "filter_dump": os.path.join(self.subgroup_path, f"{self.id}_radc_FilterSettings.json"),
             },
             "receiver": {
                 "root": self.group_path,
@@ -299,6 +300,9 @@ class Measurement():
                 +f" target_root=\"{self.group_path}\""
                 +f" target_dir=\"{self.get_path('receiver', 'dir')}\""
                 +f" target_file=\"{self.get_path('receiver', 'file')}\""
+            ),
+            "dump_filter": (
+                f"RADC save_filter_settings {self.get_path('receiver', 'filter_dump')} "
             )
         }
         return command_keys[key]
@@ -320,6 +324,9 @@ class Measurement():
             }
         }
 
+        #
+        # Todo: make filename absolute?
+        #
         filename = self.radc_commander_config_file
         with open(filename, 'w', encoding="utf-8") as file:
             json.dump(d, file)
