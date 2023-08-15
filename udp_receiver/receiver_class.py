@@ -7,6 +7,8 @@ import queue
 import signal
 import json
 
+from file_class import TargetFiles
+
 RADC_HEADER_SIZE=16
 RADC_PKG_HEADER_SIZE=4
 
@@ -33,6 +35,8 @@ class Receiver():
         tracelength=700,
         keep_alive_time=300, # 5 min
         ) -> None:
+
+        # self.target_files = TargetFiles(target_root, target_file, target_dir, ftype, number=1, version=1, allow_overwrite=allow_overwrite)
 
         self.target_dir = os.path.join(target_root, target_dir)
         self.target_file = target_file + "" if target_file.endswith(".bin") else "_readout.bin"
