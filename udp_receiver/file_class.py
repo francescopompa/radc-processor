@@ -76,7 +76,7 @@ class TargetFiles():
     def __str__(self):
         return str(self.filepath)
 
-    def _init_path(self, root_path: Path, dir: Path):
+    def _init_path(self, root_path: Path, fdir: Path):
         filename = None
         root_path.resolve() # make absolute, uses cwd if empty string
 
@@ -85,13 +85,13 @@ class TargetFiles():
             filename = root_path.name
             root_path = root_path.parent
 
-        if dir == dir.parent:
-            # dir is empty -> get from root_path (never ends with /)
-            dir = root_path.name
-            root_path = root_path.parent.parent
+        if fdir == fdir.parent:
+            # fdir is empty -> get from root_path (never ends with /)
+            fdir = root_path.name
+            root_path = root_path.parent
 
         self.root_path = root_path
-        self.dir = dir
+        self.fdir = fdir
         return filename
 
     def _init_name(self,
@@ -154,11 +154,15 @@ class TargetFiles():
 
         self._check_overwrite()
 
+    @property
+    def filedir(self):
+        """Path to the parent folder of the targetted files."""
+        return Path(self.root_path, self.fdir)
 
     @property
     def filepath(self):
         """Full path of the currently targetted file."""
-        return Path(self.root_path, self.dir, self.filename)
+        return Path(self.root_path, self.fdir, self.filename)
 
     @property
     def filename(self):
