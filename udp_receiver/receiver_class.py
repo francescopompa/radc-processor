@@ -241,14 +241,17 @@ class Receiver():
         to send data to.
         """
         if self.__do_readout is True:
-            self.__sock.send('W_00000001 00000000\r'.encode())
+            self.__sock.send('w_00000001_00000000'.encode())
         else:
             print("Skipped catch command: socket is currently closed. Please start receiver first.")
 
-    def trigger(self):
+    def trigger(self, number=1):
         """Send a software-trigger signal to the board. Making it send the
         current waveforms without pulse-filtering."""
-        self.__sock.send('W_00000001 00000001\r'.encode())
+        for i in range(number):
+            self.__sock.send('w_00000001_00000001'.encode())
+            # self.__sock.sendto('w_00000001_00000001'.encode(), (self.host, 5000))
+            time.sleep(self.tracelength*16*10**-9)
 
     def switch_file(self, filename):
         filename += "" if filename.endswith(".bin") else "_readout.bin"

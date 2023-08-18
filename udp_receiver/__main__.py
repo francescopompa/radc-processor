@@ -56,7 +56,8 @@ def parse_stdin(line, rec):
     elif line[0] == "status":
         print(rec.state())
     elif line[0] == "trigger":
-        print(rec.trigger())
+        number = int(line[1]) if len(line) > 1 else 1
+        print(rec.trigger(number=number))
     elif line[0] == "exit":
         print(line)
         # automatically closes the Receiver (see __del__() and __exit__()).
