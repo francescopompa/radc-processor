@@ -40,19 +40,15 @@ The receiver can be commanded using the following commands:
 def parse_stdin(line, rec):
     if line[0] == "start":
         rec.start(duration=int(line[1]) if len(line)==2 else None)
-        print(line)
     elif line[0] == "stop":
         rec.stop()
-        print(line)
     elif line[0] == "catch":
         rec.catch_board()
-        print(line)
     elif line[0] == "switch":
         if len(line)==2:
             rec.switch_file(filename=line[1])
         else:
             print("Missing name or path to new file. Ignoring.")
-        print(line)
     elif line[0] == "status":
         print(rec.state())
     elif line[0] == "trigger":
@@ -66,6 +62,8 @@ def parse_stdin(line, rec):
         print_usage()
     else:
         print("Unknown command given. Please retry. Print help with \"help\".")
+    print(line)
+
 
 def parse_arguments(args):
     argsdict = {}

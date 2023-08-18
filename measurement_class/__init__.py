@@ -68,7 +68,7 @@ class Measurement():
             self._init_with_file(file)
 
         self._validate_keys()
-        print("New id:", self.id)
+        print("New id:", self.id, "Suffixes:", self.suffixes)
 
     def _update_property(self, propname, value=None): #, default=None):
         default = (
@@ -219,6 +219,10 @@ class Measurement():
         return new_letters
 
     def increment(self, key, val=None, desc=None, subdesc=None, idx=0):
+        #
+        # Todo: allow setting all suffixes at once
+        # Todo: incrementing suffix should increment measurement number.
+        #
         if key in ["meas", "measurement"]:
             key = "measurement_number"
         elif key in ["att", "attempt"]:

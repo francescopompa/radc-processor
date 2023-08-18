@@ -172,5 +172,6 @@ def plot_samples(entry):
     for d in data:
         plot_data(index, d, axs[1])
 
-    fig.tight_layout()
-    plt.show()
+    # fig.tight_layout()
+    # plt.show()
+    return fig

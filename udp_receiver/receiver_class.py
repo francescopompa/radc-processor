@@ -367,11 +367,15 @@ class Receiver():
         """The task function for the update-thread.
         It gets the byte-length from the update queue and uses that to
         update the counters and print the received data volume."""
+        #
+        # Todo: split update from printing
+        # Todo: allow mode-selection between interactive and single stdout-return
+        #
 
         run_time = 0
         total_rate = 0.
         timeout = socket.getdefaulttimeout()
-        print(f"Waiting for packages...")
+        print("Waiting for packages...")
 
         while self.__do_readout is True or self.__update_queue.empty() is False:
             try:
