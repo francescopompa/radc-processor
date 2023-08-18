@@ -104,6 +104,8 @@ class TargetFiles():
             basename = filename
         elif filename is not None:
             raise ValueError(f"Specified both filename {filename} and basename {basename}")
+        if basename == "":
+            basename = "radc_receiver"
 
         parts = basename.split('.')
         n_fragments = 4 if ftype in self.numbered_ftypes else 3
@@ -146,7 +148,9 @@ class TargetFiles():
             func = next(gen)
             func(p)
 
-        self.basename = ".".join(remaining_parts) + basename + "_"+spec
+        remaining_parts.remove(ext) # remove extension in case basename had
+                                    # less than n_fragments elements
+        self.basename = ".".join(remaining_parts) + basename + "_" + spec
         self.version = version
         self.number = number
         self.ext = ext
@@ -191,6 +195,13 @@ class TargetFiles():
         else:
             self.iterations.append(copy.copy(self))
 
+    def _reset(self, version=1, number=1):
+        """
+        Reset number and version values.
+        """
+        self.version = version
+        self.number = number
+        return version, number
 
     def lowest_safe(self, start=None):
         """Increment chunk of split number to next lowest safe number"""
@@ -210,15 +221,25 @@ class TargetFiles():
         self.number += 1
         self._check_overwrite()
 
-    def switch(self, filename, number=None, version=None):
+    def switch(self,
+            filename=None,
+            number=None, version=None, reset=False,
+            ftype=None
+            ):
         """Switch to a new basename inside the same directory."""
+        if filename is None:
+            filename = self.basename.rstrip("_"+self.ftype_strings[self.ftype][0])
         if number is None:
             number = self.number
         if version is None:
             version = self.version
+        if ftype is None:
+            ftype = self.ftype
+        if reset is True:
+            self._reset()
 
         self._init_name(
-            filename, self.ftype,
+            filename, ftype,
             number,
             version,
             )
