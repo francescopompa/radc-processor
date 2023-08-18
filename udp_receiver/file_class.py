@@ -34,14 +34,22 @@ class TargetFiles():
     }
     numbered_ftypes = ["chunk", "split"]
 
-    iterations = []
-    """List of TargetFiles created during this execution."""
+    _iterations = []
+    """
+    List of TargetFiles created during this execution.
+    For now, this stores a new copy of the class instance each time it
+    succesfully adopted a new target path (or it's first).
+    This may cause unnecessary memory-usage on the long term or when
+    using splitting.
+    Over time, it may be judicious to switch to the string-representations
+    of the paths, as returned by list_files() instead.
+    """
 
     # @property
     @classmethod
     def list_files(cls):
         """List of file-paths created during this execution."""
-        return [i.filepath for i in cls.iterations]
+        return [i.filepath for i in cls._iterations]
 
 
     def __init__(
@@ -72,7 +80,20 @@ class TargetFiles():
 
 
 
-    # def __repr__
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}(root_path={self.root_path},"
+            f"basename={self.basename},"
+            f"fdir={self.fdir},"
+            f"ftype={self.ftype},"
+            f"number{self.number},"
+            f"number_padding_length={self._number_padding_length},"
+            f"version={self.version},"
+            f"version_padding_length={self._version_padding_length},"
+            f"allow_overwrite={self.allow_overwrite}"
+            ")"
+            )
+
     def __str__(self):
         return str(self.filepath)
 
