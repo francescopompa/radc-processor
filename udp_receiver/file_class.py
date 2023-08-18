@@ -207,14 +207,16 @@ class TargetFiles():
             ])
 
 
-    def _check_overwrite(self):
+    def _check_overwrite(self, make_duplicate=True):
         """If needed, increment file version to avoid overwrite."""
         if self.filepath.exists() and not self.allow_overwrite:
             # version += 1
             self.version += 1
-            self._check_overwrite()
+            self._check_overwrite(make_duplicate)
+        elif make_duplicate is True:
+            self._iterations.append(copy.copy(self))
         else:
-            self.iterations.append(copy.copy(self))
+            self._iterations.append(self)
 
     def _reset(self, version=1, number=1):
         """
@@ -265,7 +267,18 @@ class TargetFiles():
             version,
             )
 
-
+    def generate(self, **kwargs):
+        """
+        Return a new path, but don't use it as current path.
+        Example: to dump results.
+        """
+        new = copy.copy(self)
+        for key, val in kwargs.items():
+            if hasattr(new, key):
+               setattr(new, key, val) #getattr(self, key))
+        new._check_overwrite(make_duplicate=False)  # Don't append a COPY of new
+        # self._iterations.append(new)              # but append new itself.
+        return new
 
 
 
