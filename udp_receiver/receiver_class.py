@@ -252,20 +252,23 @@ class Receiver():
         to send data to.
         """
         if self.__do_readout is True:
-            self.__sock.send('W_00000001 00000000\r'.encode())
+            self.__sock.send('w_00000001_00000000'.encode())
         else:
             print("Skipped catch command: socket is currently closed. Please start receiver first.")
 
-    def trigger(self):
+    def trigger(self, number=1):
         """Send a software-trigger signal to the board. Making it send the
         current waveforms without pulse-filtering."""
-        self.__sock.send('W_00000001 00000001\r'.encode())
+        for i in range(number):
+            self.__sock.send('w_00000001_00000001'.encode())
+            # self.__sock.sendto('w_00000001_00000001'.encode(), (self.host, 5000))
+            time.sleep(self.tracelength*16*10**-9)
 
     def switch_file(self, filename):
-        # filename += "" if filename.endswith(".bin") else "_readout.bin"
-        # if not os.path.isabs(filename):
-        #     filename = os.path.join(self.target_dir, filename)
-        self.__switch_target_file(new_target=filename, mode=self._ftype)
+        filename += "" if filename.endswith(".bin") else "_readout.bin"
+        if not os.path.isabs(filename):
+            filename = os.path.join(self.target_dir, filename)
+        self.__switch_target_file(new_target=filename)
 
     def _keep_alive(self, recv_event=thr.Event()):
         """The task for the keep-alive thread.
@@ -371,11 +374,15 @@ class Receiver():
         """The task function for the update-thread.
         It gets the byte-length from the update queue and uses that to
         update the counters and print the received data volume."""
+        #
+        # Todo: split update from printing
+        # Todo: allow mode-selection between interactive and single stdout-return
+        #
 
         run_time = 0
         total_rate = 0.
         timeout = socket.getdefaulttimeout()
-        print(f"Waiting for packages...")
+        print("Waiting for packages...")
 
         while self.__do_readout is True or self.__update_queue.empty() is False:
             try:
