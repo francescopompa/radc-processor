@@ -15,7 +15,6 @@ from pathlib import Path
 class Measurement():
 
     base_path = "C:/Users/utrfh/WS22-23 (MA) Masterarbeit/Measurements/"
-    radc_commander_config_file = "radc_config.yaml"
 
     key_defaults = {
         # "group" has no default as it has to be set explicitely.
@@ -263,6 +262,9 @@ class Measurement():
         print("New id:", self.id)
 
 
+<<<<<<< measurement_class/__init__.py
+    def get_path(self, key, subkey, create=True):
+=======
     def get_path(self, key, subkey):
 
         if (key, subkey) == ("commander", "conf"):
@@ -271,6 +273,7 @@ class Measurement():
         elif (key, subkey) == ("commander", "pbk"):
             if not Path(self.subgroup_path, "radc_playbook.txt").exists():
                 return None
+>>>>>>> measurement_class/__init__.py
 
         path_keys = {
             "tek": {
@@ -282,6 +285,11 @@ class Measurement():
                 "file": Path(self.subgroup_path, "data", f"{self.id}_pgen.json")
             },
             "commander": {
+<<<<<<< measurement_class/__init__.py
+                "pbk": os.path.join(self.subgroup_path, "radc_playbook.txt"),
+                "conf": os.path.join(self.subgroup_path, "radc_config.yaml"),
+                "filter_dump": os.path.join(self.subgroup_path, f"{self.id}_radc_FilterSettings.json"),
+=======
                 "pbk": Path(self.subgroup_path, "radc_playbook.txt"),
                 "conf": Path(self.subgroup_path, self.radc_commander_config_file),
                 "filter_dump": Path(
@@ -292,6 +300,7 @@ class Measurement():
                     # Todo: make absolute
                     #
                     ),
+>>>>>>> measurement_class/__init__.py
             },
             "receiver": {
                 "root": self.subgroup_path,
@@ -308,7 +317,16 @@ class Measurement():
             }
         }
 
-        return path_keys[key][subkey]
+        path = path_keys[key][subkey]
+
+        if (key, subkey) == ("commander", "conf") and create is True:
+            if not path.exists():
+                self.make_radc_commander_config(path)
+        elif (key, subkey) == ("commander", "pbk"):
+            if not path.exists():
+                return None
+
+        return path
 
     def get_command(self, key):
         command_keys = {
@@ -325,12 +343,19 @@ class Measurement():
                 +f" target_file=\"{self.get_path('receiver', 'file')}\""
             ),
             "dump_filter": (
+<<<<<<< measurement_class/__init__.py
+                f"RADC save_filter_settings {self.get_path('receiver', 'filter_dump')}"
+=======
                 f"RADC save_filter_settings {self.get_path('commander', 'filter_dump')} "
+>>>>>>> measurement_class/__init__.py
             )
         }
         return command_keys[key]
 
-    def make_radc_commander_config(self):
+    def make_radc_commander_config(self, path=None):
+        if path is None:
+            path = self.get_path("commander", "conf", create=False)
+
         d = {
             "paths":{
                 "output_settings":{
@@ -349,8 +374,14 @@ class Measurement():
             }
         }
 
+<<<<<<< measurement_class/__init__.py
+        with open(path, 'w', encoding="utf-8") as file:
+            json.dump(d, file)
+        print(f"Created {path}")
+=======
         filename = self.radc_commander_config_file
         with open(filename, 'w', encoding="utf-8") as file:
             json.dump(d, file, indent=4)
         print(f"Created {filename}")
+>>>>>>> measurement_class/__init__.py
         print(json.dumps(d, indent=4))

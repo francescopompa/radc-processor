@@ -7,6 +7,8 @@ import queue
 import signal
 import json
 
+from file_class import TargetFiles
+
 RADC_HEADER_SIZE=16
 RADC_PKG_HEADER_SIZE=4
 
@@ -26,7 +28,7 @@ class Receiver():
         target_dir=time.strftime("%Y-%m-%d"),
         target_file=f"{time.strftime('%Y-%m-%d_%H-%M-%S')}_readout.bin",
         chunk_max_events=None, chunk_max_volume=None, chunk_max_time=None,
-        overwrite=False,
+        allow_overwrite=False,
         split=False,
         duration=None,
         timeout=5,
@@ -34,32 +36,42 @@ class Receiver():
         keep_alive_time=300, # 5 min
         ) -> None:
 
-        self.target_dir = os.path.join(target_root, target_dir)
-        self.target_file = target_file + "" if target_file.endswith(".bin") else "_readout.bin"
-        self.do_overwrite = overwrite
-        self.host = host    # IP-Adress of the DQ Board
+        # define ftype for TargetFiles:
+        if split is True:
+            self._ftype = "split"
+        elif any(
+            i is not None
+            for i in [chunk_max_events, chunk_max_volume, chunk_max_time]
+            ):
+            self._ftype = "chunk"
+        else:
+            self._ftype = "full"
+
+        self.target_files = TargetFiles(
+            root_path=target_root, basename=target_file, fdir=target_dir,
+            ftype=self._ftype, number=1, version=1,
+            allow_overwrite=allow_overwrite
+            )
+
+        self.host = host    # IP-Adress of the DAQ Board
         self.port = port    # Target port through which the board sends data.
                             # Must be identical to the content of register "UdpPort"
         self._duration = duration
         self._keep_alive_time = keep_alive_time # Length of the shortest timeout
                                                 # involved in the network connection
 
-        self.files_written = []
-        self.__suffixes = [0]
-
+        self.tracelength = tracelength
         self.chunk_max_events = chunk_max_events # Event number
         self.chunk_max_volume = chunk_max_volume # Bytes
         self.chunk_max_time = chunk_max_time # seconds
-        self.current_chunk = 0
-        self.chunk_suffix_length = 3
+        self.current_chunk = 1
         self.__chunk_count_offset = 0
         self.__chunk_volume_offset = 0
         self.__chunk_time_offset = 0
 
         self.__do_split = split
-        self.current_split = 0
-        self.split_suffix_length = 4
-        self.__split_size = 2*tracelength + RADC_HEADER_SIZE + RADC_PKG_HEADER_SIZE
+        self.current_split = 1
+        self.__split_size = 2*self.tracelength + RADC_HEADER_SIZE + RADC_PKG_HEADER_SIZE
 
         self.__do_readout = False
         self.__sock = None
@@ -211,14 +223,13 @@ class Receiver():
         return self.results
 
     def dump_results(self):
-        filename = os.path.join(self.target_dir, self.target_file.replace("_readout.bin", "_results.json"))
-
-        if self.do_overwrite is False and  os.path.exists(filename):
-            filename = self.__do_not_overwrite_file(old_target=filename)
-
-        with open(filename, 'a', encoding="utf-8") as file:
+        filepath = self.target_files.generate(ftype="results").filepath
+        #
+        # Todo: clear how this affects current or future readouts...
+        #
+        with open(filepath, 'a', encoding="utf-8") as file:
             json.dump(self.results, file, indent=4)
-        print(f"Dumped results to {filename}")
+        print(f"Dumped results to {filepath}")
 
 
     def __start_socket(self):
@@ -327,18 +338,15 @@ class Receiver():
         current target file.
         If the stop_event is set, the function closes the file.
         When a file gets closed it's name is appended to .files_written."""
-        if filename is None:
-            filename = os.path.join(self.target_dir, self.target_file)
+        filepath = self.target_files.filepath or filename
 
-        if not os.path.exists(self.target_dir):
-            os.makedirs(self.target_dir)
-
-        if self.do_overwrite is False and  os.path.exists(filename):
-            filename = self.__do_not_overwrite_file(old_target=filename)
+        parent_path = self.target_files.filepath.parent
+        if not os.path.exists(parent_path):
+            os.makedirs(parent_path)
 
         timeout = socket.getdefaulttimeout()
 
-        with open(filename, "wb") as file:
+        with open(filepath, "wb") as file:
             while self.__do_readout is True or self.__data_queue.empty() is False:
                 if stop_event.is_set():
                     break
@@ -348,12 +356,11 @@ class Receiver():
                 except queue.Empty:
                     pass
 
-        # if os.path.getsize(filename) > 0:
-        self.files_written.append(filename)
-        print(f"Writer has closed {filename}")
+        # if os.path.getsize(filepath) > 0:
+        print(f"Writer has closed {filepath}")
         # else:
-        #     os.remove(filename)
-        #     print(f"Writer has not written to {filename}: no data to write.")
+        #     os.remove(filepath)
+        #     print(f"Writer has not written to {filepath}: no data to write.")
 
     # def _write_to_stdout(self):
         # self.__readout(sys.stdout)
@@ -412,12 +419,12 @@ class Receiver():
                 "receiving_socket": self.__sock.getsockname(),
                 "timeout": socket.getdefaulttimeout(),
 
-                "default_target_file": self.target_file,
-                "target_dir": self.target_dir,
+                "default_target_file": str(self.target_files.basename),
+                "target_dir": str(self.target_files.filedir),
                 "used_splitting": self.__do_split,
                 "produced_chunks": self.current_chunk + 1,
                 "produced_splits": self.current_split * self.__do_split,
-                "files_written": self.files_written,
+                "files_written": [str(i) for i in self.target_files.list_files()],
                 # "class_params": self.__dict__(),
             }
             self.dump_results()
@@ -453,24 +460,22 @@ class Receiver():
 
         return False
 
-    def __switch_target_file(self, mode=None, new_target=None):
+    def __switch_target_file(self, new_target=None, mode=None):
         """Shadowed function to switch to a new file and start a
         corresponding writer-thread.
         Mode `split` appends the suffix `.wfm.<count>` to the filename.
         Mode `chunk` appends the suffix `.chunk.<count>` to the filename.
-        Mode `overwrite` appends the suffix `.<count>` to the filename."""
+        """
         old_writer, stop_event = self.__t_writers.pop(0) # first item -> oldest
 
-        if mode == "split":
-            self.current_split += 1
-            new_target = f"{self.target_file}.wfm.{self.current_split:0{self.split_suffix_length}}"
-        elif mode == "chunk":
-            self.current_chunk += 1
-            new_target = f"{self.target_file}.chunk.{self.current_chunk:0{self.chunk_suffix_length}}"
-        elif new_target is not None:
-            pass
+        if new_target is not None:
+            self.target_files.switch(filename=new_target, ftype=mode, reset=True)
+        elif mode == "split" or mode == "chunk":
+            self.target_files.next()
         else:
-            raise ValueError(f"Enter new target for {self.target_file}.")
+            raise ValueError(f"Enter new target for {self.target_files}.")
+
+        new_target = self.target_files.filepath
 
         stop_event.set()
         old_writer.join()
@@ -478,26 +483,26 @@ class Receiver():
 
         return new_target
 
-    def __do_not_overwrite_file(self, old_target):
-        # "overwrite" is called by a writer-thread which cannot join() itself.
-        target_folder = os.path.dirname(os.path.abspath(old_target))
-        suffixes = self.__suffixes
-        with os.scandir(target_folder) as sd:
-            for entry in sd:
-                if entry.path.startswith(old_target) and entry.is_file():
-                    try:
-                        suffixes.append(int(entry.split('.')[-1]))
-                    except:
-                        continue
-        if max(suffixes) > 0:
-            new_suffix = max(suffixes)+1
-            suffixes.append(new_suffix)
-            new_target = f"{old_target}.{new_suffix}"
-            self.__suffixes = suffixes
-        else:
-            new_target = f"{old_target}.1"
-        print(f"Replaced {old_target} with {new_target} to avoid overwrite. ({self.__suffixes})")
-        return new_target
+    # def __do_not_overwrite_file(self, old_target):
+    #     # "overwrite" is called by a writer-thread which cannot join() itself.
+    #     target_folder = os.path.dirname(os.path.abspath(old_target))
+    #     suffixes = self.__suffixes
+    #     with os.scandir(target_folder) as sd:
+    #         for entry in sd:
+    #             if entry.path.startswith(old_target) and entry.is_file():
+    #                 try:
+    #                     suffixes.append(int(entry.split('.')[-1]))
+    #                 except:
+    #                     continue
+    #     if max(suffixes) > 0:
+    #         new_suffix = max(suffixes)+1
+    #         suffixes.append(new_suffix)
+    #         new_target = f"{old_target}.{new_suffix}"
+    #         self.__suffixes = suffixes
+    #     else:
+    #         new_target = f"{old_target}.1"
+    #     print(f"Replaced {old_target} with {new_target} to avoid overwrite. ({self.__suffixes})")
+    #     return new_target
 
 
 
