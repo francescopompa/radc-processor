@@ -265,10 +265,10 @@ class Receiver():
             time.sleep(self.tracelength*16*10**-9)
 
     def switch_file(self, filename):
-        filename += "" if filename.endswith(".bin") else "_readout.bin"
-        if not os.path.isabs(filename):
-            filename = os.path.join(self.target_dir, filename)
-        self.__switch_target_file(new_target=filename)
+        # filename += "" if filename.endswith(".bin") else "_readout.bin"
+        # if not os.path.isabs(filename):
+        #     filename = os.path.join(self.target_dir, filename)
+        self.__switch_target_file(new_target=filename, mode=self._ftype)
 
     def _keep_alive(self, recv_event=thr.Event()):
         """The task for the keep-alive thread.
