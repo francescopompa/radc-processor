@@ -157,10 +157,12 @@ class Measurement():
     @property
     def path(self, key=None):
         group_path = Path(
-            self.base_path, f"{self.group} - {self.group_desc}"
+            self.base_path,
+            f"{self.group} - {self.group_desc}"
         )
         subgroup_path = Path(
-           group_path, f"{self.date}{self.subgroup} {self.subgroup_desc}"
+           group_path,
+           f"{self.date}{self.subgroup} {self.subgroup_desc}"
         )
         return group_path, subgroup_path
 
@@ -281,12 +283,16 @@ class Measurement():
             }
         }
 
+        path = path_keys[key][subkey]
+
         if (key, subkey) == ("commander", "conf") and create is True:
-            path = path_keys[key][subkey]
             if not path.exists():
                 self.make_radc_commander_config(path)
+        elif (key, subkey) == ("commander", "pbk"):
+            if not path.exists():
+                return None
 
-        return path_keys[key][subkey]
+        return path
 
     def get_command(self, key):
         command_keys = {
@@ -302,7 +308,7 @@ class Measurement():
                 +f" target_file=\"{self.get_path('receiver', 'file')}\""
             ),
             "dump_filter": (
-                f"RADC save_filter_settings {self.get_path('receiver', 'filter_dump')} "
+                f"RADC save_filter_settings {self.get_path('receiver', 'filter_dump')}"
             )
         }
         return command_keys[key]
