@@ -1,7 +1,7 @@
 """
 Class representing a single - or a suite of - measurements.
 """
-import os
+from pathlib import Path
 import time
 import pickle
 import json
@@ -113,7 +113,7 @@ class Measurement():
         self._update_property("suffixes", suffixes)
 
     def _init_with_file(self, file):
-        if not os.path.exists(file):
+        if not Path(file).exists():
             self._init_with_id(file)
             return
 
@@ -157,10 +157,10 @@ class Measurement():
 
     @property
     def path(self, key=None):
-        group_path = os.path.join(
+        group_path = Path(
             self.base_path, f"{self.group} - {self.group_desc}"
         )
-        subgroup_path = os.path.join(
+        subgroup_path = Path(
            group_path, f"{self.date}{self.subgroup} {self.subgroup_desc}"
         )
         return group_path, subgroup_path
@@ -258,7 +258,7 @@ class Measurement():
     def get_path(self, key, subkey):
 
         if (key, subkey) == ("commander", "conf"):
-            if not os.path.exists(self.radc_commander_config_file):
+            if not Path(self.radc_commander_config_file).exists():
                 self.make_radc_commander_config()
 
         path_keys = {
@@ -268,12 +268,12 @@ class Measurement():
                 "wfm": f"\"E:{self.groupid}/{self.id}_tek.isf\"",
             },
             "pgen": {
-                "file": os.path.join(self.subgroup_path, f"{self.id}_pgen.json")
+                "file": Path(self.subgroup_path, f"{self.id}_pgen.json")
             },
             "commander": {
-                "pbk": os.path.join(self.subgroup_path, "radc_playbook.txt"),
-                "conf": os.path.join(self.subgroup_path, "radc_config.yaml"),
-                "filter_dump": os.path.join(self.subgroup_path, f"{self.id}_radc_FilterSettings.json"),
+                "pbk": Path(self.subgroup_path, "radc_playbook.txt"),
+                "conf": Path(self.subgroup_path, "radc_config.yaml"),
+                "filter_dump": Path(self.subgroup_path, f"{self.id}_radc_FilterSettings.json"),
             },
             "receiver": {
                 "root": self.group_path,
