@@ -13,7 +13,6 @@ import json
 class Measurement():
 
     base_path = "C:/Users/utrfh/WS22-23 (MA) Masterarbeit/Measurements/"
-    radc_commander_config_file = "radc_config.yaml"
 
     key_defaults = {
         # "group" has no default as it has to be set explicitely.
@@ -255,11 +254,7 @@ class Measurement():
         print("New id:", self.id)
 
 
-    def get_path(self, key, subkey):
-
-        if (key, subkey) == ("commander", "conf"):
-            if not Path(self.radc_commander_config_file).exists():
-                self.make_radc_commander_config()
+    def get_path(self, key, subkey, create=True):
 
         path_keys = {
             "tek": {
@@ -286,6 +281,11 @@ class Measurement():
             }
         }
 
+        if (key, subkey) == ("commander", "conf") and create is True:
+            path = path_keys[key][subkey]
+            if not path.exists():
+                self.make_radc_commander_config(path)
+
         return path_keys[key][subkey]
 
     def get_command(self, key):
@@ -307,7 +307,10 @@ class Measurement():
         }
         return command_keys[key]
 
-    def make_radc_commander_config(self):
+    def make_radc_commander_config(self, path=None):
+        if path is None:
+            path = self.get_path("commander", "conf", create=False)
+
         d = {
             "paths":{
                 "output_settings":{
@@ -324,11 +327,7 @@ class Measurement():
             }
         }
 
-        #
-        # Todo: make filename absolute?
-        #
-        filename = self.radc_commander_config_file
-        with open(filename, 'w', encoding="utf-8") as file:
+        with open(path, 'w', encoding="utf-8") as file:
             json.dump(d, file)
-        print(f"Created {filename}")
+        print(f"Created {path}")
         print(json.dumps(d, indent=4))
