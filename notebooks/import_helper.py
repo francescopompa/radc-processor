@@ -13,7 +13,7 @@ def pjoin(path):
 path_to_data_parser = pjoin("..")
 sys.path.append(path_to_data_parser)
 from data_parser.configuration import CONFIG
-from data_parser import struct_conversion, data_io, plotting
+from data_parser import struct_conversion, data_io, plotting, dataFrame_helpers
 from measurement_class import Measurement
 
 path_to_meas_interfaces = pjoin("../../nd-measurement-interfaces/")
