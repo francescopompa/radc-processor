@@ -83,10 +83,11 @@ class TargetFiles():
     def __repr__(self):
         return (
             f"{self.__class__.__name__}(root_path={self.root_path},"
-            f"basename={self.basename},"
-            f"fdir={self.fdir},"
-            f"ftype={self.ftype},"
-            f"number{self.number},"
+            f"basename=\"{self.basename}\","
+            # f"ext={self.ext},"
+            f"fdir=\"{self.fdir}\","
+            f"ftype=\"{self.ftype}\","
+            f"number={self.number},"
             f"number_padding_length={self._number_padding_length},"
             f"version={self.version},"
             f"version_padding_length={self._version_padding_length},"
@@ -139,6 +140,7 @@ class TargetFiles():
         def set_name(p):
             nonlocal basename#, parts
             words = p.rstrip('_').split('_')
+            # if words[-1] in [s[0] for s in ftype_strings.values()]
             if words[-1] == spec:
                 words.pop(-1)
             basename = "_".join(words)
@@ -171,8 +173,9 @@ class TargetFiles():
             func = next(gen)
             func(p)
 
-        remaining_parts.remove(ext) # remove extension in case basename had
-                                    # less than n_fragments elements
+        if ext in remaining_parts:
+            remaining_parts.remove(ext) # remove extension in case basename had
+                                        # less than n_fragments elements
         self.basename = ".".join(remaining_parts) + basename + "_" + spec
         self.version = version
         self.number = number
@@ -267,21 +270,15 @@ class TargetFiles():
             ftype=None
             ):
         """Switch to a new basename inside the same directory."""
-        if filename is None:
-            filename = self.basename.rstrip("_"+self.ftype_strings[self.ftype][0])
-        if number is None:
-            number = self.number
-        if version is None:
-            version = self.version
-        if ftype is None:
-            ftype = self.ftype
+
         if reset is True:
             self._reset()
 
         self._init_name(
-            filename, ftype,
-            number,
-            version,
+            filename or self.basename.rstrip("_"+self.ftype_strings[self.ftype][0]),
+            ftype or self.ftype,
+            number or self.number,
+            version or self.version,
             )
 
     def generate(self, **kwargs):
