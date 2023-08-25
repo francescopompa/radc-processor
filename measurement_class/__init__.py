@@ -28,6 +28,7 @@ class Measurement():
     }
 
     _validation_functions = {
+        # "group": lambda x: x.isalpha() and x.isupper() and x.isascii(),   # Remove Check on length to allow Experiment Names as group value.
         "group": lambda x: x.isalpha() and x.isupper() and len(x)==2 and x.isascii(),
         "date": lambda x: x.isdigit() and len(x) == 6 and time.strptime(x, "%y%m%d"),
         "subgroup": lambda x: x.isalpha() and x.islower() and len(x)==1 and x.isascii(),
@@ -71,7 +72,22 @@ class Measurement():
             self._init_with_file(file)
 
         self._validate_keys()
-        print("New id:", self.id, "Suffixes:", self.suffixes)
+        print("New id:", self.id, "Suffixes:", " ".join([f"{i}:{val}" for i, val in enumerate(self.suffixes)]))
+        print(self.__repr__())
+
+    def __str__(self):
+        return self.id
+
+    def __repr__(self):
+        params = ", ".join([
+            f"{name}={val}" for name, val in
+                [("group", self.group), ("date", self.date), ("subgroup", self. subgroup),
+                 ("measurement_number", self.measurement_number), ("attempt_number", self.attempt_number),
+                 ("group_desc", self.group_desc), ("subgroup_desc", self.subgroup_desc),
+                 ("suffices", self.suffixes), ("base_path", self.base_path)
+                 ]
+        ])
+        return f"Measurement({params})"
 
     def _update_property(self, propname, value=None): #, default=None):
         default = (
@@ -327,7 +343,7 @@ class Measurement():
                 +f" target_file=\"{self.get_path('receiver', 'file')}\""
             ),
             "dump_filter": (
-                f"RADC save_filter_settings {self.get_path('receiver', 'filter_dump')}"
+                f"RADC save_filter_settings {self.get_path('commander', 'filter_dump')}"
             )
         }
         return command_keys[key]
