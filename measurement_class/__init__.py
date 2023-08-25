@@ -14,7 +14,7 @@ from pathlib import Path
 #
 class Measurement():
 
-    base_path = "C:/Users/utrfh/WS22-23 (MA) Masterarbeit/Measurements/"
+    _base_path = "C:/Users/utrfh/WS22-23 (MA) Masterarbeit/Measurements/"
 
     key_defaults = {
         # "group" has no default as it has to be set explicitely.
@@ -50,6 +50,7 @@ class Measurement():
         group_desc = None, # ""
         subgroup_desc = None, # ""
         suffixes = None,
+        base_path = None
         ) -> None:
 
         self.group = group
@@ -60,6 +61,9 @@ class Measurement():
         self.group_desc = group_desc
         self.subgroup_desc = subgroup_desc
         self.suffixes = suffixes
+
+        if base_path is None:
+            self.base_path = self._base_path
 
         if id is not None:
             self._init_with_id(id)

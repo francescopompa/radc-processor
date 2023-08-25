@@ -38,7 +38,7 @@ from pyvisa.errors import VisaIOError
 import scipy
 import scipy.signal as scp
 
-meas_base_path = pjoin(Measurement.base_path)
+meas_base_path = pjoin(Measurement._base_path)
 irrelevant_labels = ["Type", "Subsecs", "Channel_number", "Rest", "min", "max", "trigger_count", "Multiplicity", "Trigger_info"]
 
 
