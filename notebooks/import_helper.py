@@ -23,6 +23,10 @@ from KeysightAgilent_3220A.pulse_emulation import pGen_pulse_class
 from KeysightAgilent_3220A import Agilent3220A, pulse_emulation
 from Tektronix_DPO4104B import TektronixDPO4104B
 
+path_to_baseline_analysis = pjoin("../baseline_analysis")
+sys.path.append(path_to_baseline_analysis)
+import baseline_analysis
+
 import pyvisa
 from pyvisa.errors import VisaIOError
 
