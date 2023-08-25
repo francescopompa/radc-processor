@@ -119,7 +119,9 @@ class TargetFiles():
             basename, ftype,
             number,
             version,
-            filename=None):
+            filename=None,
+            make_duplicate=True,
+            ):
 
         if filename is not None and basename == "":
             basename = filename
@@ -177,7 +179,22 @@ class TargetFiles():
         self.ext = ext
         self.ftype = ftype
 
-        self._check_overwrite()
+        self._check_overwrite(make_duplicate)
+
+    def _re_init_name(self,
+            basename=None, ftype=None,
+            number=None,
+            version=None,
+            # filename=None,
+            make_duplicate=False,
+            ):
+
+        self._init_name(basename or self.basename,
+                        ftype or self.ftype,
+                        number or self.number,
+                        version or self.version,
+                        # filename or self.filename,
+                        make_duplicate=make_duplicate)
 
     @property
     def filedir(self):
@@ -276,10 +293,10 @@ class TargetFiles():
         for key, val in kwargs.items():
             if hasattr(new, key):
                setattr(new, key, val) #getattr(self, key))
-        new._check_overwrite(make_duplicate=False)  # Don't append a COPY of new
-        # self._iterations.append(new)              # but append new itself.
+        new._re_init_name(make_duplicate=False)
+        # new._check_overwrite(make_duplicate=False)  # Don't append a COPY of new
+        # # self._iterations.append(new)              # but append new itself.
         return new
-
 
 
 
