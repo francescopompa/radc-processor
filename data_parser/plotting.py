@@ -10,18 +10,18 @@ from .configuration import CONFIG
 
 
 
-def _get_samples_data(entry):
+def _get_samples_data(entry, key="samples"):
 
     if isinstance(entry, pd.core.series.Series):
         # entry is a row OR a column of a DataFrame
-        if "samples" in entry:
+        if key in entry:
             # is a row
-            return [entry["samples"]]
+            return [entry[key]]
         else:
             # is a column
             return entry.to_list()
     elif isinstance(entry, pd.core.frame.DataFrame):
-        return entry["samples"].to_list()
+        return entry[key].to_list()
     elif isinstance(entry, list):
         return [entry]
 
@@ -154,10 +154,10 @@ def plot_rows(rows, xlim=None):
 
 
 
-def plot_samples(entry):
+def plot_samples(entry, key="samples"):
     cmap = plt.colormaps["plasma"]
 
-    data = _get_samples_data(entry)
+    data = _get_samples_data(entry, key=key)
     index = range(len(data[0]))
 
     fig, axs = plt.subplots(2,1)
