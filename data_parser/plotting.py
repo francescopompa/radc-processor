@@ -1,6 +1,8 @@
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.ticker as plticker
+
 from collections.abc import Iterable
 # from configuration import CONFIG
 # import configuration #.CONFIG as CONFIG
@@ -36,8 +38,7 @@ def plot_data(index, data, ax):
 #         return rows.itertuples(), rows.shape[0]
 
 
-def _plot_row(row, ax_flags, ax_samples, color=None, xlim=None):
-
+def _plot_row(row, ax_flags, ax_samples, color=None, xlim=None, minor_locator=10.0):
     x_array = range(len(row.samples))
     flags = [1 if i in row.trigger_IDs else 0 for i in x_array]
 
@@ -58,6 +59,9 @@ def _plot_row(row, ax_flags, ax_samples, color=None, xlim=None):
         row.samples,
         label=row.Event_ID,
         color=color, linewidth=1, alpha=0.7)
+
+    loc = plticker.MultipleLocator(base=minor_locator) # this locator puts ticks at regular intervals
+    ax_samples.xaxis.set_minor_locator(loc)
 
 
 def _plot_dataFrame(df, axs, cmap, xlim=None):
