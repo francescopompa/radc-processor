@@ -179,3 +179,25 @@ def plot_samples(entry, key="samples"):
     # fig.tight_layout()
     # plt.show()
     return fig
+
+
+def plot_events(df: pd.DataFrame, **kwargs):
+    from .dataFrame_helpers import group_by_events
+
+    events = group_by_events(df)
+    for (filename, event_ID), event_DF in events:
+        lowest_peak = min(event_DF["max"])
+        highest_peak = max(event_DF["max"])
+        if highest_peak > 2*lowest_peak:
+            kwargs["ylim"] = kwargs.get("ylim") or (None, lowest_peak*1.5)
+
+        if "PeakFinding" in event_DF.columns:
+            kwargs["xlim"] = None
+            left_bases = []
+            right_bases = []
+            for i, row in event_DF.iterrows():
+                if "left_bases" in row["PeakFinding"][1].keys():
+                    left_bases.append(min(row["PeakFinding"][1]["left_bases"]))
+                    right_bases.append(max(row["PeakFinding"][1]["right_bases"]))
+            kwargs["xlim"] = kwargs.get("xlim") or (min(left_bases), max(right_bases))
+        plot_rows(event_DF, **kwargs)

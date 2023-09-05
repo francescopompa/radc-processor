@@ -20,3 +20,8 @@ def print_df_properties(df: pd.DataFrame) -> None:
             print(f"  - Channel {channel:02}:", sub_df[sub_df["Channel_number"] == channel].shape[0])
 
     return cols, files
+
+
+def group_by_events(df: pd.DataFrame) -> pd.core.groupby.DataFrameGroupBy:
+    return df.groupby(["File", "Event_ID"])
+
