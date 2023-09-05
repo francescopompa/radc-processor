@@ -132,6 +132,13 @@ class Snippet():
 
         self.samples = list(self.__convert_samples(tup[i+1:]))
 
+        if all(key in self.header for key in ["Seconds", "Subsecs"]):
+            self.header["Timestamp_s"] = self.__convert_time(
+                self.header["Seconds"],
+                self.header["Subsecs"],
+            )
+
+
     def __convert_types(self, key, entry):
         if key == "Energy":
             # Reverse the Byte order
@@ -140,6 +147,10 @@ class Snippet():
             )
         else:
             return entry
+
+    def __convert_time(self, seconds, subsecs, freq=62500000):
+        return seconds+subsecs/freq # divide by the clock frequency
+
 
     def __convert_samples(self, tup):
         for ID, sample in enumerate(tup):

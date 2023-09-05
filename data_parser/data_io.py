@@ -3,14 +3,22 @@ from .struct_conversion import DataFile
 
 
 
-def datafile_to_df(file):
+def datafile_to_df(file: DataFile) -> pd.DataFrame:
+    """
+    Read data from all Snippets in DataFile instance and return a pandas
+    DataFrame.
+    pandas-specific data-manipulations happen here.
+    """
 
-    return pd.DataFrame.from_records(
+    df = pd.DataFrame.from_records(
         file.get_records(),
         index=None,
         exclude=None,
         columns=None,
     )
+    df["Datetime"] = pd.Timestamp(df["Timestamp_s"]),
+
+    return df
 
 
 def load_files_to_df(files):
