@@ -38,16 +38,15 @@ def plot_data(index, data, ax):
 #         return rows.itertuples(), rows.shape[0]
 
 
-def _plot_row(row, ax_flags, ax_samples, color=None, xlim=None, minor_locator=10.0):
+def _plot_row(row, ax_flags, ax_samples, **kwargs):
+    #
+    # Todo: plot points above 8192 in other color/mark them
+    #
+    color = kwargs.get("color")
+    minor_locator = kwargs.get("minor_locator") or 10.0
+
     x_array = range(len(row.samples))
     flags = [1 if i in row.trigger_IDs else 0 for i in x_array]
-
-    if isinstance(xlim, Iterable):
-        ax_flags.set_xlim(*xlim)
-        ax_samples.set_xlim(*xlim)
-    elif isinstance(xlim, (int, float)) and not isinstance(xlim, bool):
-        ax_flags.set_xlim(xlim)
-        ax_samples.set_xlim(xlim)
 
     ax_flags.plot(
         x_array,
@@ -64,27 +63,30 @@ def _plot_row(row, ax_flags, ax_samples, color=None, xlim=None, minor_locator=10
     ax_samples.xaxis.set_minor_locator(loc)
 
 
-def _plot_dataFrame(df, axs, cmap, xlim=None):
+def _plot_dataFrame(df, ax_flags, ax_samples, cmap, **kwargs):
     # iterrows, nrows = _get_rows(rows)
     iterrows = df.reset_index().itertuples()
     nrows = df.shape[0]
 
+    if nrows == 0:
+        return
+
     for row in iterrows:
         color = cmap(row.Index/nrows)
-        _plot_row(row, axs[0], axs[1], color, xlim)
+        _plot_row(row, ax_flags, ax_samples, color=color, **kwargs)
 
     # srange = (0, max(df["samples"].map(len)))
     srange = (min(df['Event_ID']), max(df['Event_ID']))
 
     suptitle = f"Plots of events {srange[0]}-{srange[1]}"
-    title = ""
+    title = kwargs.get("title") or ""
 
     return nrows, srange, title, suptitle
 
 
-def _plot_series(series, axs, cmap, xlim=None):
+def _plot_series(series, ax_flags, ax_samples, cmap, **kwargs):
 
-    _plot_row(series, axs[0], axs[1], cmap(0), xlim)
+    _plot_row(series, ax_flags, ax_samples, color=cmap(0), **kwargs)
 
     eid = series.Event_ID
     suptitle = f"Event {eid}"
@@ -102,19 +104,37 @@ def _plot_series(series, axs, cmap, xlim=None):
 # def plot_compare(*args, xlim=None):
 
 
-def plot_rows(rows, xlim=None):
+def plot_rows(rows, **kwargs):
 
-    fig, axs = plt.subplots(
+    fig, (ax_flags, ax_samples) = plt.subplots(
         2,1,
         gridspec_kw={'height_ratios': [1, 3]},
         figsize=(7.2, 4.8)
         )
     cmap = plt.colormaps["copper"]  # See also: viridis, brg, winter, copper, plasma
 
+    xlim = kwargs.get("xlim")
+    ylim = kwargs.get("ylim")
+    if xlim: ax_flags.set_xlim(xlim)
+    if xlim: ax_samples.set_xlim(xlim)
+    if ylim: ax_samples.set_ylim(ylim)
+    # if isinstance(xlim, Iterable):
+    #     ax_flags.set_xlim(*xlim)
+    #     ax_samples.set_xlim(*xlim)
+    # elif isinstance(xlim, (int, float)) and not isinstance(xlim, bool):
+    #     ax_flags.set_xlim(xlim)
+    #     ax_samples.set_xlim(xlim)
+
+    # if isinstance(ylim, Iterable):
+    #     ax_samples.set_ylim(*ylim)
+    # elif isinstance(ylim, (int, float)) and not isinstance(ylim, bool):
+    #     ax_samples.set_ylim(ylim)
+
+
     if isinstance(rows, pd.core.frame.DataFrame):
-        nrows, srange, title, suptitle = _plot_dataFrame(rows, axs, cmap, xlim)
+        nrows, srange, title, suptitle = _plot_dataFrame(rows, ax_flags, ax_samples, cmap, **kwargs)
     elif isinstance(rows, pd.core.series.Series):
-        nrows, srange, title, suptitle = _plot_series(rows, axs, cmap, xlim)
+        nrows, srange, title, suptitle = _plot_series(rows, ax_flags, ax_samples, cmap, **kwargs)
     # List of lists
     # List of samples
     else:
@@ -129,24 +149,24 @@ def plot_rows(rows, xlim=None):
 
     if nrows > 10:
         # Large number of plots -> Show colormap
-        plt.colorbar(mappable=mappable, ax = axs)
+        plt.colorbar(mappable=mappable, ax = (ax_flags, ax_samples))
     else:
         fig.legend(loc="center right")
 
 
     # Flag plot
-    axs[0].margins(x=0, y=0)
-    axs[0].set_ylabel("Trigger Flags")
+    ax_flags.margins(x=0, y=0)
+    ax_flags.set_ylabel("Trigger Flags")
 
     # Samples plot
-    axs[1].margins(x=0)
-    axs[1].set_xlabel("Sample IDs")
-    axs[1].set_ylabel("ADC Values")
+    ax_samples.margins(x=0)
+    ax_samples.set_xlabel("Sample IDs")
+    ax_samples.set_ylabel("ADC Values")
 
     # Title
     fig.suptitle(suptitle)
     if title != "":
-        axs[0].set_title(
+        ax_flags.set_title(
             title,
             fontsize="small",
             y=1.05,
