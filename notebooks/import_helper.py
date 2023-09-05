@@ -27,6 +27,10 @@ path_to_baseline_analysis = pjoin("../baseline_analysis")
 sys.path.append(path_to_baseline_analysis)
 import baseline_analysis
 
+path_to_pulse_analysis = pjoin("../pulse_analysis")
+sys.path.append(path_to_pulse_analysis)
+import pulse_analysis
+
 import pyvisa
 from pyvisa.errors import VisaIOError
 
