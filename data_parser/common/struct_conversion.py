@@ -1,26 +1,26 @@
 import struct
 import collections
 
-from .configuration import CONFIG
+from ..configuration import CONFIG
 
-field_struct_mapping = collections.OrderedDict({
-    # UDP Header
-    "UDP_Type": "c",    # 1 Byte char
-    "UDP_Number": "B",  # 1 Byte unsigned char
-    "UDP_Rest": "2s",   # 2 Bytes char
+# field_struct_mapping = collections.OrderedDict({
+#     # UDP Header
+#     "UDP_Type": "c",    # 1 Byte char
+#     "UDP_Number": "B",  # 1 Byte unsigned char
+#     "UDP_Rest": "2s",   # 2 Bytes char
 
-    # RADC Header for each snippet
-    "Snippet_Channel_number": "B",  # 1 Byte unsigned char integer
-    "Snippet_Trigger_info": "B",    # 1 Byte unsigned char integer
-    "Snippet_Event_ID": "H",    # 2 Bytes unsigned short integer
-    "Snippet_Energy": "3s",     # 3 Bytes arbitrary char
-    "Snippet_Multiplicity": "B",  # 1 Byte unsigned char integer
-    "Snippet_Subsecs": "I",     # 4 Bytes unsigned integer
-    "Snippet_Seconds": "I",     # 4 Bytes unsigned integer
+#     # RADC Header for each snippet
+#     "Snippet_Channel_number": "B",  # 1 Byte unsigned char integer
+#     "Snippet_Trigger_info": "B",    # 1 Byte unsigned char integer
+#     "Snippet_Event_ID": "H",    # 2 Bytes unsigned short integer
+#     "Snippet_Energy": "3s",     # 3 Bytes arbitrary char
+#     "Snippet_Multiplicity": "B",  # 1 Byte unsigned char integer
+#     "Snippet_Subsecs": "I",     # 4 Bytes unsigned integer
+#     "Snippet_Seconds": "I",     # 4 Bytes unsigned integer
 
-    # RADC single sample
-    "Sample": "h",      # 2 Bytes short integer
-})
+#     # RADC single sample
+#     "Sample": "h",      # 2 Bytes short integer
+# })
 
 endianness_struct_mapping = {
     # SOURCE: https://docs.python.org/3/library/struct.html#format-strings
@@ -32,7 +32,7 @@ endianness_struct_mapping = {
 }
 
 
-class DataFile():
+class _DataFile():
 
     def __init__(self,
                  path,
@@ -58,11 +58,11 @@ class DataFile():
 
         fsm = CONFIG["struct_fields_mapping"]
         package_header = ''.join([
-            fsm["UDP_header"][key] for key in fsm["UDP_header"].keys()
+            value for value in fsm["UDP_header"].values()
         ])
 
         snippet_header = ''.join([
-            fsm["Snippet_header"][key] for key in fsm["Snippet_header"].keys()
+            value for value in fsm["Snippet_header"].values()
         ])
 
         samples = self.tracelength * fsm["Sample"]
@@ -89,10 +89,10 @@ class DataFile():
 
     def __convert_struct_to_snippet(self, structs):
         if not isinstance(structs, collections.abc.Iterable):
-            return iter(Snippet(structs))
+            return iter(_Snippet(structs))
 
         for istruct in structs:
-            yield Snippet(istruct)
+            yield _Snippet(istruct)
 
     def get_records(self):
         if len(self.snippets) == 0:
@@ -102,41 +102,54 @@ class DataFile():
             yield snippet.get_record()
 
 
-class Snippet():
+class _Snippet():
 
-    def __init__(self, tup) -> None:
-        self.udp_header = {}
-        self.header = {}
-        self.samples = []
-        self.trigger_IDs = []
-
-        self.stats = {
+    _kwargs = []
+    _contents = "samples"
+    _mapping_dict = CONFIG["struct_fields_mapping"]
+    _stats_default = {
             "min": 0,
             "max": 0,
             "trigger_count": 0,
         }
 
-        self.__init_with_tuple(tup)
+    def __init__(self, tup, **kwargs) -> None:
+        self.udp_header = {}
+        self.header = {}
+        # self.samples = []
+        self.trigger_IDs = []
+
+        self.stats = self._stats_default.copy()
+
+        for key, val in kwargs.items():
+            if key in self._kwargs:
+                setattr(self, key, val)
+
+        index = self.__init_header_with_tuple(tup)
+        self.__init_contents_with_tuple(tup, index)
         self.__calculate_stats()
 
-    def __init_with_tuple(self, tup):
+    def __init_header_with_tuple(self, tup):
         # if ["UDP_header"] is empty, i is not declared. Set to -1 as backup
         i = -1
 
-        for i, key in enumerate(CONFIG["struct_fields_mapping"]["UDP_header"], 0):
+        for i, key in enumerate(self._mapping_dict["UDP_header"], 0):
             self.udp_header[key] = tup[i]
 
         # Use previous counter (or -1) as offset:
-        for i, key in enumerate(CONFIG["struct_fields_mapping"]["Snippet_header"], i+1):
+        for i, key in enumerate(self._mapping_dict["Snippet_header"], i+1):
             self.header[key] = self.__convert_types(key, tup[i])
-
-        self.samples = list(self.__convert_samples(tup[i+1:]))
 
         if all(key in self.header for key in ["Seconds", "Subsecs"]):
             self.header["Timestamp_s"] = self.__convert_time(
                 self.header["Seconds"],
                 self.header["Subsecs"],
             )
+
+        return i+1
+
+    def __init_contents_with_tuple(self, tup, index):
+        setattr(self, self._contents, list(self.__convert_samples(tup[index:])))
 
 
     def __convert_types(self, key, entry):
