@@ -1,0 +1,40 @@
+
+# UDP Structure
+udp_package_structure:
+  udp_package_size_bytes: 1420 # 1480
+  udp_header_size_bytes: 4
+  event_header_size_bytes: 14
+  snippet_header_size_bytes: 8
+  sample_size_bytes: 2
+
+  default_trace_length: 64
+
+
+# Struct field formatting description
+struct_fields_mapping:
+  # UDP Package header
+  UDP_header:
+    Type: "c"    # 1 Byte char
+    Number: "B"  # 1 Byte unsigned char
+    Rest: "2s"   # 2 Bytes char
+
+  # RADC Header for each event
+  Event_header:
+    Trigger_type: "c" # 1 Byte char
+    Frame_number: "B" # 1 Byte unsigned integer/char
+    Event_ID: "3s"  # 3 Bytes unsigned integer
+    Seconds: "I"  # 4 Bytes unsigned integer
+    Subsecs: "I"  # 4 Bytes unsigned integer
+    Snippet_count: "B"  # 1 Byte unsigned integer
+
+  # RADC Header for each snippet
+  Snippet_header:
+    Channel_number: "B"  # 1 Byte unsigned char integer
+    Energy: "3s"     # 3 Bytes arbitrary char
+    Timedelta_samples: "h"  # 2 Byte signed int ("short")
+    Snippet_number: "B" # 1 Byte unsigned int
+    Info_flags: "c" # 1 Byte bits
+
+
+  # RADC single sample
+  Sample: "h"   # 2 Bytes short integer

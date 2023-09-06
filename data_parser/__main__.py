@@ -8,13 +8,14 @@ generate and handle plots out of the data sets.
 Usage: Tbd.
 """
 
-from configuration import CONFIG
-import struct_conversion
-import data_io
-import plotting
+# from .configuration import CONFIG
+import .struct_conversion as struct_conversion
+import .data_io
+import .plotting
 
 #
 # Todo:
+# - [ ] Call init() from __init__
 # - [ ] Define folders to load
 # - [ ] Define files to load
 # - [ ] Convert to DataFrame
