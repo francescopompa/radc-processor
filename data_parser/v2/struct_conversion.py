@@ -14,6 +14,8 @@ sizes = CONFIG["udp_package_structure"]
 
 class DataFile(_DataFile):
 
+    _contents = "events"
+
     def __calculate_format_string(self, endianness=None):
         if endianness is None:
             endianness = self.__endianness
@@ -86,7 +88,12 @@ class DataFile(_DataFile):
     def unpack(self):
         self.events = list(self._unpack_events())
 
-    # def get_records()
+    def get_records():
+        if len(self.events) == 0:
+            self.unpack()
+
+        for event in self.events:
+            yield event.get_record()
 
 
 class Event(_Snippet):
@@ -103,7 +110,6 @@ class Event(_Snippet):
         ),
         "snippet_space": 0
         }
-    # _keys = CONFIG["struct_fields_mapping"]["Event_header"].keys()
 
     def __init_contents_with_tuple(self, tup, index):
         setattr(self, self._contents, [])
@@ -137,6 +143,16 @@ class Event(_Snippet):
             )
         )
 
+    def get_record(self):
+        return {
+            **self.udp_header,
+            **self.header,
+            **self.stats,
+            "snippets": [
+                snippet.get_record() for snippet in self.snippets
+            ]
+        }
+
 
 
 
@@ -147,3 +163,4 @@ class Snippet(_Snippet):
     # Timedelta_samples: "h"  # 2 Byte signed int ("short")
     # Snippet_number: "B" # 1 Byte unsigned int
     # Info_flags: "c" # 1 Byte bits
+    pass

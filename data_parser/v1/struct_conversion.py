@@ -15,4 +15,12 @@ class DataFile(_DataFile):
     pass
 
 class Snippet(_Snippet):
-    pass
+
+    def __convert_types(self, key, entry):
+        if key == "Energy":
+            # Reverse the Byte order
+            return int.from_bytes(
+                bytes([entry[2], entry[1], entry[0]])
+            )
+        else:
+            return entry

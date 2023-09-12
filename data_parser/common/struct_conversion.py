@@ -34,6 +34,8 @@ endianness_struct_mapping = {
 
 class _DataFile():
 
+    _contents = "snippets"
+
     def __init__(self,
                  path,
                  tracelength=CONFIG["udp_package_structure"]["default_trace_length"],
@@ -41,7 +43,8 @@ class _DataFile():
                  ) -> None:
         self.path = path
         self.tracelength = tracelength
-        self.snippets = []  # iter(())
+        setattr(self, self._contents, [])
+        # self.snippets = []  # iter(())
         self.snippet_size_bytes = None
 
         self.__endianness = endianness
@@ -153,13 +156,16 @@ class _Snippet():
 
 
     def __convert_types(self, key, entry):
-        if key == "Energy":
-            # Reverse the Byte order
-            return int.from_bytes(
-                bytes([entry[2], entry[1], entry[0]])
-            )
-        else:
-            return entry
+        match key:
+            case "Type":
+                return entry.decode("ascii")
+            case "Energy":
+                # Reverse the Byte order
+                return int.from_bytes(
+                    bytes([entry[2], entry[1], entry[0]])
+                )
+            case _:
+                return entry
 
     def __convert_time(self, seconds, subsecs, freq=62500000):
         return seconds+subsecs/freq # divide by the clock frequency
