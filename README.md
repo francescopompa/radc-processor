@@ -18,16 +18,23 @@ Various tools are also included.
 Python >= 3.10 is required.
 The project itself was developed in Python 3.11.
 
-The required python modules and their version limitations are listed in `requirements.txt`. You can install them with
+The required python modules and their version limitations are listed in `requirements.txt`. You can generate the list yourself using
+```bash
+# pip install pigar
+cd radc-processor
+pigar generate --with-referenced-comments -c ">=" --dry-run .
 ```
-python -m pip install -r requirements.txt
-```
+for example.
 
 ### Network and Ports
 The requirements from *RADC Commander* apply also here.
 
 ## Installation
-Once the project has been cloned locally and the dependencies are fulfilled or installed, the packages can be used as-is (⚠️ Notice caveats in ###Configuration).
+Once the project has been cloned locally this package library can be installed using:
+```bash
+cd radc-processor
+python -m pip install -e .
+```
 
 
 ## `udp_receiver`

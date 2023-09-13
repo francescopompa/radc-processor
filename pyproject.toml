@@ -1,0 +1,54 @@
+[project]
+name = "radc-processor"
+version = "0.9.0"
+authors = [
+    { name="Ulrich Pirling", email="ulrich.pirling@student.kit.edu" },
+]
+description = "A collection of python packages to capture and analyse Data taken with the RADC-40"
+readme = "README.md"
+requires-python = ">=3.10.11"
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Programming Language :: Python :: 3.10",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+    "License :: Free To Use But Restricted",
+]
+keywords = [
+    "detector", "neutron", "LNGS", "Gran Sasso", "RADC", "FPGA", "DAQ",
+    "IAP", "KIT",
+    "pulse", "analysis", "datarate", "baseline"
+]
+
+dynamic = ["dependencies"]
+
+[tool.setuptools.package-dir]
+baseline_analysis = "baseline_analysis"
+data_parser = "data_parser"
+measurement_class = "measurement_class"
+pulse_analysis = "pulse_analysis"
+udp_receiver = "udp_receiver"
+import_helper = "notebooks"
+
+[options.packages_data]
+"*" = ["pyproject.toml"]
+"data_parser" = ["*.yaml"]
+
+[tools.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools-ext]
+requires-external = [
+    "radc_nd_reg",
+    "radc_commander"
+]
+
+[project.urls]
+homepage = "https://git.scc.kit.edu/lngs-neutron-detector-project/radc-processor"
+# documentation = "documentation.html"
+repository = "https://git.scc.kit.edu/lngs-neutron-detector-project/radc-processor"
+
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-ext"]
+# build-backend = "setuptools.build_meta"
+build-backend = "setuptools_ext"
