@@ -11,8 +11,11 @@ def pjoin(path):
         path
     )
 
+<<<<<<< 34b68106b5f42cc0f95c308fa2b87f9123c5baf1
 path_to_data_parser = pjoin("..")
 sys.path.append(path_to_data_parser)
+=======
+>>>>>>> 1fd1808ed53c1d0c0525d6a706be754fa4734642
 import data_parser
 data_parser.init("v1")
 from data_parser import data_io, dataFrame_helpers, plotting, struct_conversion
@@ -20,19 +23,13 @@ from data_parser.configuration import CONFIG
 
 from measurement_class import Measurement
 
-path_to_meas_interfaces = pjoin("../../nd-measurement-interfaces/")
-sys.path.append(path_to_meas_interfaces)
 from KeysightAgilent_3220A.pulse_emulation import pGen_pulse_class
 
 from KeysightAgilent_3220A import Agilent3220A, pulse_emulation
 from Tektronix_DPO4104B import TektronixDPO4104B
 
-path_to_baseline_analysis = pjoin("../baseline_analysis")
-sys.path.append(path_to_baseline_analysis)
 import baseline_analysis
 
-path_to_pulse_analysis = pjoin("../pulse_analysis")
-sys.path.append(path_to_pulse_analysis)
 import pulse_analysis
 
 import pyvisa

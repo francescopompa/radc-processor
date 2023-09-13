@@ -3,3 +3,4 @@
 **/*bin*
 .vscode/**
 **/*.backup
+radc_processor.egg-info
