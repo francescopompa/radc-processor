@@ -2,12 +2,22 @@
 import os
 import time
 import yaml
+from pathlib import Path
+
+from . import VERSION, init
+if VERSION is None:
+    init()
+from . import VERSION_STR
 
 path_map = {
-    "radc-processor": "data_parser/configuration.yaml",
-    "notebooks": "../data_parser/configuration.yaml",
-    "data_parser": "configuration.yaml",
-    "else": r"C:\Users\utrfh\WS22-23 (MA) Masterarbeit\Codes\radc-processor\data_parser\configuration.yaml"
+    "radc-processor": f"data_parser/{VERSION_STR}/{VERSION_STR}.configuration.yaml",
+    "notebooks": f"../data_parser/{VERSION_STR}/{VERSION_STR}.configuration.yaml",
+    "data_parser": f"{VERSION_STR}.configuration.yaml",
+    "else": Path(
+        r"C:\Users\utrfh\WS22-23 (MA) Masterarbeit\Codes\radc-processor\data_parser",
+        VERSION_STR,
+        f"{VERSION_STR}.configuration.yaml"
+    )
 }
 try:
     config_path = path_map[os.getcwd().split('\\')[-1].split('/')[-1]]

@@ -4,6 +4,7 @@ import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
 def pjoin(path):
     return os.path.join(
         os.path.dirname(__file__),
@@ -14,7 +15,7 @@ import data_parser
 data_parser.init("v1")
 from data_parser import data_io, dataFrame_helpers, plotting, struct_conversion
 from data_parser.configuration import CONFIG
-from data_parser import struct_conversion, data_io, plotting, dataFrame_helpers
+
 from measurement_class import Measurement
 
 from KeysightAgilent_3220A.pulse_emulation import pGen_pulse_class
