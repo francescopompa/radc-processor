@@ -89,13 +89,16 @@ def _plot_series(series, ax_flags, ax_samples, cmap, **kwargs):
     _plot_row(series, ax_flags, ax_samples, color=cmap(0), **kwargs)
 
     eid = series.Event_ID
-    suptitle = f"Event {eid}"
-    udp_str = f"UDP-Infos: Type {series['Type']}\n      # {series['Number']}\n      Rest {series['Rest']}"
-    eve_str = f"Event-Infos: Energy {series['Energy']}\n        Multiplicity {series['Multiplicity']}\n       Time {series['Seconds']}.{series['Subsecs']}"
-    sta_str = f"Trigger count: {series['trigger_count']}\n      Min {series['min']}\n       Max {series['max']}"
-    title = ', '.join(
-        f"{key}: {series[key]}" for key in series.keys()
-        if key not in ["trigger_IDs", "samples", "Event_ID"]
+    suptitle = kwargs.get("suptitle") or f"Event {eid}"
+    udp_str = f"UDP-Infos: Type {series['Type']}, # {series['Number']}, Rest {series['Rest']}"
+    eve_str = f"Event-Infos: Energy {series['Energy']}, Multiplicity {series['Multiplicity']}, Time {series['Seconds']}.{series['Subsecs']}"
+    sta_str = f"Trigger count: {series['trigger_count']}, Min {series['min']}, Max {series['max']}"
+    # title = kwargs.get("title") or ', '.join(
+    #     f"{key}: {series[key]}" for key in series.keys()
+    #     if key not in ["trigger_IDs", "samples", "Event_ID"]
+    #     )
+    title = kwargs.get("title") or ' '.join(
+        [udp_str, eve_str, sta_str]
         )
 
     return 1, (eid,eid), title, suptitle
@@ -134,6 +137,7 @@ def plot_rows(rows, **kwargs):
     if isinstance(rows, pd.core.frame.DataFrame):
         nrows, srange, title, suptitle = _plot_dataFrame(rows, ax_flags, ax_samples, cmap, **kwargs)
     elif isinstance(rows, pd.core.series.Series):
+        # It's a single row
         nrows, srange, title, suptitle = _plot_series(rows, ax_flags, ax_samples, cmap, **kwargs)
     # List of lists
     # List of samples

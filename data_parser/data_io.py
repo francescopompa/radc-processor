@@ -1,4 +1,5 @@
 import pandas as pd
+# from . import struct_conversion
 from .struct_conversion import DataFile
 
 
@@ -21,7 +22,7 @@ def datafile_to_df(file: DataFile) -> pd.DataFrame:
     return df
 
 
-def load_files_to_df(files):
+def load_files_to_df(files: list) -> pd.DataFrame:
     for file in files:
         if isinstance(file, DataFile):
             yield datafile_to_df(file)
@@ -29,7 +30,7 @@ def load_files_to_df(files):
             yield datafile_to_df(DataFile(file))
 
 
-def make_total_dataFrame(files):
+def make_total_dataFrame(files: list|str) -> pd.DataFrame:
 
     if not isinstance(files, list):
         files = [files]

@@ -43,4 +43,4 @@ def validate_config():
 
 validate_config()
 
-print("Loaded CONFIG", CONFIG)
+# print("Loaded CONFIG", CONFIG)
