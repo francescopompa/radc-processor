@@ -21,10 +21,16 @@ RADC_PKG_HEADER_SIZE=4
 
 class Receiver():
 
+    _base_path = (
+        "C:/Users/utrfh/WS22-23 (MA) Masterarbeit/RADC_testData/"
+            if os.getlogin() == "utrfh" else
+        "/data/RADC_testData"
+            )
+
     def __init__(self,
         host="192.168.1.200",
         port=4000,
-        target_root="C:/Users/utrfh/WS22-23 (MA) Masterarbeit/RADC_testData",
+        target_root=_base_path,
         target_dir=time.strftime("%Y-%m-%d"),
         target_file=f"{time.strftime('%Y-%m-%d_%H-%M-%S')}_readout.bin",
         chunk_max_events=None, chunk_max_volume=None, chunk_max_time=None,

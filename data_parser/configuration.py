@@ -9,21 +9,12 @@ if VERSION is None:
     init()
 from . import VERSION_STR
 
-path_map = {
-    "radc-processor": f"data_parser/{VERSION_STR}/{VERSION_STR}.configuration.yaml",
-    "notebooks": f"../data_parser/{VERSION_STR}/{VERSION_STR}.configuration.yaml",
-    "data_parser": f"{VERSION_STR}.configuration.yaml",
-    "else": Path(
-        r"C:\Users\utrfh\WS22-23 (MA) Masterarbeit\Codes\radc-processor\data_parser",
-        VERSION_STR,
-        f"{VERSION_STR}.configuration.yaml"
-    )
-}
-try:
-    config_path = path_map[os.getcwd().split('\\')[-1].split('/')[-1]]
-except KeyError:
-    config_path = path_map["else"]
-
+config_path = Path(
+    __file__,
+    "..",
+    VERSION_STR,
+    f"{VERSION_STR}.configuration.yaml"
+    ).resolve()
 
 with open(config_path, "r", encoding="utf-8") as file:
     CONFIG = yaml.safe_load(file)
@@ -50,6 +41,7 @@ def _loop_through_dict(config, dpath=None):
 def validate_config():
     # global CONFIG
     _loop_through_dict(CONFIG)
+    CONFIG["VERSION"] = VERSION
 
 validate_config()
 

@@ -1,7 +1,7 @@
 """
 Class representing a single - or a suite of - measurements.
 """
-# import os
+import os
 import time
 import pickle
 import json
@@ -14,7 +14,11 @@ from pathlib import Path
 #
 class Measurement():
 
-    _base_path = "C:/Users/utrfh/WS22-23 (MA) Masterarbeit/Measurements/"
+    _base_path = (
+        "C:/Users/utrfh/WS22-23 (MA) Masterarbeit/Measurements/"
+            if os.getlogin() == "utrfh" else
+        "/home/mnd/Measurements"
+            )
 
     key_defaults = {
         # "group" has no default as it has to be set explicitely.
