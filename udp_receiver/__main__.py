@@ -21,18 +21,20 @@ If an argument is a single number N, it is interpreted as duration=N.
 
 A command must end with a linebreak character (\\n).
 The receiver can be commanded using the following commands:
-    start [N]:  Receiver.start(duration=N)
+    start [duration]:   Receiver.start(duration=None)
                 Starts readout for the receiver, indefinitely.
-                N is optional and limits the readout time to N seconds.
+                If duration is given, it limits the readout time to
+                `duration` seconds.
     stop:       Receiver.stop()
                 Stops readout for the receiver.
     catch:      Receiver.catch_board()
                 Sends a dummy write to the board to set it's target port.
-    switch file:Receiver.switch_file(file)
+    switch file:    Receiver.switch_file(file)
                 Closes the current file and starts writing to file instead.
                 file must be provided!
-    trigger:    Release a software-trigger signal to receive the current
-                waveforms without filtering.
+    trigger [number]:   Receiver.trigger(number=1)
+                Release `number` software-trigger signals to receive the
+                current (noise) waveforms without pulse detection.
     help:       Print this help message.
     exit:       Closes receiver and exits Programm.
 """)
@@ -80,10 +82,10 @@ def parse_arguments(args):
     print("Parsed args:", argsdict)
     return argsdict
 
-def main(runtime=None):
+def main(argsdict=None):
     print_usage()
     # print(sys.argv)
-    argsdict = parse_arguments(sys.argv[1:])    # First argument is the script name
+    argsdict = argsdict or parse_arguments(sys.argv[1:])    # First argument is the script name
     with Receiver(**argsdict) as rec:
         # print(rec.__dict__)
         while True:
