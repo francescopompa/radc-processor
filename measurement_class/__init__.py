@@ -86,7 +86,7 @@ class Measurement():
         params = ", ".join([
             # f"{name}=\"{val}\"" for name, val in
             # f"{name}={val if isinstance(val, int) else '\"'+val+'\"'}" for name, val in
-            f"{name}={val if isinstance(val, list) else '\"'+val+'\"'}" for name, val in
+            f"""{name}={val if isinstance(val, list) else '"'+val+'"'}""" for name, val in
                 [("group", self.group), ("date", self.date), ("subgroup", self. subgroup),
                  ("measurement_number", self.measurement_number), ("attempt_number", self.attempt_number),
                  ("group_desc", self.group_desc), ("subgroup_desc", self.subgroup_desc),
