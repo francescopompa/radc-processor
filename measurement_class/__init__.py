@@ -17,7 +17,7 @@ class Measurement():
     _base_path = (
         "C:/Users/utrfh/WS22-23 (MA) Masterarbeit/Measurements/"
             if os.getlogin() == "utrfh" else
-        "/home/mnd/Measurements"
+        "/data/umeasurements"
             )
 
     key_defaults = {

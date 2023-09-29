@@ -49,6 +49,6 @@ homepage = "https://git.scc.kit.edu/lngs-neutron-detector-project/radc-processor
 repository = "https://git.scc.kit.edu/lngs-neutron-detector-project/radc-processor"
 
 [build-system]
-requires = ["setuptools>=61.0", "setuptools-ext"]
+requires = ["setuptools>=64.0", "setuptools-ext"]
 # build-backend = "setuptools.build_meta"
 build-backend = "setuptools_ext"
