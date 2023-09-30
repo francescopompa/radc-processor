@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>radc-processor.scripts.dataRateCalculator API documentation</title>
+<meta name="description" content="Calculates data rates and volumes necessary for various scenarios" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>radc-processor.scripts.dataRateCalculator</code></h1>
+</header>
+<section id="section-intro">
+<p>Calculates data rates and volumes necessary for various scenarios</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;Calculates data rates and volumes necessary for various scenarios
+&#34;&#34;&#34;
+import bitmath
+import math
+
+variables = {
+    &#34;driveSpeeds&#34;: {
+        # per Second
+        &#34;HDD&#34;: {
+            &#34;readMin&#34;: bitmath.MiB(180),
+            &#34;readMax&#34;: bitmath.MiB(250),
+            &#34;writeSmallF&#34;: bitmath.MiB(500),
+            &#34;writeMin&#34;: bitmath.MiB(80),
+            &#34;writeMax&#34;: bitmath.MiB(160),
+            &#34;4size&#34;: bitmath.TB(4).to_TiB(),
+            &#34;8size&#34;: bitmath.TB(8).to_TiB(),
+        },
+        &#34;SSD&#34;: {
+            &#34;readMin&#34;: bitmath.MiB(2500),
+            &#34;readMax&#34;: bitmath.MiB(3500),
+            &#34;writeMin&#34;: bitmath.MiB(1500),
+            &#34;writeMin&#34;: bitmath.MiB(3000),
+            &#34;1size&#34;: bitmath.TB(1).to_TiB(),
+            &#34;2size&#34;: bitmath.TB(2).to_TiB(),
+        },
+        &#34;USB32G1x1&#34;: {
+            &#34;callName&#34;: &#34;USB3.1 Gen1 (USB3.0)&#34;,
+            &#34;min&#34;: bitmath.Gib(1),
+            &#34;max&#34;: bitmath.Gib(5),
+            &#34;dual&#34;: False,
+        },
+        &#34;USB32G2x1&#34;: {
+            &#34;callName&#34;: &#34;USB3.1 Gen2 (USB3.1)&#34;,
+            &#34;min&#34;: bitmath.Gib(10),
+            &#34;max&#34;: bitmath.Gib(10),
+            &#34;dual&#34;: False,
+        },
+        &#34;USB32G1x2&#34;: {
+            &#34;callName&#34;: &#34;USB3.2 Gen1x2&#34;,
+            &#34;min&#34;: bitmath.Gib(10),
+            &#34;max&#34;: bitmath.Gib(10),
+            &#34;dual&#34;: True,
+        },
+        &#34;USB32G2x2&#34;: {
+            &#34;callName&#34;: &#34;USB3.2 Gen2x2&#34;,
+            &#34;min&#34;: bitmath.Gib(20),
+            &#34;max&#34;: bitmath.Gib(20),
+            &#34;dual&#34;: True,
+        },
+        &#34;USB4&#34;: {
+            &#34;min&#34;: bitmath.Gib(10),
+            &#34;max&#34;: bitmath.Gib(40),
+            &#34;dual&#34;: False,
+        },
+        &#34;Thunderbolt1&#34;: {
+            &#34;callName&#34;: &#34;Thunderbolt 1&#34;,
+            &#34;min&#34;: bitmath.Gib(10),
+            &#34;max&#34;: bitmath.Gib(20),
+            &#34;dual&#34;: False,
+        },
+    },
+    &#34;channels&#34;: {
+        &#34;all&#34;: 36
+    },
+    &#34;samples&#34;: {
+        &#34;time&#34;: 0.016, # us (16ns)
+    },
+    &#34;packages&#34;: {
+        &#34;size&#34;: {
+            &#34;max&#34;: bitmath.Byte(1420),
+        },
+        &#34;headerSize&#34;: {
+            &#34;max&#34;: bitmath.Byte(20),
+        },
+        &#34;samplesMax&#34;: {
+            # each two Bytes long
+            &#34;max&#34;: 700,
+        },
+    },
+    &#34;bandwidth&#34;: {
+        # &#34;bits_s&#34;: 1e9, # 1Gb/s
+        # &#34;bytes_s&#34;: 1e9 / 8,
+        # Efficiency at MTU=1500B is 96%
+        &#34;max&#34;: bitmath.Gib(1) * 0.96,
+        &#34;extreme&#34;: bitmath.Gib(10) * 0.96,
+    },
+    &#34;neutronRate&#34;: {
+        # Rate of _registered_ neutron events
+        &#34;estimate&#34;: 2.4e-4, # 0.001,
+        &#34;highEstimate&#34;: 10, # Hz
+        &#34;lowCalibration&#34;: 100,
+        &#34;highCalibration&#34;: 200,
+    },
+    &#34;gammaRate&#34;: {
+        &#34;highCalibration&#34;: 1000,
+    },
+    &#34;lookTime&#34;: {
+        # us
+        &#34;gammaShort&#34;: 1,
+        &#34;gammaLong&#34;: 5,
+        &#34;backwards&#34;: 100,
+        &#34;backAndForw&#34;: 200,
+    },
+    &#34;duration&#34;: {
+        # in Seconds
+        &#34;oneHour&#34;: 3600,
+        &#34;oneDay&#34;: 86400,
+        &#34;oneWeek&#34;: 86400*7,
+        &#34;threeMonths&#34;: 7948800,
+    },
+
+}
+
+scenarios = {
+    &#34;fullBandwidth1Gbps&#34;: {
+        &#34;max&#34;: {
+            &#34;eventRate&#34;: 1,
+            &#34;snippetCount&#34;: 1,
+            &#34;snippetSize&#34;: variables[&#34;bandwidth&#34;][&#34;max&#34;]
+        },
+    },
+    &#34;fullBandwidth10Gbps&#34;: {
+        &#34;max&#34;: {
+            &#34;eventRate&#34;: 1,
+            &#34;snippetCount&#34;: 1,
+            &#34;snippetSize&#34;: variables[&#34;bandwidth&#34;][&#34;extreme&#34;]
+        },
+    },
+    &#34;neutronMeasurement&#34;: {
+        &#34;extreme&#34;: {
+            &#34;eventRate&#34;: variables[&#34;neutronRate&#34;][&#34;highCalibration&#34;],
+            &#34;snippetCount&#34;: 50,
+            &#34;snippetSize&#34;: bitmath.Byte(100), # Bytes
+        },
+        &#34;maxEstimate&#34;: {
+            # &#34;eventRate&#34;: variables[&#34;neutronRate&#34;][&#34;highCalibration&#34;],
+            &#34;eventRate&#34;: variables[&#34;neutronRate&#34;][&#34;highEstimate&#34;],
+            &#34;snippetCount&#34;: 50,
+            &#34;snippetSize&#34;: bitmath.Byte(100), # Bytes
+        },
+        &#34;estimatedAverage&#34;: {
+            &#34;eventRate&#34;: variables[&#34;neutronRate&#34;][&#34;estimate&#34;],
+            &#34;snippetCount&#34;: 50,
+            &#34;snippetSize&#34;: bitmath.Byte(100), # Bytes
+        },
+    },
+    &#34;Full-neutronCalibration&#34;: {
+        &#34;worstCase&#34;: {
+            &#34;eventRate&#34;: variables[&#34;neutronRate&#34;][&#34;highCalibration&#34;],
+            &#34;timeWindow&#34;: variables[&#34;lookTime&#34;][&#34;backAndForw&#34;],
+        },
+        &#34;estimatedAverage&#34;: {
+            &#34;eventRate&#34;: variables[&#34;neutronRate&#34;][&#34;lowCalibration&#34;],
+            &#34;timeWindow&#34;: variables[&#34;lookTime&#34;][&#34;backAndForw&#34;],
+        },
+    },
+    &#34;gammaCalibration&#34;: {
+        &#34;worstCase&#34;: {
+            &#34;eventRate&#34;: variables[&#34;gammaRate&#34;][&#34;highCalibration&#34;],
+            &#34;timeWindow&#34;: variables[&#34;lookTime&#34;][&#34;gammaLong&#34;],
+        },
+        &#34;estimatedAverage&#34;: {
+
+        },
+    }
+}
+
+
+
+
+def meas_raw_event_size(
+    eventRate,
+    snippetCount,# Snippets
+    snippetSize, # Bytes
+):
+    eventSize = snippetCount * snippetSize
+    return eventSize, eventRate*eventSize
+
+def cali_raw_event_size(
+    eventRate,
+    timeWindow, # us
+    channels = variables[&#34;channels&#34;][&#34;all&#34;],
+    sampleTime = variables[&#34;samples&#34;][&#34;time&#34;], # us
+    packageHeader = variables[&#34;packages&#34;][&#34;headerSize&#34;][&#34;max&#34;], # Bytes
+    packageSamplesMax = variables[&#34;packages&#34;][&#34;samplesMax&#34;][&#34;max&#34;],
+):
+    samples = math.ceil(timeWindow / sampleTime)
+    # print(&#34;n_Samples:&#34;, samples, &#34;per sampleTime&#34;)
+
+    eventSize = channels * (
+        bitmath.Byte(2)*samples
+        + packageHeader*math.ceil(samples/packageSamplesMax)
+    )
+    return eventSize, eventRate*eventSize
+
+
+def raw_data_volume(
+    duration, # s
+    dataRate, # Bytes/s
+    rateUnit = &#34;Bytes&#34;,
+):
+    if rateUnit == &#34;Bytes&#34;:
+        Bytes = duration * dataRate
+        bits = duration * dataRate * 8
+    else:
+        Bytes = duration * dataRate / 8
+        bits = duration * dataRate
+
+    return duration * dataRate
+
+
+def format_rate(rate, pct = &#34;&#34;, eventRate = None, buildup=&#34;&#34;):
+    rate_B = rate.best_prefix()
+    rate_b = rate_B.to_Gib().format(&#39;{value:.3g} {unit}&#39;)
+
+    rate_2B = (2*rate).best_prefix()
+    rate_2b = rate_2B.to_Gib().format(&#39;{value:.3g} {unit}&#39;)
+
+    maxEventRate = eventRate / pct
+    halfEventRate = f&#34;--&gt; {maxEventRate/2:.0f}Hz&#34;
+    maxEventRate = f&#34;--&gt; {maxEventRate:.0f}Hz&#34;
+
+    if pct &gt; 1:
+        newEventRate = eventRate / pct
+        warning = f&#34;&#34;&#34;
+! Bandwidth exceeded. Limiting to {variables[&#39;bandwidth&#39;][&#39;max&#39;]}/s
+  Requires limit of {int(pct)} in {math.ceil(pct)} events.&#34;&#34;&#34;
+    else:
+        warning = &#34;&#34;
+    # return f&#34;Data rate: {rate_B.format(&#39;{value:.4g} {unit}&#39;)}/s ({pct*100:.3g}% of the bandwidth: {rate_b}/s) ({rate}/s)&#34;
+    return f&#34;&#34;&#34;Data rate: {rate_B.format(&#39;{value:.4g} {unit}&#39;)}/s ({pct*100:.3g}% of the bandwidth: {rate_b}/s){maxEventRate}
+Data transfer: {rate_2B.format(&#39;{value:.4g} {unit}&#39;)}/s ({rate_2b}/s){halfEventRate }{buildup}{warning}&#34;&#34;&#34;
+
+
+def format_buildup(dataRate, bandwidth, duration):
+    free_bandwidth = bandwidth - dataRate
+    volume = raw_data_volume(duration, dataRate)
+
+    buildup = volume - raw_data_volume(duration, min(dataRate, free_bandwidth))
+    buildup_time = buildup / bandwidth
+    timePct = 100*buildup_time/duration
+
+    if buildup_time &gt; 3600:
+        buildup_time = f&#34;{buildup_time/3600:.0f}h&#34;
+    elif buildup_time &gt; 60:
+        buildup_time = f&#34;{buildup_time/60:.0f}m&#34;
+    else:
+        buildup_time = f&#34;{buildup_time}s&#34;
+    buildup = buildup.best_prefix().format(&#39;{value:.3g} {unit}&#39;)
+
+
+    return f&#34;&#34;&#34;
+Data buildup 📦: {buildup} (requires an additional {buildup_time}, ~{timePct:.3g}%)&#34;&#34;&#34;
+
+
+def format_many_events(eventSize, dataRate, eventRate, many=10000):
+    format = &#39;{value:.2f} {unit}&#39;
+
+    events_second = dataRate / eventSize
+    hours_many = many / events_second / variables[&#34;duration&#34;][&#34;oneHour&#34;]
+    many_days = eventRate / many * variables[&#34;duration&#34;][&#34;oneDay&#34;]
+    many_Bytes = many*eventSize
+
+    if hours_many &lt; 0.5:
+        hours_many = f&#34;{hours_many * 60:.3g} minutes&#34;
+    else:
+        hours_many = f&#34;{hours_many:.3g} hours&#34;
+
+    return f&#34;{hours_many} for {many_Bytes.best_prefix().format(format)} ({many_days:.3f} event chunks per day).&#34;
+
+
+def format_chunks(eventSize, dataRate, eventRate):
+    format = &#39;{value:.2f} {unit}&#39;
+
+    oneGB = bitmath.GiB(1)
+    hours_oneGB = oneGB / dataRate / variables[&#34;duration&#34;][&#34;oneHour&#34;]
+    oneGB_days = dataRate * variables[&#34;duration&#34;][&#34;oneDay&#34;]
+
+    oneGB_events = int(oneGB / eventSize)
+
+
+    if hours_oneGB &lt; 0.5:
+        hours_oneGB = f&#34;{hours_oneGB * 60:.3g} minutes&#34;
+    else:
+        hours_oneGB = f&#34;{hours_oneGB:.3g} hours&#34;
+
+    return f&#34;&#34;&#34;Chunksizes:
+  Single Event: {eventSize.best_prefix().format(format)}
+  1 Gigabyte time: {hours_oneGB} for {oneGB_events} events ({oneGB_days.best_prefix().format(format)} chunks per day).
+  10000 Events time: {format_many_events(eventSize, dataRate, eventRate)}
+  1M Events time: {format_many_events(eventSize, dataRate, eventRate, many=1000000)}
+  10M Events time: {format_many_events(eventSize, dataRate, eventRate, many=10000000)}
+  20M Events time: {format_many_events(eventSize, dataRate, eventRate, many=20000000)}&#34;&#34;&#34;
+
+
+def format_volume(volume):
+    v = volume.best_prefix()
+    # return f&#34;Total volume: {v.format(&#39;{value:.3g} {unit}&#39;)} ({volume})&#34;
+    return f&#34;Total volume: {v.format(&#39;{value:.3g} {unit}&#39;)}&#34;
+
+def compare_drive(drive, rate, volume, size=&#34;size&#34;):
+    Capacity = int(drive[size] / volume)
+    Read = &#34;min&#34; if rate &lt;= drive[&#34;readMin&#34;] else &#34;max&#34; if rate &lt;= drive[&#34;readMax&#34;] else &#34;no&#34;
+    Write = &#34;min&#34; if rate &lt;= drive[&#34;writeMin&#34;] else &#34;max&#34; if rate &lt;= drive[&#34;writeMax&#34;] else &#34;no&#34;
+
+    if &#34;writeSmallF&#34; in drive:
+        # HDD
+        WriteSmallFiles = &#34;yes&#34; if rate &gt;= drive[&#34;writeSmallF&#34;] else &#34;no&#34;
+        Transfer = &#34;?&#34;
+    else:
+        # SSD
+        WriteSmallFiles = &#34;yes&#34;
+        Transfer = &#34;Only PCIe&#34;
+
+
+    return Capacity, Read, Write, WriteSmallFiles, Transfer
+
+def compare_cable(cable, rate):
+    Read = &#34;min&#34; if rate &lt;= cable[&#34;min&#34;] else &#34;max&#34; if rate &lt;= cable[&#34;max&#34;] else &#34;no&#34;
+    Write = &#34;min&#34; if rate &lt;= cable[&#34;min&#34;] else &#34;max&#34; if rate &lt;= cable[&#34;max&#34;] else &#34;no&#34;
+    # if cable[&#34;dual&#34;]:
+    #     Transfer = &#34;min&#34; if rate &lt;= cable[&#34;min&#34;] else &#34;max&#34; if rate &lt;= cable[&#34;max&#34;] else &#34;no&#34;
+    # else:
+    #     Transfer = &#34;min&#34; if rate &lt;= cable[&#34;min&#34;]/2 else &#34;max&#34; if rate &lt;= cable[&#34;max&#34;]/2 else &#34;no&#34;
+    Transfer = &#34;min&#34; if rate &lt;= cable[&#34;min&#34;]/2 else &#34;max&#34; if rate &lt;= cable[&#34;max&#34;]/2 else &#34;no&#34;
+
+    return &#34; &#34;, Read, Write, &#34; &#34;, Transfer
+
+
+def format_comparison_table(rate, volume):
+    vars = variables[&#34;driveSpeeds&#34;]
+
+    header = [&#34;Capacity&#34;, &#34;Read&#34;, &#34;Write&#34;, &#34;WriteSmallFiles&#34;, &#34;Transfer (read+write)&#34;]
+    HDD4Size = variables[&#39;driveSpeeds&#39;][&#39;HDD&#39;][&#39;4size&#39;].format(&#34;{value:.1f} {unit}&#34;)
+    HDD8Size = variables[&#39;driveSpeeds&#39;][&#39;HDD&#39;][&#39;8size&#39;].format(&#34;{value:.1f} {unit}&#34;)
+    SSD1Size = variables[&#39;driveSpeeds&#39;][&#39;SSD&#39;][&#39;1size&#39;].format(&#34;{value:.1f} {unit}&#34;)
+    SSD2Size = variables[&#39;driveSpeeds&#39;][&#39;SSD&#39;][&#39;2size&#39;].format(&#34;{value:.1f} {unit}&#34;)
+    index = [&#34;Type&#34;, f&#34;HDD {HDD4Size}&#34;, f&#34;HDD {HDD8Size}&#34;, f&#34;SSD {SSD1Size}&#34;, f&#34;SSD {SSD2Size}&#34;,
+        vars[&#34;USB32G1x1&#34;][&#34;callName&#34;],
+        vars[&#34;USB32G2x1&#34;][&#34;callName&#34;],
+        vars[&#34;USB32G1x2&#34;][&#34;callName&#34;],
+        vars[&#34;USB32G2x2&#34;][&#34;callName&#34;],
+        &#34;USB4&#34;,
+        vars[&#34;Thunderbolt1&#34;][&#34;callName&#34;],
+        ]
+
+    HDD4 = compare_drive(vars[&#34;HDD&#34;], rate, volume, size=&#34;4size&#34;)
+    HDD8 = compare_drive(vars[&#34;HDD&#34;], rate, volume, size=&#34;8size&#34;)
+    SSD1 = compare_drive(vars[&#34;SSD&#34;], rate, volume, size=&#34;1size&#34;)
+    SSD2 = compare_drive(vars[&#34;SSD&#34;], rate, volume, size=&#34;2size&#34;)
+    USB32G1x1 = compare_cable(vars[&#34;USB32G1x1&#34;], rate)
+    USB32G2x1 = compare_cable(vars[&#34;USB32G2x1&#34;], rate)
+    USB32G1x2 = compare_cable(vars[&#34;USB32G1x2&#34;], rate)
+    USB32G2x2 = compare_cable(vars[&#34;USB32G2x2&#34;], rate)
+    USB32G1x1 = compare_cable(vars[&#34;USB32G1x1&#34;], rate)
+    USB4 = compare_cable(vars[&#34;USB4&#34;], rate)
+    Thunderbolt1 = compare_cable(vars[&#34;Thunderbolt1&#34;], rate)
+
+    for i, row in enumerate([header, HDD4, HDD8, SSD1, SSD2, USB32G1x1, USB32G2x1, USB32G1x2, USB32G2x2, USB4, Thunderbolt1]):
+        print(&#39;| {:{i1}} | {:{h0}} | {:{h1}} | {:{h2}} | {:{h3}} | {:{h4}} |&#39;.format(
+            index[i], *row,
+            i1 = max([len(x) for x in index]),
+            h0 = len(header[0]),
+            h1 = len(header[1]),
+            h2 = len(header[2]),
+            h3 = len(header[3]),
+            h4 = len(header[4]),
+            ))
+        #print(index[i], *row)
+
+
+def process_scenario(durationName, scenarioName, variantName=&#34;worstCase&#34;):
+    duration = variables[&#34;duration&#34;][durationName]
+    scenario = scenarios[scenarioName][variantName]
+    eventRate = scenario[&#39;eventRate&#39;]
+    buildup = &#34;&#34;
+
+    if scenarioName.endswith(&#34;Calibration&#34;):
+        eventSize, dataRate = cali_raw_event_size(**scenario)
+        icon = &#34;🎇&#34;
+    elif scenarioName.endswith(&#34;Measurement&#34;):
+        eventSize, dataRate = meas_raw_event_size(**scenario)
+        icon = &#34;🔎&#34;
+    else:
+        eventSize, dataRate = meas_raw_event_size(**scenario)
+        icon = &#34;🔌&#34;
+
+    bandwidth = variables[&#34;bandwidth&#34;][&#34;max&#34;].to_Byte()
+    ratePct = dataRate / bandwidth
+
+    if ratePct &gt; 1:
+        # volume = volume / ratePct
+        dataRate = bandwidth
+    if scenarioName.endswith(&#34;10Gbps&#34;):
+        icon += &#34;✨&#34;
+        bandwidth = variables[&#34;bandwidth&#34;][&#34;extreme&#34;].to_Byte()
+        ratePct = dataRate / bandwidth
+        dataRate = dataRate if ratePct &lt; 1 else bandwidth
+
+    if ratePct &gt; 0.5:
+        buildup = format_buildup(dataRate, bandwidth, duration)
+
+    volume = raw_data_volume(duration, dataRate)
+
+
+    print(f&#34;\nScenario: {icon} {durationName} {scenarioName} - {variantName} ({eventRate} Hz)&#34;)
+    # print(rate, volume, ratePct)
+    print(format_rate(dataRate, ratePct, eventRate, buildup))
+    print(format_chunks(eventSize, dataRate, eventRate))
+    print(format_volume(volume))
+
+    format_comparison_table(dataRate, volume)
+
+
+def main():
+    # print(&#34;Bandwidth limitations&#34;)
+    process_scenario(&#34;threeMonths&#34;, &#34;fullBandwidth1Gbps&#34;, variantName=&#34;max&#34;)
+    process_scenario(&#34;oneHour&#34;, &#34;fullBandwidth1Gbps&#34;, variantName=&#34;max&#34;)
+    # process_scenario(&#34;threeMonths&#34;, &#34;fullBandwidth10Gbps&#34;, variantName=&#34;max&#34;)
+    # process_scenario(&#34;oneHour&#34;, &#34;fullBandwidth10Gbps&#34;, variantName=&#34;max&#34;)
+
+    # print(&#34;Scenarios limitations&#34;)
+    process_scenario(&#34;threeMonths&#34;, &#34;neutronMeasurement&#34;, variantName=&#34;maxEstimate&#34;)
+    process_scenario(&#34;threeMonths&#34;, &#34;neutronMeasurement&#34;, variantName=&#34;estimatedAverage&#34;)
+    # process_scenario(&#34;oneHour&#34;, &#34;neutronCalibration&#34;)
+    # process_scenario(&#34;oneDay&#34;, &#34;Full-neutronCalibration&#34;, variantName=&#34;estimatedAverage&#34;)
+    process_scenario(&#34;oneHour&#34;, &#34;Full-neutronCalibration&#34;, variantName=&#34;estimatedAverage&#34;)
+
+    process_scenario(&#34;oneDay&#34;, &#34;neutronMeasurement&#34;, variantName=&#34;extreme&#34;)
+    process_scenario(&#34;oneHour&#34;, &#34;neutronMeasurement&#34;, variantName=&#34;extreme&#34;)
+
+    process_scenario(&#34;oneHour&#34;, &#34;gammaCalibration&#34;)
+
+
+
+
+if __name__ == &#34;__main__&#34;:
+    main()</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="radc-processor.scripts.dataRateCalculator.cali_raw_event_size"><code class="name flex">
+<span>def <span class="ident">cali_raw_event_size</span></span>(<span>eventRate, timeWindow, channels=36, sampleTime=0.016, packageHeader=Byte(20.0), packageSamplesMax=700)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cali_raw_event_size(
+    eventRate,
+    timeWindow, # us
+    channels = variables[&#34;channels&#34;][&#34;all&#34;],
+    sampleTime = variables[&#34;samples&#34;][&#34;time&#34;], # us
+    packageHeader = variables[&#34;packages&#34;][&#34;headerSize&#34;][&#34;max&#34;], # Bytes
+    packageSamplesMax = variables[&#34;packages&#34;][&#34;samplesMax&#34;][&#34;max&#34;],
+):
+    samples = math.ceil(timeWindow / sampleTime)
+    # print(&#34;n_Samples:&#34;, samples, &#34;per sampleTime&#34;)
+
+    eventSize = channels * (
+        bitmath.Byte(2)*samples
+        + packageHeader*math.ceil(samples/packageSamplesMax)
+    )
+    return eventSize, eventRate*eventSize</code></pre>
+</details>
+</dd>
+<dt id="radc-processor.scripts.dataRateCalculator.compare_cable"><code class="name flex">
+<span>def <span class="ident">compare_cable</span></span>(<span>cable, rate)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def compare_cable(cable, rate):
+    Read = &#34;min&#34; if rate &lt;= cable[&#34;min&#34;] else &#34;max&#34; if rate &lt;= cable[&#34;max&#34;] else &#34;no&#34;
+    Write = &#34;min&#34; if rate &lt;= cable[&#34;min&#34;] else &#34;max&#34; if rate &lt;= cable[&#34;max&#34;] else &#34;no&#34;
+    # if cable[&#34;dual&#34;]:
+    #     Transfer = &#34;min&#34; if rate &lt;= cable[&#34;min&#34;] else &#34;max&#34; if rate &lt;= cable[&#34;max&#34;] else &#34;no&#34;
+    # else:
+    #     Transfer = &#34;min&#34; if rate &lt;= cable[&#34;min&#34;]/2 else &#34;max&#34; if rate &lt;= cable[&#34;max&#34;]/2 else &#34;no&#34;
+    Transfer = &#34;min&#34; if rate &lt;= cable[&#34;min&#34;]/2 else &#34;max&#34; if rate &lt;= cable[&#34;max&#34;]/2 else &#34;no&#34;
+
+    return &#34; &#34;, Read, Write, &#34; &#34;, Transfer</code></pre>
+</details>
+</dd>
+<dt id="radc-processor.scripts.dataRateCalculator.compare_drive"><code class="name flex">
+<span>def <span class="ident">compare_drive</span></span>(<span>drive, rate, volume, size='size')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def compare_drive(drive, rate, volume, size=&#34;size&#34;):
+    Capacity = int(drive[size] / volume)
+    Read = &#34;min&#34; if rate &lt;= drive[&#34;readMin&#34;] else &#34;max&#34; if rate &lt;= drive[&#34;readMax&#34;] else &#34;no&#34;
+    Write = &#34;min&#34; if rate &lt;= drive[&#34;writeMin&#34;] else &#34;max&#34; if rate &lt;= drive[&#34;writeMax&#34;] else &#34;no&#34;
+
+    if &#34;writeSmallF&#34; in drive:
+        # HDD
+        WriteSmallFiles = &#34;yes&#34; if rate &gt;= drive[&#34;writeSmallF&#34;] else &#34;no&#34;
+        Transfer = &#34;?&#34;
+    else:
+        # SSD
+        WriteSmallFiles = &#34;yes&#34;
+        Transfer = &#34;Only PCIe&#34;
+
+
+    return Capacity, Read, Write, WriteSmallFiles, Transfer</code></pre>
+</details>
+</dd>
+<dt id="radc-processor.scripts.dataRateCalculator.format_buildup"><code class="name flex">
+<span>def <span class="ident">format_buildup</span></span>(<span>dataRate, bandwidth, duration)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def format_buildup(dataRate, bandwidth, duration):
+    free_bandwidth = bandwidth - dataRate
+    volume = raw_data_volume(duration, dataRate)
+
+    buildup = volume - raw_data_volume(duration, min(dataRate, free_bandwidth))
+    buildup_time = buildup / bandwidth
+    timePct = 100*buildup_time/duration
+
+    if buildup_time &gt; 3600:
+        buildup_time = f&#34;{buildup_time/3600:.0f}h&#34;
+    elif buildup_time &gt; 60:
+        buildup_time = f&#34;{buildup_time/60:.0f}m&#34;
+    else:
+        buildup_time = f&#34;{buildup_time}s&#34;
+    buildup = buildup.best_prefix().format(&#39;{value:.3g} {unit}&#39;)
+
+
+    return f&#34;&#34;&#34;
+Data buildup 📦: {buildup} (requires an additional {buildup_time}, ~{timePct:.3g}%)&#34;&#34;&#34;</code></pre>
+</details>
+</dd>
+<dt id="radc-processor.scripts.dataRateCalculator.format_chunks"><code class="name flex">
+<span>def <span class="ident">format_chunks</span></span>(<span>eventSize, dataRate, eventRate)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def format_chunks(eventSize, dataRate, eventRate):
+    format = &#39;{value:.2f} {unit}&#39;
+
+    oneGB = bitmath.GiB(1)
+    hours_oneGB = oneGB / dataRate / variables[&#34;duration&#34;][&#34;oneHour&#34;]
+    oneGB_days = dataRate * variables[&#34;duration&#34;][&#34;oneDay&#34;]
+
+    oneGB_events = int(oneGB / eventSize)
+
+
+    if hours_oneGB &lt; 0.5:
+        hours_oneGB = f&#34;{hours_oneGB * 60:.3g} minutes&#34;
+    else:
+        hours_oneGB = f&#34;{hours_oneGB:.3g} hours&#34;
+
+    return f&#34;&#34;&#34;Chunksizes:
+  Single Event: {eventSize.best_prefix().format(format)}
+  1 Gigabyte time: {hours_oneGB} for {oneGB_events} events ({oneGB_days.best_prefix().format(format)} chunks per day).
+  10000 Events time: {format_many_events(eventSize, dataRate, eventRate)}
+  1M Events time: {format_many_events(eventSize, dataRate, eventRate, many=1000000)}
+  10M Events time: {format_many_events(eventSize, dataRate, eventRate, many=10000000)}
+  20M Events time: {format_many_events(eventSize, dataRate, eventRate, many=20000000)}&#34;&#34;&#34;</code></pre>
+</details>
+</dd>
+<dt id="radc-processor.scripts.dataRateCalculator.format_comparison_table"><code class="name flex">
+<span>def <span class="ident">format_comparison_table</span></span>(<span>rate, volume)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def format_comparison_table(rate, volume):
+    vars = variables[&#34;driveSpeeds&#34;]
+
+    header = [&#34;Capacity&#34;, &#34;Read&#34;, &#34;Write&#34;, &#34;WriteSmallFiles&#34;, &#34;Transfer (read+write)&#34;]
+    HDD4Size = variables[&#39;driveSpeeds&#39;][&#39;HDD&#39;][&#39;4size&#39;].format(&#34;{value:.1f} {unit}&#34;)
+    HDD8Size = variables[&#39;driveSpeeds&#39;][&#39;HDD&#39;][&#39;8size&#39;].format(&#34;{value:.1f} {unit}&#34;)
+    SSD1Size = variables[&#39;driveSpeeds&#39;][&#39;SSD&#39;][&#39;1size&#39;].format(&#34;{value:.1f} {unit}&#34;)
+    SSD2Size = variables[&#39;driveSpeeds&#39;][&#39;SSD&#39;][&#39;2size&#39;].format(&#34;{value:.1f} {unit}&#34;)
+    index = [&#34;Type&#34;, f&#34;HDD {HDD4Size}&#34;, f&#34;HDD {HDD8Size}&#34;, f&#34;SSD {SSD1Size}&#34;, f&#34;SSD {SSD2Size}&#34;,
+        vars[&#34;USB32G1x1&#34;][&#34;callName&#34;],
+        vars[&#34;USB32G2x1&#34;][&#34;callName&#34;],
+        vars[&#34;USB32G1x2&#34;][&#34;callName&#34;],
+        vars[&#34;USB32G2x2&#34;][&#34;callName&#34;],
+        &#34;USB4&#34;,
+        vars[&#34;Thunderbolt1&#34;][&#34;callName&#34;],
+        ]
+
+    HDD4 = compare_drive(vars[&#34;HDD&#34;], rate, volume, size=&#34;4size&#34;)
+    HDD8 = compare_drive(vars[&#34;HDD&#34;], rate, volume, size=&#34;8size&#34;)
+    SSD1 = compare_drive(vars[&#34;SSD&#34;], rate, volume, size=&#34;1size&#34;)
+    SSD2 = compare_drive(vars[&#34;SSD&#34;], rate, volume, size=&#34;2size&#34;)
+    USB32G1x1 = compare_cable(vars[&#34;USB32G1x1&#34;], rate)
+    USB32G2x1 = compare_cable(vars[&#34;USB32G2x1&#34;], rate)
+    USB32G1x2 = compare_cable(vars[&#34;USB32G1x2&#34;], rate)
+    USB32G2x2 = compare_cable(vars[&#34;USB32G2x2&#34;], rate)
+    USB32G1x1 = compare_cable(vars[&#34;USB32G1x1&#34;], rate)
+    USB4 = compare_cable(vars[&#34;USB4&#34;], rate)
+    Thunderbolt1 = compare_cable(vars[&#34;Thunderbolt1&#34;], rate)
+
+    for i, row in enumerate([header, HDD4, HDD8, SSD1, SSD2, USB32G1x1, USB32G2x1, USB32G1x2, USB32G2x2, USB4, Thunderbolt1]):
+        print(&#39;| {:{i1}} | {:{h0}} | {:{h1}} | {:{h2}} | {:{h3}} | {:{h4}} |&#39;.format(
+            index[i], *row,
+            i1 = max([len(x) for x in index]),
+            h0 = len(header[0]),
+            h1 = len(header[1]),
+            h2 = len(header[2]),
+            h3 = len(header[3]),
+            h4 = len(header[4]),
+            ))
+        #print(index[i], *row)</code></pre>
+</details>
+</dd>
+<dt id="radc-processor.scripts.dataRateCalculator.format_many_events"><code class="name flex">
+<span>def <span class="ident">format_many_events</span></span>(<span>eventSize, dataRate, eventRate, many=10000)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def format_many_events(eventSize, dataRate, eventRate, many=10000):
+    format = &#39;{value:.2f} {unit}&#39;
+
+    events_second = dataRate / eventSize
+    hours_many = many / events_second / variables[&#34;duration&#34;][&#34;oneHour&#34;]
+    many_days = eventRate / many * variables[&#34;duration&#34;][&#34;oneDay&#34;]
+    many_Bytes = many*eventSize
+
+    if hours_many &lt; 0.5:
+        hours_many = f&#34;{hours_many * 60:.3g} minutes&#34;
+    else:
+        hours_many = f&#34;{hours_many:.3g} hours&#34;
+
+    return f&#34;{hours_many} for {many_Bytes.best_prefix().format(format)} ({many_days:.3f} event chunks per day).&#34;</code></pre>
+</details>
+</dd>
+<dt id="radc-processor.scripts.dataRateCalculator.format_rate"><code class="name flex">
+<span>def <span class="ident">format_rate</span></span>(<span>rate, pct='', eventRate=None, buildup='')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def format_rate(rate, pct = &#34;&#34;, eventRate = None, buildup=&#34;&#34;):
+    rate_B = rate.best_prefix()
+    rate_b = rate_B.to_Gib().format(&#39;{value:.3g} {unit}&#39;)
+
+    rate_2B = (2*rate).best_prefix()
+    rate_2b = rate_2B.to_Gib().format(&#39;{value:.3g} {unit}&#39;)
+
+    maxEventRate = eventRate / pct
+    halfEventRate = f&#34;--&gt; {maxEventRate/2:.0f}Hz&#34;
+    maxEventRate = f&#34;--&gt; {maxEventRate:.0f}Hz&#34;
+
+    if pct &gt; 1:
+        newEventRate = eventRate / pct
+        warning = f&#34;&#34;&#34;
+! Bandwidth exceeded. Limiting to {variables[&#39;bandwidth&#39;][&#39;max&#39;]}/s
+  Requires limit of {int(pct)} in {math.ceil(pct)} events.&#34;&#34;&#34;
+    else:
+        warning = &#34;&#34;
+    # return f&#34;Data rate: {rate_B.format(&#39;{value:.4g} {unit}&#39;)}/s ({pct*100:.3g}% of the bandwidth: {rate_b}/s) ({rate}/s)&#34;
+    return f&#34;&#34;&#34;Data rate: {rate_B.format(&#39;{value:.4g} {unit}&#39;)}/s ({pct*100:.3g}% of the bandwidth: {rate_b}/s){maxEventRate}
+Data transfer: {rate_2B.format(&#39;{value:.4g} {unit}&#39;)}/s ({rate_2b}/s){halfEventRate }{buildup}{warning}&#34;&#34;&#34;</code></pre>
+</details>
+</dd>
+<dt id="radc-processor.scripts.dataRateCalculator.format_volume"><code class="name flex">
+<span>def <span class="ident">format_volume</span></span>(<span>volume)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def format_volume(volume):
+    v = volume.best_prefix()
+    # return f&#34;Total volume: {v.format(&#39;{value:.3g} {unit}&#39;)} ({volume})&#34;
+    return f&#34;Total volume: {v.format(&#39;{value:.3g} {unit}&#39;)}&#34;</code></pre>
+</details>
+</dd>
+<dt id="radc-processor.scripts.dataRateCalculator.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def main():
+    # print(&#34;Bandwidth limitations&#34;)
+    process_scenario(&#34;threeMonths&#34;, &#34;fullBandwidth1Gbps&#34;, variantName=&#34;max&#34;)
+    process_scenario(&#34;oneHour&#34;, &#34;fullBandwidth1Gbps&#34;, variantName=&#34;max&#34;)
+    # process_scenario(&#34;threeMonths&#34;, &#34;fullBandwidth10Gbps&#34;, variantName=&#34;max&#34;)
+    # process_scenario(&#34;oneHour&#34;, &#34;fullBandwidth10Gbps&#34;, variantName=&#34;max&#34;)
+
+    # print(&#34;Scenarios limitations&#34;)
+    process_scenario(&#34;threeMonths&#34;, &#34;neutronMeasurement&#34;, variantName=&#34;maxEstimate&#34;)
+    process_scenario(&#34;threeMonths&#34;, &#34;neutronMeasurement&#34;, variantName=&#34;estimatedAverage&#34;)
+    # process_scenario(&#34;oneHour&#34;, &#34;neutronCalibration&#34;)
+    # process_scenario(&#34;oneDay&#34;, &#34;Full-neutronCalibration&#34;, variantName=&#34;estimatedAverage&#34;)
+    process_scenario(&#34;oneHour&#34;, &#34;Full-neutronCalibration&#34;, variantName=&#34;estimatedAverage&#34;)
+
+    process_scenario(&#34;oneDay&#34;, &#34;neutronMeasurement&#34;, variantName=&#34;extreme&#34;)
+    process_scenario(&#34;oneHour&#34;, &#34;neutronMeasurement&#34;, variantName=&#34;extreme&#34;)
+
+    process_scenario(&#34;oneHour&#34;, &#34;gammaCalibration&#34;)</code></pre>
+</details>
+</dd>
+<dt id="radc-processor.scripts.dataRateCalculator.meas_raw_event_size"><code class="name flex">
+<span>def <span class="ident">meas_raw_event_size</span></span>(<span>eventRate, snippetCount, snippetSize)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def meas_raw_event_size(
+    eventRate,
+    snippetCount,# Snippets
+    snippetSize, # Bytes
+):
+    eventSize = snippetCount * snippetSize
+    return eventSize, eventRate*eventSize</code></pre>
+</details>
+</dd>
+<dt id="radc-processor.scripts.dataRateCalculator.process_scenario"><code class="name flex">
+<span>def <span class="ident">process_scenario</span></span>(<span>durationName, scenarioName, variantName='worstCase')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def process_scenario(durationName, scenarioName, variantName=&#34;worstCase&#34;):
+    duration = variables[&#34;duration&#34;][durationName]
+    scenario = scenarios[scenarioName][variantName]
+    eventRate = scenario[&#39;eventRate&#39;]
+    buildup = &#34;&#34;
+
+    if scenarioName.endswith(&#34;Calibration&#34;):
+        eventSize, dataRate = cali_raw_event_size(**scenario)
+        icon = &#34;🎇&#34;
+    elif scenarioName.endswith(&#34;Measurement&#34;):
+        eventSize, dataRate = meas_raw_event_size(**scenario)
+        icon = &#34;🔎&#34;
+    else:
+        eventSize, dataRate = meas_raw_event_size(**scenario)
+        icon = &#34;🔌&#34;
+
+    bandwidth = variables[&#34;bandwidth&#34;][&#34;max&#34;].to_Byte()
+    ratePct = dataRate / bandwidth
+
+    if ratePct &gt; 1:
+        # volume = volume / ratePct
+        dataRate = bandwidth
+    if scenarioName.endswith(&#34;10Gbps&#34;):
+        icon += &#34;✨&#34;
+        bandwidth = variables[&#34;bandwidth&#34;][&#34;extreme&#34;].to_Byte()
+        ratePct = dataRate / bandwidth
+        dataRate = dataRate if ratePct &lt; 1 else bandwidth
+
+    if ratePct &gt; 0.5:
+        buildup = format_buildup(dataRate, bandwidth, duration)
+
+    volume = raw_data_volume(duration, dataRate)
+
+
+    print(f&#34;\nScenario: {icon} {durationName} {scenarioName} - {variantName} ({eventRate} Hz)&#34;)
+    # print(rate, volume, ratePct)
+    print(format_rate(dataRate, ratePct, eventRate, buildup))
+    print(format_chunks(eventSize, dataRate, eventRate))
+    print(format_volume(volume))
+
+    format_comparison_table(dataRate, volume)</code></pre>
+</details>
+</dd>
+<dt id="radc-processor.scripts.dataRateCalculator.raw_data_volume"><code class="name flex">
+<span>def <span class="ident">raw_data_volume</span></span>(<span>duration, dataRate, rateUnit='Bytes')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def raw_data_volume(
+    duration, # s
+    dataRate, # Bytes/s
+    rateUnit = &#34;Bytes&#34;,
+):
+    if rateUnit == &#34;Bytes&#34;:
+        Bytes = duration * dataRate
+        bits = duration * dataRate * 8
+    else:
+        Bytes = duration * dataRate / 8
+        bits = duration * dataRate
+
+    return duration * dataRate</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="radc-processor.scripts" href="index.html">radc-processor.scripts</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="radc-processor.scripts.dataRateCalculator.cali_raw_event_size" href="#radc-processor.scripts.dataRateCalculator.cali_raw_event_size">cali_raw_event_size</a></code></li>
+<li><code><a title="radc-processor.scripts.dataRateCalculator.compare_cable" href="#radc-processor.scripts.dataRateCalculator.compare_cable">compare_cable</a></code></li>
+<li><code><a title="radc-processor.scripts.dataRateCalculator.compare_drive" href="#radc-processor.scripts.dataRateCalculator.compare_drive">compare_drive</a></code></li>
+<li><code><a title="radc-processor.scripts.dataRateCalculator.format_buildup" href="#radc-processor.scripts.dataRateCalculator.format_buildup">format_buildup</a></code></li>
+<li><code><a title="radc-processor.scripts.dataRateCalculator.format_chunks" href="#radc-processor.scripts.dataRateCalculator.format_chunks">format_chunks</a></code></li>
+<li><code><a title="radc-processor.scripts.dataRateCalculator.format_comparison_table" href="#radc-processor.scripts.dataRateCalculator.format_comparison_table">format_comparison_table</a></code></li>
+<li><code><a title="radc-processor.scripts.dataRateCalculator.format_many_events" href="#radc-processor.scripts.dataRateCalculator.format_many_events">format_many_events</a></code></li>
+<li><code><a title="radc-processor.scripts.dataRateCalculator.format_rate" href="#radc-processor.scripts.dataRateCalculator.format_rate">format_rate</a></code></li>
+<li><code><a title="radc-processor.scripts.dataRateCalculator.format_volume" href="#radc-processor.scripts.dataRateCalculator.format_volume">format_volume</a></code></li>
+<li><code><a title="radc-processor.scripts.dataRateCalculator.main" href="#radc-processor.scripts.dataRateCalculator.main">main</a></code></li>
+<li><code><a title="radc-processor.scripts.dataRateCalculator.meas_raw_event_size" href="#radc-processor.scripts.dataRateCalculator.meas_raw_event_size">meas_raw_event_size</a></code></li>
+<li><code><a title="radc-processor.scripts.dataRateCalculator.process_scenario" href="#radc-processor.scripts.dataRateCalculator.process_scenario">process_scenario</a></code></li>
+<li><code><a title="radc-processor.scripts.dataRateCalculator.raw_data_volume" href="#radc-processor.scripts.dataRateCalculator.raw_data_volume">raw_data_volume</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

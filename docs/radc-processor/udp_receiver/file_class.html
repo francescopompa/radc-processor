@@ -1,0 +1,965 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>radc-processor.udp_receiver.file_class API documentation</title>
+<meta name="description" content="Class class TargetFiles() taking care of file management and overwrite-checks in
+assistance for the UDP-Receiver Receiver()-class." />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>radc-processor.udp_receiver.file_class</code></h1>
+</header>
+<section id="section-intro">
+<p>Class class TargetFiles() taking care of file management and overwrite-checks in
+assistance for the UDP-Receiver Receiver()-class.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+Class class TargetFiles() taking care of file management and overwrite-checks in
+assistance for the UDP-Receiver Receiver()-class.
+&#34;&#34;&#34;
+
+# import os
+import copy
+import os.path as pa
+from pathlib import Path
+
+class TargetFiles():
+    &#34;&#34;&#34;
+    Class TargetFiles()
+
+    Returns an object able to proceed most checks needed by the class
+    Receiver(). The full path is built as follows:
+
+        /root_path/ dir/ name . ext
+
+    where name is made of
+
+        basename {_readout|_results} .number
+
+    and ext is made of
+
+        {.chunk .number|.wfm .number|.bin|.json}
+    &#34;&#34;&#34;
+
+    ftype_strings = {
+        &#34;full&#34;: (&#34;readout&#34;, &#34;bin&#34;),
+        &#34;chunk&#34;: (&#34;chunk&#34;, &#34;bin&#34;),
+        &#34;split&#34;: (&#34;wfm&#34;, &#34;bin&#34;),
+        &#34;results&#34;: (&#34;results&#34;, &#34;json&#34;),
+    }
+    numbered_ftypes = [&#34;chunk&#34;, &#34;split&#34;]
+
+    _iterations = []
+    &#34;&#34;&#34;
+    List of TargetFiles created during this execution.
+    For now, this stores a new copy of the class instance each time it
+    succesfully adopted a new target path (or it&#39;s first).
+    This may cause unnecessary memory-usage on the long term or when
+    using splitting.
+    Over time, it may be judicious to switch to the string-representations
+    of the paths, as returned by list_files() instead.
+    &#34;&#34;&#34;
+
+    # @property
+    @classmethod
+    def list_files(cls):
+        &#34;&#34;&#34;List of file-paths created during this execution.&#34;&#34;&#34;
+        return [i.filepath for i in cls._iterations]
+
+
+    def __init__(
+            self,
+            root_path: str,
+            basename: str=&#34;&#34;,
+            fdir: str=&#34;&#34;,
+            ftype: str=&#34;full&#34;,   # full, chunk, split, results
+            number: int=1,
+            number_padding_length: int=4,
+            version: int=1,
+            version_padding_length: int=2,
+            allow_overwrite: bool=False,
+            ) -&gt; None:
+
+        self._number_padding_length = number_padding_length
+        self._version_padding_length = version_padding_length
+        self.allow_overwrite = allow_overwrite
+
+        filename = self._init_path(Path(root_path), Path(fdir))
+
+        self._init_name(
+            basename, ftype,
+            number,
+            version,
+            filename
+            )
+
+
+
+    def __repr__(self):
+        return (
+            f&#34;{self.__class__.__name__}(root_path={self.root_path},&#34;
+            f&#34;basename=\&#34;{self.basename}\&#34;,&#34;
+            # f&#34;ext={self.ext},&#34;
+            f&#34;fdir=\&#34;{self.fdir}\&#34;,&#34;
+            f&#34;ftype=\&#34;{self.ftype}\&#34;,&#34;
+            f&#34;number={self.number},&#34;
+            f&#34;number_padding_length={self._number_padding_length},&#34;
+            f&#34;version={self.version},&#34;
+            f&#34;version_padding_length={self._version_padding_length},&#34;
+            f&#34;allow_overwrite={self.allow_overwrite}&#34;
+            &#34;)&#34;
+            )
+
+    def __str__(self):
+        return str(self.filepath)
+
+    def _init_path(self, root_path: Path, fdir: Path):
+        filename = None
+        root_path.resolve() # make absolute, uses cwd if empty string
+
+        if root_path.suffix != &#34;&#34; or root_path.is_file():
+            # root_path includes target file -&gt; split
+            filename = root_path.name
+            root_path = root_path.parent
+
+        if fdir == fdir.parent:
+            # fdir is empty -&gt; get from root_path (never ends with /)
+            fdir = root_path.name
+            root_path = root_path.parent
+
+        self.root_path = root_path
+        self.fdir = fdir
+        return filename
+
+    def _init_name(self,
+            basename, ftype,
+            number,
+            version,
+            filename=None,
+            make_duplicate=True,
+            ):
+
+        if filename is not None and basename == &#34;&#34;:
+            basename = filename
+        elif filename is not None:
+            raise ValueError(f&#34;Specified both filename {filename} and basename {basename}&#34;)
+        if basename == &#34;&#34;:
+            basename = &#34;radc_receiver&#34;
+
+        parts = basename.split(&#39;.&#39;)
+        n_fragments = 4 if ftype in self.numbered_ftypes else 3
+        last_n_parts = parts[-n_fragments:] # use last three or four fragments
+        remaining_parts = parts[:-n_fragments]
+        spec, ext = self.ftype_strings[ftype]
+
+        def set_name(p):
+            nonlocal basename#, parts
+            words = p.rstrip(&#39;_&#39;).split(&#39;_&#39;)
+            # if words[-1] in [s[0] for s in ftype_strings.values()]
+            if words[-1] == spec:
+                words.pop(-1)
+            basename = &#34;_&#34;.join(words)
+
+        def set_version(p):
+            nonlocal version, remaining_parts
+            if p.isdecimal():
+                version = int(p)
+            else:
+                remaining_parts.append(p)
+
+        def set_number(p):
+            nonlocal number, remaining_parts
+            if p.isdecimal():
+                number = int(p)
+            else:
+                remaining_parts.append(p)
+
+        def set_ext(p):
+            nonlocal ext, remaining_parts
+            if p != ext:
+                remaining_parts.append(p)
+
+        if n_fragments == 3:
+            gen = iter((set_name, set_version, set_ext))
+        elif n_fragments == 4:
+            gen = iter((set_name, set_version, set_number, set_ext))
+
+        for p in last_n_parts:
+            func = next(gen)
+            func(p)
+
+        if ext in remaining_parts:
+            remaining_parts.remove(ext) # remove extension in case basename had
+                                        # less than n_fragments elements
+        self.basename = &#34;.&#34;.join(remaining_parts) + basename + &#34;_&#34; + spec
+        self.version = version
+        self.number = number
+        self.ext = ext
+        self.ftype = ftype
+
+        self._check_overwrite(make_duplicate)
+
+    def _re_init_name(self,
+            basename=None, ftype=None,
+            number=None,
+            version=None,
+            # filename=None,
+            make_duplicate=False,
+            ):
+
+        self._init_name(basename or self.basename,
+                        ftype or self.ftype,
+                        number or self.number,
+                        version or self.version,
+                        # filename or self.filename,
+                        make_duplicate=make_duplicate)
+
+    @property
+    def filedir(self):
+        &#34;&#34;&#34;Path to the parent folder of the targetted files.&#34;&#34;&#34;
+        return Path(self.root_path, self.fdir)
+
+    @property
+    def filepath(self):
+        &#34;&#34;&#34;Full path of the currently targetted file.&#34;&#34;&#34;
+        return Path(self.root_path, self.fdir, self.filename)
+
+    @property
+    def filename(self):
+        &#34;&#34;&#34;Full name of the currently targetted file.&#34;&#34;&#34;
+        if self.ftype in self.numbered_ftypes:
+            return &#39;.&#39;.join([
+                self.basename,
+                f&#34;{self.version:0{self._version_padding_length}}&#34;,  # 0 pad
+                f&#34;{self.number:0{self._number_padding_length}}&#34;,    # 0 pad
+                self.ext
+            ])
+        else:
+            return &#39;.&#39;.join([
+                self.basename,
+                f&#34;{self.version:0{self._version_padding_length}}&#34;,  # 0 pad
+                self.ext
+            ])
+
+
+    def _check_overwrite(self, make_duplicate=True):
+        &#34;&#34;&#34;If needed, increment file version to avoid overwrite.&#34;&#34;&#34;
+        if self.filepath.exists() and not self.allow_overwrite:
+            # version += 1
+            self.version += 1
+            self._check_overwrite(make_duplicate)
+        elif make_duplicate is True:
+            self._iterations.append(copy.copy(self))
+        else:
+            self._iterations.append(self)
+
+    def _reset(self, version=1, number=1):
+        &#34;&#34;&#34;
+        Reset number and version values.
+        &#34;&#34;&#34;
+        self.version = version
+        self.number = number
+        return version, number
+
+    def lowest_safe(self, start=None):
+        &#34;&#34;&#34;Increment chunk of split number to next lowest safe number&#34;&#34;&#34;
+        if start is None:
+            start = self.number
+        else:
+            self.number = start
+
+        while self.filepath.exists():
+            self.number +=1
+        self._check_overwrite()
+
+    def next(self):
+        &#34;&#34;&#34;Increment chunk or split number&#34;&#34;&#34;
+        if self.ftype not in self.numbered_ftypes:
+            return
+        self.number += 1
+        self._check_overwrite()
+
+    def switch(self,
+            filename=None,
+            number=None, version=None, reset=False,
+            ftype=None
+            ):
+        &#34;&#34;&#34;Switch to a new basename inside the same directory.&#34;&#34;&#34;
+
+        if reset is True:
+            self._reset()
+
+        self._init_name(
+            filename or self.basename.rstrip(&#34;_&#34;+self.ftype_strings[self.ftype][0]),
+            ftype or self.ftype,
+            number or self.number,
+            version or self.version,
+            )
+
+    def generate(self, **kwargs):
+        &#34;&#34;&#34;
+        Return a new path, but don&#39;t use it as current path.
+        Example: to dump results.
+        &#34;&#34;&#34;
+        new = copy.copy(self)
+        for key, val in kwargs.items():
+            if hasattr(new, key):
+               setattr(new, key, val) #getattr(self, key))
+        new._re_init_name(make_duplicate=False)
+        # new._check_overwrite(make_duplicate=False)  # Don&#39;t append a COPY of new
+        # # self._iterations.append(new)              # but append new itself.
+        return new
+
+
+
+
+class Test():
+    instances = []
+
+    @property
+    def numbers(self):
+        return [i.number for i in self.instances]
+
+    def __init__(self, name=&#34;a&#34;, number=0):
+        self.name = name
+        self.number = number
+        self.increase()
+
+    def increase(self):
+        if self.number % 3 != 0:
+            self.number += 1
+            self.increase()
+        else:
+            self.instances.append(copy.copy(self))</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="radc-processor.udp_receiver.file_class.TargetFiles"><code class="flex name class">
+<span>class <span class="ident">TargetFiles</span></span>
+<span>(</span><span>root_path: str, basename: str = '', fdir: str = '', ftype: str = 'full', number: int = 1, number_padding_length: int = 4, version: int = 1, version_padding_length: int = 2, allow_overwrite: bool = False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Class TargetFiles()</p>
+<p>Returns an object able to proceed most checks needed by the class
+Receiver(). The full path is built as follows:</p>
+<pre><code>/root_path/ dir/ name . ext
+</code></pre>
+<p>where name is made of</p>
+<pre><code>basename {_readout|_results} .number
+</code></pre>
+<p>and ext is made of</p>
+<pre><code>{.chunk .number|.wfm .number|.bin|.json}
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class TargetFiles():
+    &#34;&#34;&#34;
+    Class TargetFiles()
+
+    Returns an object able to proceed most checks needed by the class
+    Receiver(). The full path is built as follows:
+
+        /root_path/ dir/ name . ext
+
+    where name is made of
+
+        basename {_readout|_results} .number
+
+    and ext is made of
+
+        {.chunk .number|.wfm .number|.bin|.json}
+    &#34;&#34;&#34;
+
+    ftype_strings = {
+        &#34;full&#34;: (&#34;readout&#34;, &#34;bin&#34;),
+        &#34;chunk&#34;: (&#34;chunk&#34;, &#34;bin&#34;),
+        &#34;split&#34;: (&#34;wfm&#34;, &#34;bin&#34;),
+        &#34;results&#34;: (&#34;results&#34;, &#34;json&#34;),
+    }
+    numbered_ftypes = [&#34;chunk&#34;, &#34;split&#34;]
+
+    _iterations = []
+    &#34;&#34;&#34;
+    List of TargetFiles created during this execution.
+    For now, this stores a new copy of the class instance each time it
+    succesfully adopted a new target path (or it&#39;s first).
+    This may cause unnecessary memory-usage on the long term or when
+    using splitting.
+    Over time, it may be judicious to switch to the string-representations
+    of the paths, as returned by list_files() instead.
+    &#34;&#34;&#34;
+
+    # @property
+    @classmethod
+    def list_files(cls):
+        &#34;&#34;&#34;List of file-paths created during this execution.&#34;&#34;&#34;
+        return [i.filepath for i in cls._iterations]
+
+
+    def __init__(
+            self,
+            root_path: str,
+            basename: str=&#34;&#34;,
+            fdir: str=&#34;&#34;,
+            ftype: str=&#34;full&#34;,   # full, chunk, split, results
+            number: int=1,
+            number_padding_length: int=4,
+            version: int=1,
+            version_padding_length: int=2,
+            allow_overwrite: bool=False,
+            ) -&gt; None:
+
+        self._number_padding_length = number_padding_length
+        self._version_padding_length = version_padding_length
+        self.allow_overwrite = allow_overwrite
+
+        filename = self._init_path(Path(root_path), Path(fdir))
+
+        self._init_name(
+            basename, ftype,
+            number,
+            version,
+            filename
+            )
+
+
+
+    def __repr__(self):
+        return (
+            f&#34;{self.__class__.__name__}(root_path={self.root_path},&#34;
+            f&#34;basename=\&#34;{self.basename}\&#34;,&#34;
+            # f&#34;ext={self.ext},&#34;
+            f&#34;fdir=\&#34;{self.fdir}\&#34;,&#34;
+            f&#34;ftype=\&#34;{self.ftype}\&#34;,&#34;
+            f&#34;number={self.number},&#34;
+            f&#34;number_padding_length={self._number_padding_length},&#34;
+            f&#34;version={self.version},&#34;
+            f&#34;version_padding_length={self._version_padding_length},&#34;
+            f&#34;allow_overwrite={self.allow_overwrite}&#34;
+            &#34;)&#34;
+            )
+
+    def __str__(self):
+        return str(self.filepath)
+
+    def _init_path(self, root_path: Path, fdir: Path):
+        filename = None
+        root_path.resolve() # make absolute, uses cwd if empty string
+
+        if root_path.suffix != &#34;&#34; or root_path.is_file():
+            # root_path includes target file -&gt; split
+            filename = root_path.name
+            root_path = root_path.parent
+
+        if fdir == fdir.parent:
+            # fdir is empty -&gt; get from root_path (never ends with /)
+            fdir = root_path.name
+            root_path = root_path.parent
+
+        self.root_path = root_path
+        self.fdir = fdir
+        return filename
+
+    def _init_name(self,
+            basename, ftype,
+            number,
+            version,
+            filename=None,
+            make_duplicate=True,
+            ):
+
+        if filename is not None and basename == &#34;&#34;:
+            basename = filename
+        elif filename is not None:
+            raise ValueError(f&#34;Specified both filename {filename} and basename {basename}&#34;)
+        if basename == &#34;&#34;:
+            basename = &#34;radc_receiver&#34;
+
+        parts = basename.split(&#39;.&#39;)
+        n_fragments = 4 if ftype in self.numbered_ftypes else 3
+        last_n_parts = parts[-n_fragments:] # use last three or four fragments
+        remaining_parts = parts[:-n_fragments]
+        spec, ext = self.ftype_strings[ftype]
+
+        def set_name(p):
+            nonlocal basename#, parts
+            words = p.rstrip(&#39;_&#39;).split(&#39;_&#39;)
+            # if words[-1] in [s[0] for s in ftype_strings.values()]
+            if words[-1] == spec:
+                words.pop(-1)
+            basename = &#34;_&#34;.join(words)
+
+        def set_version(p):
+            nonlocal version, remaining_parts
+            if p.isdecimal():
+                version = int(p)
+            else:
+                remaining_parts.append(p)
+
+        def set_number(p):
+            nonlocal number, remaining_parts
+            if p.isdecimal():
+                number = int(p)
+            else:
+                remaining_parts.append(p)
+
+        def set_ext(p):
+            nonlocal ext, remaining_parts
+            if p != ext:
+                remaining_parts.append(p)
+
+        if n_fragments == 3:
+            gen = iter((set_name, set_version, set_ext))
+        elif n_fragments == 4:
+            gen = iter((set_name, set_version, set_number, set_ext))
+
+        for p in last_n_parts:
+            func = next(gen)
+            func(p)
+
+        if ext in remaining_parts:
+            remaining_parts.remove(ext) # remove extension in case basename had
+                                        # less than n_fragments elements
+        self.basename = &#34;.&#34;.join(remaining_parts) + basename + &#34;_&#34; + spec
+        self.version = version
+        self.number = number
+        self.ext = ext
+        self.ftype = ftype
+
+        self._check_overwrite(make_duplicate)
+
+    def _re_init_name(self,
+            basename=None, ftype=None,
+            number=None,
+            version=None,
+            # filename=None,
+            make_duplicate=False,
+            ):
+
+        self._init_name(basename or self.basename,
+                        ftype or self.ftype,
+                        number or self.number,
+                        version or self.version,
+                        # filename or self.filename,
+                        make_duplicate=make_duplicate)
+
+    @property
+    def filedir(self):
+        &#34;&#34;&#34;Path to the parent folder of the targetted files.&#34;&#34;&#34;
+        return Path(self.root_path, self.fdir)
+
+    @property
+    def filepath(self):
+        &#34;&#34;&#34;Full path of the currently targetted file.&#34;&#34;&#34;
+        return Path(self.root_path, self.fdir, self.filename)
+
+    @property
+    def filename(self):
+        &#34;&#34;&#34;Full name of the currently targetted file.&#34;&#34;&#34;
+        if self.ftype in self.numbered_ftypes:
+            return &#39;.&#39;.join([
+                self.basename,
+                f&#34;{self.version:0{self._version_padding_length}}&#34;,  # 0 pad
+                f&#34;{self.number:0{self._number_padding_length}}&#34;,    # 0 pad
+                self.ext
+            ])
+        else:
+            return &#39;.&#39;.join([
+                self.basename,
+                f&#34;{self.version:0{self._version_padding_length}}&#34;,  # 0 pad
+                self.ext
+            ])
+
+
+    def _check_overwrite(self, make_duplicate=True):
+        &#34;&#34;&#34;If needed, increment file version to avoid overwrite.&#34;&#34;&#34;
+        if self.filepath.exists() and not self.allow_overwrite:
+            # version += 1
+            self.version += 1
+            self._check_overwrite(make_duplicate)
+        elif make_duplicate is True:
+            self._iterations.append(copy.copy(self))
+        else:
+            self._iterations.append(self)
+
+    def _reset(self, version=1, number=1):
+        &#34;&#34;&#34;
+        Reset number and version values.
+        &#34;&#34;&#34;
+        self.version = version
+        self.number = number
+        return version, number
+
+    def lowest_safe(self, start=None):
+        &#34;&#34;&#34;Increment chunk of split number to next lowest safe number&#34;&#34;&#34;
+        if start is None:
+            start = self.number
+        else:
+            self.number = start
+
+        while self.filepath.exists():
+            self.number +=1
+        self._check_overwrite()
+
+    def next(self):
+        &#34;&#34;&#34;Increment chunk or split number&#34;&#34;&#34;
+        if self.ftype not in self.numbered_ftypes:
+            return
+        self.number += 1
+        self._check_overwrite()
+
+    def switch(self,
+            filename=None,
+            number=None, version=None, reset=False,
+            ftype=None
+            ):
+        &#34;&#34;&#34;Switch to a new basename inside the same directory.&#34;&#34;&#34;
+
+        if reset is True:
+            self._reset()
+
+        self._init_name(
+            filename or self.basename.rstrip(&#34;_&#34;+self.ftype_strings[self.ftype][0]),
+            ftype or self.ftype,
+            number or self.number,
+            version or self.version,
+            )
+
+    def generate(self, **kwargs):
+        &#34;&#34;&#34;
+        Return a new path, but don&#39;t use it as current path.
+        Example: to dump results.
+        &#34;&#34;&#34;
+        new = copy.copy(self)
+        for key, val in kwargs.items():
+            if hasattr(new, key):
+               setattr(new, key, val) #getattr(self, key))
+        new._re_init_name(make_duplicate=False)
+        # new._check_overwrite(make_duplicate=False)  # Don&#39;t append a COPY of new
+        # # self._iterations.append(new)              # but append new itself.
+        return new</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="radc-processor.udp_receiver.file_class.TargetFiles.ftype_strings"><code class="name">var <span class="ident">ftype_strings</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="radc-processor.udp_receiver.file_class.TargetFiles.numbered_ftypes"><code class="name">var <span class="ident">numbered_ftypes</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Static methods</h3>
+<dl>
+<dt id="radc-processor.udp_receiver.file_class.TargetFiles.list_files"><code class="name flex">
+<span>def <span class="ident">list_files</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>List of file-paths created during this execution.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+def list_files(cls):
+    &#34;&#34;&#34;List of file-paths created during this execution.&#34;&#34;&#34;
+    return [i.filepath for i in cls._iterations]</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Instance variables</h3>
+<dl>
+<dt id="radc-processor.udp_receiver.file_class.TargetFiles.filedir"><code class="name">var <span class="ident">filedir</span></code></dt>
+<dd>
+<div class="desc"><p>Path to the parent folder of the targetted files.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def filedir(self):
+    &#34;&#34;&#34;Path to the parent folder of the targetted files.&#34;&#34;&#34;
+    return Path(self.root_path, self.fdir)</code></pre>
+</details>
+</dd>
+<dt id="radc-processor.udp_receiver.file_class.TargetFiles.filename"><code class="name">var <span class="ident">filename</span></code></dt>
+<dd>
+<div class="desc"><p>Full name of the currently targetted file.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def filename(self):
+    &#34;&#34;&#34;Full name of the currently targetted file.&#34;&#34;&#34;
+    if self.ftype in self.numbered_ftypes:
+        return &#39;.&#39;.join([
+            self.basename,
+            f&#34;{self.version:0{self._version_padding_length}}&#34;,  # 0 pad
+            f&#34;{self.number:0{self._number_padding_length}}&#34;,    # 0 pad
+            self.ext
+        ])
+    else:
+        return &#39;.&#39;.join([
+            self.basename,
+            f&#34;{self.version:0{self._version_padding_length}}&#34;,  # 0 pad
+            self.ext
+        ])</code></pre>
+</details>
+</dd>
+<dt id="radc-processor.udp_receiver.file_class.TargetFiles.filepath"><code class="name">var <span class="ident">filepath</span></code></dt>
+<dd>
+<div class="desc"><p>Full path of the currently targetted file.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def filepath(self):
+    &#34;&#34;&#34;Full path of the currently targetted file.&#34;&#34;&#34;
+    return Path(self.root_path, self.fdir, self.filename)</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="radc-processor.udp_receiver.file_class.TargetFiles.generate"><code class="name flex">
+<span>def <span class="ident">generate</span></span>(<span>self, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Return a new path, but don't use it as current path.
+Example: to dump results.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def generate(self, **kwargs):
+    &#34;&#34;&#34;
+    Return a new path, but don&#39;t use it as current path.
+    Example: to dump results.
+    &#34;&#34;&#34;
+    new = copy.copy(self)
+    for key, val in kwargs.items():
+        if hasattr(new, key):
+           setattr(new, key, val) #getattr(self, key))
+    new._re_init_name(make_duplicate=False)
+    # new._check_overwrite(make_duplicate=False)  # Don&#39;t append a COPY of new
+    # # self._iterations.append(new)              # but append new itself.
+    return new</code></pre>
+</details>
+</dd>
+<dt id="radc-processor.udp_receiver.file_class.TargetFiles.lowest_safe"><code class="name flex">
+<span>def <span class="ident">lowest_safe</span></span>(<span>self, start=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Increment chunk of split number to next lowest safe number</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def lowest_safe(self, start=None):
+    &#34;&#34;&#34;Increment chunk of split number to next lowest safe number&#34;&#34;&#34;
+    if start is None:
+        start = self.number
+    else:
+        self.number = start
+
+    while self.filepath.exists():
+        self.number +=1
+    self._check_overwrite()</code></pre>
+</details>
+</dd>
+<dt id="radc-processor.udp_receiver.file_class.TargetFiles.next"><code class="name flex">
+<span>def <span class="ident">next</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Increment chunk or split number</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def next(self):
+    &#34;&#34;&#34;Increment chunk or split number&#34;&#34;&#34;
+    if self.ftype not in self.numbered_ftypes:
+        return
+    self.number += 1
+    self._check_overwrite()</code></pre>
+</details>
+</dd>
+<dt id="radc-processor.udp_receiver.file_class.TargetFiles.switch"><code class="name flex">
+<span>def <span class="ident">switch</span></span>(<span>self, filename=None, number=None, version=None, reset=False, ftype=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Switch to a new basename inside the same directory.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def switch(self,
+        filename=None,
+        number=None, version=None, reset=False,
+        ftype=None
+        ):
+    &#34;&#34;&#34;Switch to a new basename inside the same directory.&#34;&#34;&#34;
+
+    if reset is True:
+        self._reset()
+
+    self._init_name(
+        filename or self.basename.rstrip(&#34;_&#34;+self.ftype_strings[self.ftype][0]),
+        ftype or self.ftype,
+        number or self.number,
+        version or self.version,
+        )</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="radc-processor.udp_receiver.file_class.Test"><code class="flex name class">
+<span>class <span class="ident">Test</span></span>
+<span>(</span><span>name='a', number=0)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Test():
+    instances = []
+
+    @property
+    def numbers(self):
+        return [i.number for i in self.instances]
+
+    def __init__(self, name=&#34;a&#34;, number=0):
+        self.name = name
+        self.number = number
+        self.increase()
+
+    def increase(self):
+        if self.number % 3 != 0:
+            self.number += 1
+            self.increase()
+        else:
+            self.instances.append(copy.copy(self))</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="radc-processor.udp_receiver.file_class.Test.instances"><code class="name">var <span class="ident">instances</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Instance variables</h3>
+<dl>
+<dt id="radc-processor.udp_receiver.file_class.Test.numbers"><code class="name">var <span class="ident">numbers</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def numbers(self):
+    return [i.number for i in self.instances]</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="radc-processor.udp_receiver.file_class.Test.increase"><code class="name flex">
+<span>def <span class="ident">increase</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def increase(self):
+    if self.number % 3 != 0:
+        self.number += 1
+        self.increase()
+    else:
+        self.instances.append(copy.copy(self))</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="radc-processor.udp_receiver" href="index.html">radc-processor.udp_receiver</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="radc-processor.udp_receiver.file_class.TargetFiles" href="#radc-processor.udp_receiver.file_class.TargetFiles">TargetFiles</a></code></h4>
+<ul class="two-column">
+<li><code><a title="radc-processor.udp_receiver.file_class.TargetFiles.filedir" href="#radc-processor.udp_receiver.file_class.TargetFiles.filedir">filedir</a></code></li>
+<li><code><a title="radc-processor.udp_receiver.file_class.TargetFiles.filename" href="#radc-processor.udp_receiver.file_class.TargetFiles.filename">filename</a></code></li>
+<li><code><a title="radc-processor.udp_receiver.file_class.TargetFiles.filepath" href="#radc-processor.udp_receiver.file_class.TargetFiles.filepath">filepath</a></code></li>
+<li><code><a title="radc-processor.udp_receiver.file_class.TargetFiles.ftype_strings" href="#radc-processor.udp_receiver.file_class.TargetFiles.ftype_strings">ftype_strings</a></code></li>
+<li><code><a title="radc-processor.udp_receiver.file_class.TargetFiles.generate" href="#radc-processor.udp_receiver.file_class.TargetFiles.generate">generate</a></code></li>
+<li><code><a title="radc-processor.udp_receiver.file_class.TargetFiles.list_files" href="#radc-processor.udp_receiver.file_class.TargetFiles.list_files">list_files</a></code></li>
+<li><code><a title="radc-processor.udp_receiver.file_class.TargetFiles.lowest_safe" href="#radc-processor.udp_receiver.file_class.TargetFiles.lowest_safe">lowest_safe</a></code></li>
+<li><code><a title="radc-processor.udp_receiver.file_class.TargetFiles.next" href="#radc-processor.udp_receiver.file_class.TargetFiles.next">next</a></code></li>
+<li><code><a title="radc-processor.udp_receiver.file_class.TargetFiles.numbered_ftypes" href="#radc-processor.udp_receiver.file_class.TargetFiles.numbered_ftypes">numbered_ftypes</a></code></li>
+<li><code><a title="radc-processor.udp_receiver.file_class.TargetFiles.switch" href="#radc-processor.udp_receiver.file_class.TargetFiles.switch">switch</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="radc-processor.udp_receiver.file_class.Test" href="#radc-processor.udp_receiver.file_class.Test">Test</a></code></h4>
+<ul class="">
+<li><code><a title="radc-processor.udp_receiver.file_class.Test.increase" href="#radc-processor.udp_receiver.file_class.Test.increase">increase</a></code></li>
+<li><code><a title="radc-processor.udp_receiver.file_class.Test.instances" href="#radc-processor.udp_receiver.file_class.Test.instances">instances</a></code></li>
+<li><code><a title="radc-processor.udp_receiver.file_class.Test.numbers" href="#radc-processor.udp_receiver.file_class.Test.numbers">numbers</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>
