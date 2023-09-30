@@ -31,9 +31,9 @@ struct_fields_mapping:
   Snippet_header:
     Channel_number: "B"  # 1 Byte unsigned char integer
     Energy: "3s"     # 3 Bytes arbitrary char
+    Info_flags: "c" # 1 Byte bits
     Timedelta_samples: "h"  # 2 Byte signed int ("short")
     Snippet_number: "B" # 1 Byte unsigned int
-    Info_flags: "c" # 1 Byte bits
 
 
   # RADC single sample
