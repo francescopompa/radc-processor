@@ -278,7 +278,6 @@ class Measurement():
                 if isinstance(val, list):
                     for i,e in enumerate(val):
                         self.suffixes[idx+i] = str(e)
-                        self.measurement_number = self._increment_number(self.measurement_number)
                 else:
                     if val is None:
                         try:
@@ -286,6 +285,7 @@ class Measurement():
                         except ValueError:
                             val = self._increment_letter(self.suffixes[idx])
                     self.suffixes[idx] = str(val)
+                self.measurement_number = self._increment_number(self.measurement_number)
             case _:
                 raise ValueError(f"Key unknown: {key}")
 
