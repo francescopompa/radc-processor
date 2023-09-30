@@ -2,7 +2,7 @@
 
 import sys
 import time
-from receiver_class import Receiver
+from udp_receiver.receiver_class import Receiver
 
 #
 # Todo:

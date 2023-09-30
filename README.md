@@ -69,3 +69,15 @@ You can pass non-default parameters in the form of `key=value`-pairs.
 
 - [ ] Todo: Make color of each event consistent accross different plots (different selections).
 
+
+## Documentation
+
+Open `documentation.html` for the full code documentation.
+
+Similarly as for the `radc-commander`project, the documentation of this project is automatically generated using `pdoc`.
+The command to update the documentation is currently:
+```bash
+# cd radc-processor
+pdoc --force --html -o docs .
+```
+(On first creation under Windows do also: `gsudo new-item -ItemType SymbolicLink -Path .\documentation.html -Target .\docs\radc-processor\index.html`)

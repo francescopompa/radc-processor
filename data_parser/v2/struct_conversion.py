@@ -2,7 +2,9 @@ import os
 import struct
 # import collections
 
-from ..configuration import CONFIG
+from ..configuration import validate_config
+CONFIG = validate_config(version="v2")
+
 from ..common.struct_conversion import (
     endianness_struct_mapping,
     _DataFile,

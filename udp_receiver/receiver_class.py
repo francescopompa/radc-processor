@@ -7,7 +7,7 @@ import queue
 import signal
 import json
 
-from file_class import TargetFiles
+from .file_class import TargetFiles
 
 RADC_HEADER_SIZE=16
 RADC_PKG_HEADER_SIZE=4

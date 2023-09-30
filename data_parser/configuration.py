@@ -9,16 +9,6 @@ if VERSION is None:
     init()
 from . import VERSION_STR
 
-config_path = Path(
-    __file__,
-    "..",
-    VERSION_STR,
-    f"{VERSION_STR}.configuration.yaml"
-    ).resolve()
-
-with open(config_path, "r", encoding="utf-8") as file:
-    CONFIG = yaml.safe_load(file)
-
 
 def _insert_variable_value(string=""):
     string = string.lstrip("$").lower()
@@ -38,11 +28,23 @@ def _loop_through_dict(config, dpath=None):
             dpath[key] = _insert_variable_value(value)
 
 
-def validate_config():
-    # global CONFIG
+def validate_config(version: str = VERSION_STR):
+
+    config_path = Path(
+        __file__,
+        "..",
+        version,
+        f"{version}.configuration.yaml"
+        ).resolve()
+
+    with open(config_path, "r", encoding="utf-8") as file:
+        CONFIG = yaml.safe_load(file)
+
     _loop_through_dict(CONFIG)
     CONFIG["VERSION"] = VERSION
 
-validate_config()
+    return CONFIG
+
+CONFIG = validate_config()
 
 # print("Loaded CONFIG", CONFIG)
