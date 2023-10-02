@@ -74,7 +74,10 @@ You can pass non-default parameters in the form of `key=value`-pairs.
 
 Open `documentation.html` for the full code documentation.
 
-Similarly as for the `radc-commander`project, the documentation of this project is automatically generated using `pdoc`.
+Similarly as for the `radc-commander`project, the documentation of this project is automatically generated using `pdoc3`.
+
+> ⚠️ **warning**: After finding out about the problematic behaviour ([64](https://github.com/pdoc3/pdoc/issues/64), [346](https://github.com/pdoc3/pdoc/issues/346), [#397](https://github.com/pdoc3/pdoc/issues/397)) of the maintainer, I am in the process of migrating from `pdoc3` to another alternative. DO NOT INSTALL `pdoc3` IF YOU DON'T WANT TO SUPPORT IT!
+
 The command to update the documentation is currently:
 ```bash
 # cd radc-processor
