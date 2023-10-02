@@ -28,7 +28,7 @@ data_parser = "data_parser"
 measurement_class = "measurement_class"
 pulse_analysis = "pulse_analysis"
 udp_receiver = "udp_receiver"
-import_helper = "notebooks"
+import_helper = "import_helper"
 
 [options.packages_data]
 "*" = ["pyproject.toml"]
