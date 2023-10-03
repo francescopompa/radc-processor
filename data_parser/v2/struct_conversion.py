@@ -90,7 +90,7 @@ class DataFile(_DataFile):
     def unpack(self):
         self.events = list(self._unpack_events())
 
-    def get_records():
+    def get_records(self):
         if len(self.events) == 0:
             self.unpack()
 
