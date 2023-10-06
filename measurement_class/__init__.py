@@ -343,13 +343,13 @@ class Measurement():
     def get_command(self, key):
         command_keys = {
             "commander": (
-                "python -m radc_commander"
+                "radc_commander"
                 +(f" -p \"{self.get_path('commander', 'pbk')}\""
                     if self.get_path('commander', 'pbk') else "")
                 +f" -c \"{self.get_path('commander', 'conf')}\""
                 ),
             "receiver": (
-                "python udp_receiver"
+                "radc_receiver"
                 +f" target_root=\"{self.subgroup_path}\""
                 +f" target_dir=\"{self.get_path('receiver', 'dir')}\""
                 +f" target_file=\"{self.get_path('receiver', 'file')}\""
