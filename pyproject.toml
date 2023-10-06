@@ -22,6 +22,9 @@ keywords = [
 
 dynamic = ["dependencies"]
 
+[project.scripts]
+radc_receiver = "udp_receiver.__main__:main"
+
 [tool.setuptools.package-dir]
 baseline_analysis = "baseline_analysis"
 data_parser = "data_parser"

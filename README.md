@@ -37,7 +37,7 @@ python -m pip install -e .
 ```
 
 
-## `udp_receiver`
+## `udp_receiver` / `radc_receiver`
 
 This package receives data sent by the board and writes it to disk.
 It uses multiple threads and queues to ensure that no package gets lost.
@@ -46,14 +46,15 @@ It uses multiple threads and queues to ensure that no package gets lost.
 > ⚠️ For now, configuration is only done via arguments and default values of parameters. **It is imperative that you read the source code to be aware of which parameters you have to provide!** (`udp_receiver/receiver_class.py:20-31`)
 
 ### Usage
-The simplest package execution is done with:
+After installation, the simplest package execution is done with:
 ```bash
-# cd path/to/radc-processor
-python udp_receiver
+radc_receiver
 ```
 This will start the receiver and show you the usage explanation. It will then wait for commands on the command-line (STDIN).
 
 You can pass non-default parameters in the form of `key=value`-pairs.
+
+(If you want to test the package locally or without installing it first, you can do so with `cd radc-processor` followed by `python -m udp_receiver`.)
 
 #### Available Commands
 - `help`: Prints help (usage explanation)
@@ -61,6 +62,9 @@ You can pass non-default parameters in the form of `key=value`-pairs.
 - `stop`: stops the receiver and closes the file(s) and connection(s).
 - `exit`: exits the receiver.
 - `catch`: Fetches the "attention" of the board again. Use it in case you do not receive any more data even if the board *should* send some.
+- `status`: (todoc)
+- `trigger`: (todoc)
+- `switch`: (todoc)
 
 
 ## `data_parser`

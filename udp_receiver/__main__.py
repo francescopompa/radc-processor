@@ -1,8 +1,5 @@
 
 
-import sys
-import time
-from udp_receiver.receiver_class import Receiver
 
 #
 # Todo:
@@ -82,7 +79,11 @@ def parse_arguments(args):
     print("Parsed args:", argsdict)
     return argsdict
 
+
 def main(argsdict=None):
+    import sys
+    from udp_receiver.receiver_class import Receiver
+
     print_usage()
     # print(sys.argv)
     argsdict = argsdict or parse_arguments(sys.argv[1:])    # First argument is the script name
@@ -91,7 +92,6 @@ def main(argsdict=None):
         while True:
             line = sys.stdin.readline().rstrip('\n').split(' ')
             parse_stdin(line, rec)
-
 
 
 if __name__ == "__main__":
