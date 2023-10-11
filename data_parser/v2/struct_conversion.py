@@ -21,6 +21,7 @@ class DataFile(_DataFile):
     def __calculate_format_string(self, endianness=None):
         if endianness is None:
             endianness = self.__endianness
+        endian = endianness_struct_mapping[endianness]
 
         fsm = CONFIG["struct_fields_mapping"]
         package_header = ''.join([
@@ -28,7 +29,7 @@ class DataFile(_DataFile):
         ])
 
         event_header = ''.join([
-            value for value in fsm["Snippet_header"].values()
+            value for value in fsm["Event_header"].values()
         ])
 
         snippet_header = ''.join([
@@ -67,24 +68,24 @@ class DataFile(_DataFile):
         offset = 0
         filesize = os.stat(self.path).st_size
         with open(self.path, "rb") as file:
-            # filecontents = file.read()
-            while offset < filesize:
-                event = Event(
-                    tup=event_struct.unpack_from(file, offset=offset),
-                    snippet_length = snippet_struct.size,
-                    snippet_size_bytes = self.snippet_size_bytes
-                    )
+            filecontents = file.read()
+        while offset < filesize:
+            event = Event(
+                tup=event_struct.unpack_from(filecontents, offset=offset),
+                snippet_length = snippet_struct.size,
+                snippet_size_bytes = self.snippet_size_bytes
+                )
 
-                for i in range(event.stats["snippet_space"]):
-                    event.snippets.append(Snippet(
-                        tup=snippet_struct.unpack_from(
-                            file,
-                            offset=offset+i*snippet_struct.size
-                            )
-                    ))
+            for i in range(event.stats["snippet_space"]):
+                event.snippets.append(Snippet(
+                    tup=snippet_struct.unpack_from(
+                        filecontents,
+                        offset=offset+i*snippet_struct.size
+                        )
+                ))
 
-                offset += event.stats["length"]
-                yield event
+            offset += event.stats["length"]
+            yield event
 
 
     def unpack(self):
@@ -103,6 +104,7 @@ class Event(_Snippet):
     _kwargs = ["snippet_length", "snippet_size_bytes"]
     _contents = "snippets"
     _mapping_dict = CONFIG["struct_fields_mapping"]
+    _mapping_name = "Event_header"
     _stats_default = {
         "length": (
             sizes["udp_header_size_bytes"]
@@ -139,7 +141,7 @@ class Event(_Snippet):
         self.stats["snippet_space"] = (
             min(
                 self.header["Snippet_count"],
-                ((CONFIG["udp_package_size_bytes"]
+                ((sizes["udp_package_size_bytes"]
                   - self.snippet_size_bytes[0])
                 // self.snippet_size_bytes[1])
             )

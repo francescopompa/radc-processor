@@ -20,6 +20,9 @@ struct_fields_mapping:
 
   # RADC Header for each event
   Event_header:
+    # WARNING: simply using "I" will pad the bytes
+    # Specifiy a non-default byte-order to inhibit this.
+    # https://docs.python.org/3/library/struct.html#byte-order-size-and-alignment
     Trigger_type: "c" # 1 Byte char
     Frame_number: "B" # 1 Byte unsigned integer/char
     Event_ID: "3s"  # 3 Bytes unsigned integer

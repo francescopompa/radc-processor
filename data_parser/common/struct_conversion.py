@@ -50,10 +50,17 @@ class _DataFile():
         self.__endianness = endianness
         self.format = self.__calculate_format_string(self.__endianness)
 
-    def __validate_format_string(self, string, size):
-        if struct.calcsize(string) != size:
+    def _validate_format_string(self, string, size, structname=""):
+        if not any(
+            string.startswith(e) for e in endianness_struct_mapping.values()
+            ):
+            string = endianness_struct_mapping[self.__endianness] + string
+        structname += " " if structname else ""
+
+        calcsize = struct.calcsize(string)
+        if calcsize != size:
             raise ValueError(
-                f"Struct Format string \"{string}\" does not match size {size} bytes.")
+                f"{self.__class__.__name__}: {structname}struct Format string \"{string}\" of size {calcsize} does not match size {size} bytes.")
 
     def __calculate_format_string(self, endianness=None):
         if endianness is None:
@@ -110,6 +117,7 @@ class _Snippet():
     _kwargs = []
     _contents = "samples"
     _mapping_dict = CONFIG["struct_fields_mapping"]
+    _mapping_name = "Snippet_header"
     _stats_default = {
             "min": 0,
             "max": 0,
@@ -140,8 +148,8 @@ class _Snippet():
             self.udp_header[key] = tup[i]
 
         # Use previous counter (or -1) as offset:
-        for i, key in enumerate(self._mapping_dict["Snippet_header"], i+1):
-            self.header[key] = self.__convert_types(key, tup[i])
+        for i, key in enumerate(self._mapping_dict[self._mapping_name], i+1):
+            self.header[key] = self._convert_types(key, tup[i])
 
         if all(key in self.header for key in ["Seconds", "Subsecs"]):
             self.header["Timestamp_s"] = self.__convert_time(
