@@ -18,15 +18,27 @@ class DataFile(_DataFile):
 
     _contents = "events"
 
-    def _calculate_format_string(self, endianness=None):
+    def _calculate_format_string(self, endianness=None, include_UDP_header=None):
         if endianness is None:
             endianness = self.__endianness
+        if include_UDP_header is None:
+            include_UDP_header = self.include_UDP_header
         endian = endianness_struct_mapping[endianness]
 
         fsm = CONFIG["struct_fields_mapping"]
-        package_header = ''.join([
-            value for value in fsm["UDP_header"].values()
-        ])
+
+        if include_UDP_header is True:
+            package_header = ''.join([
+                value for value in fsm["UDP_header"].values()
+            ])
+            self._validate_format_string(
+                package_header,
+                CONFIG["udp_package_structure"]["udp_header_size_bytes"],
+                structname="package_header"
+            )
+        else:
+            package_header = ""
+
 
         event_header = ''.join([
             value for value in fsm["Event_header"].values()
@@ -38,10 +50,6 @@ class DataFile(_DataFile):
 
         samples = self.tracelength * fsm["Sample"]
 
-        self._validate_format_string(
-            package_header,
-            CONFIG["udp_package_structure"]["udp_header_size_bytes"],
-            structname="package_header")
         self._validate_format_string(
             event_header,
             CONFIG["udp_package_structure"]["event_header_size_bytes"],
@@ -80,7 +88,8 @@ class DataFile(_DataFile):
             event = Event(
                 tup=event_struct.unpack_from(filecontents, offset=offset),
                 snippet_length = snippet_struct.size,
-                snippet_size_bytes = self.snippet_size_bytes
+                snippet_size_bytes = self.snippet_size_bytes,
+                include_UDP_header = self.include_UDP_header
                 )
 
             for i in range(event.stats["snippet_space"]):
@@ -88,7 +97,8 @@ class DataFile(_DataFile):
                     tup=snippet_struct.unpack_from(
                         filecontents,
                         offset=offset+i*snippet_struct.size
-                        )
+                        ),
+                    include_UDP_header=self.include_UDP_header
                 ))
 
             offset += event.stats["length"]
@@ -139,7 +149,7 @@ class Event(_Snippet):
 
     def _calculate_stats(self):
         self.stats["length"] = (
-            sizes["udp_header_size_bytes"]
+            sizes["udp_header_size_bytes"] if self.include_UDP_header is True else 0
             + sizes["event_header_size_bytes"]
             + self.header["Snippet_count"]
                 * self.snippet_length

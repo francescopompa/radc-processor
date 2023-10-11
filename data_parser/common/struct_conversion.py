@@ -39,16 +39,18 @@ class _DataFile():
     def __init__(self,
                  path,
                  tracelength=CONFIG["udp_package_structure"]["default_trace_length"],
-                 endianness="little-endian"
+                 endianness="little-endian",
+                 include_UDP_header=True
                  ) -> None:
         self.path = path
         self.tracelength = tracelength
+        self.include_UDP_header = include_UDP_header
         setattr(self, self._contents, [])
         # self.snippets = []  # iter(())
         self.snippet_size_bytes = None
 
         self.__endianness = endianness
-        self.format = self._calculate_format_string(self.__endianness)
+        self.format = self._calculate_format_string()
 
     def _validate_format_string(self, string, size, structname=""):
         if not any(
@@ -62,14 +64,23 @@ class _DataFile():
             raise ValueError(
                 f"{self.__class__.__name__}: {structname}struct Format string \"{string}\" of size {calcsize} does not match size {size} bytes.")
 
-    def _calculate_format_string(self, endianness=None):
+    def _calculate_format_string(self, endianness=None, include_UDP_header=None):
         if endianness is None:
             endianness = self.__endianness
+        if include_UDP_header is None:
+            include_UDP_header = self.include_UDP_header
 
         fsm = CONFIG["struct_fields_mapping"]
-        package_header = ''.join([
-            value for value in fsm["UDP_header"].values()
-        ])
+
+        if include_UDP_header is True:
+            package_header = ''.join([
+                value for value in fsm["UDP_header"].values()
+            ])
+            self._validate_format_string(
+                package_header, CONFIG["udp_package_structure"]["udp_header_size_bytes"]
+            )
+        else:
+            package_header = ""
 
         snippet_header = ''.join([
             value for value in fsm["Snippet_header"].values()
@@ -77,8 +88,6 @@ class _DataFile():
 
         samples = self.tracelength * fsm["Sample"]
 
-        self._validate_format_string(
-            package_header, CONFIG["udp_package_structure"]["udp_header_size_bytes"])
         self._validate_format_string(
             snippet_header, CONFIG["udp_package_structure"]["snippet_header_size_bytes"])
         self._validate_format_string(
@@ -99,10 +108,10 @@ class _DataFile():
 
     def _convert_struct_to_snippet(self, structs):
         if not isinstance(structs, collections.abc.Iterable):
-            return iter(_Snippet(structs))
+            return iter(_Snippet(structs, include_UDP_header=self.include_UDP_header))
 
         for istruct in structs:
-            yield _Snippet(istruct)
+            yield _Snippet(istruct, include_UDP_header=self.include_UDP_header)
 
     def get_records(self):
         if len(self.snippets) == 0:
@@ -124,7 +133,7 @@ class _Snippet():
             "trigger_count": 0,
         }
 
-    def __init__(self, tup, **kwargs) -> None:
+    def __init__(self, tup, include_UDP_header=True, **kwargs) -> None:
         """
         Within __init__, `self` will always match the baseclass/superclass.
         Name mangling (__method_name()) should therefore not be used for
@@ -134,6 +143,7 @@ class _Snippet():
         self.header = {}
         # self.samples = []
         self.trigger_IDs = []
+        self.include_UDP_header = include_UDP_header
 
         self.stats = self._stats_default.copy()
 
@@ -147,11 +157,16 @@ class _Snippet():
 
     def _init_header_with_tuple(self, tup):
         #
+        # Implement event unpacking
+        #
+        print(tup)
         # if ["UDP_header"] is empty, i is not declared. Set to -1 as backup
         i = -1
 
-        for i, key in enumerate(self._mapping_dict["UDP_header"], 0):
-            self.udp_header[key] = tup[i]
+        if self.include_UDP_header is True:
+            for i, key in enumerate(self._mapping_dict["UDP_header"], 0):
+                self.udp_header[key] = tup[i]
+            print(self.udp_header, self.include_UDP_header)
 
         # Use previous counter (or -1) as offset:
         for i, key in enumerate(self._mapping_dict[self._mapping_name], i+1):
