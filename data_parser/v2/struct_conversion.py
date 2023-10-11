@@ -18,7 +18,7 @@ class DataFile(_DataFile):
 
     _contents = "events"
 
-    def __calculate_format_string(self, endianness=None):
+    def _calculate_format_string(self, endianness=None):
         if endianness is None:
             endianness = self.__endianness
         endian = endianness_struct_mapping[endianness]
@@ -38,16 +38,23 @@ class DataFile(_DataFile):
 
         samples = self.tracelength * fsm["Sample"]
 
-        self.__validate_format_string(
-            package_header, CONFIG["udp_package_structure"]["udp_header_size_bytes"])
-        self.__validate_format_string(
-            event_header, CONFIG["udp_package_structure"]["event_header_size_bytes"])
-        self.__validate_format_string(
-            snippet_header, CONFIG["udp_package_structure"]["snippet_header_size_bytes"])
-        self.__validate_format_string(
-            fsm["Sample"], CONFIG["udp_package_structure"]["sample_size_bytes"])
+        self._validate_format_string(
+            package_header,
+            CONFIG["udp_package_structure"]["udp_header_size_bytes"],
+            structname="package_header")
+        self._validate_format_string(
+            event_header,
+            CONFIG["udp_package_structure"]["event_header_size_bytes"],
+            structname="event_header")
+        self._validate_format_string(
+            snippet_header,
+            CONFIG["udp_package_structure"]["snippet_header_size_bytes"],
+            structname="snippet_header")
+        self._validate_format_string(
+            fsm["Sample"],
+            CONFIG["udp_package_structure"]["sample_size_bytes"],
+            structname="sample")
 
-        endian = endianness_struct_mapping[endianness]
         # string = f"{endian} {package_header} {snippet_header} {samples}"
         event_string = f"{endian} {package_header} {event_header}"
         snippet_string = f"{endian} {snippet_header} {samples}"
@@ -115,10 +122,10 @@ class Event(_Snippet):
         "snippet_space": 0
         }
 
-    def __init_contents_with_tuple(self, tup, index):
+    def _init_contents_with_tuple(self, tup, index):
         setattr(self, self._contents, [])
 
-    def __convert_types(self, key, entry):
+    def _convert_types(self, key, entry):
         match key:
             case "Type"|"Trigger_type":
                 return entry.decode("ascii")
@@ -130,8 +137,7 @@ class Event(_Snippet):
             case _:
                 return entry
 
-
-    def __calculate_stats(self):
+    def _calculate_stats(self):
         self.stats["length"] = (
             sizes["udp_header_size_bytes"]
             + sizes["event_header_size_bytes"]

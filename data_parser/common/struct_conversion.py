@@ -48,7 +48,7 @@ class _DataFile():
         self.snippet_size_bytes = None
 
         self.__endianness = endianness
-        self.format = self.__calculate_format_string(self.__endianness)
+        self.format = self._calculate_format_string(self.__endianness)
 
     def _validate_format_string(self, string, size, structname=""):
         if not any(
@@ -62,7 +62,7 @@ class _DataFile():
             raise ValueError(
                 f"{self.__class__.__name__}: {structname}struct Format string \"{string}\" of size {calcsize} does not match size {size} bytes.")
 
-    def __calculate_format_string(self, endianness=None):
+    def _calculate_format_string(self, endianness=None):
         if endianness is None:
             endianness = self.__endianness
 
@@ -77,11 +77,11 @@ class _DataFile():
 
         samples = self.tracelength * fsm["Sample"]
 
-        self.__validate_format_string(
+        self._validate_format_string(
             package_header, CONFIG["udp_package_structure"]["udp_header_size_bytes"])
-        self.__validate_format_string(
+        self._validate_format_string(
             snippet_header, CONFIG["udp_package_structure"]["snippet_header_size_bytes"])
-        self.__validate_format_string(
+        self._validate_format_string(
             fsm["Sample"], CONFIG["udp_package_structure"]["sample_size_bytes"])
 
         string = f"{endianness_struct_mapping[endianness]} {package_header} {snippet_header} {samples}"
@@ -95,9 +95,9 @@ class _DataFile():
             filecontents = file.read()
 
         structs = struct.iter_unpack(self.format, filecontents)
-        self.snippets = list(self.__convert_struct_to_snippet(structs))
+        self.snippets = list(self._convert_struct_to_snippet(structs))
 
-    def __convert_struct_to_snippet(self, structs):
+    def _convert_struct_to_snippet(self, structs):
         if not isinstance(structs, collections.abc.Iterable):
             return iter(_Snippet(structs))
 
@@ -125,6 +125,11 @@ class _Snippet():
         }
 
     def __init__(self, tup, **kwargs) -> None:
+        """
+        Within __init__, `self` will always match the baseclass/superclass.
+        Name mangling (__method_name()) should therefore not be used for
+        methods the subclasses want to overwrite.
+        """
         self.udp_header = {}
         self.header = {}
         # self.samples = []
@@ -136,11 +141,12 @@ class _Snippet():
             if key in self._kwargs:
                 setattr(self, key, val)
 
-        index = self.__init_header_with_tuple(tup)
-        self.__init_contents_with_tuple(tup, index)
-        self.__calculate_stats()
+        index = self._init_header_with_tuple(tup)
+        self._init_contents_with_tuple(tup, index)
+        self._calculate_stats()
 
-    def __init_header_with_tuple(self, tup):
+    def _init_header_with_tuple(self, tup):
+        #
         # if ["UDP_header"] is empty, i is not declared. Set to -1 as backup
         i = -1
 
@@ -152,18 +158,18 @@ class _Snippet():
             self.header[key] = self._convert_types(key, tup[i])
 
         if all(key in self.header for key in ["Seconds", "Subsecs"]):
-            self.header["Timestamp_s"] = self.__convert_time(
+            self.header["Timestamp_s"] = self._convert_time(
                 self.header["Seconds"],
                 self.header["Subsecs"],
             )
 
         return i+1
 
-    def __init_contents_with_tuple(self, tup, index):
-        setattr(self, self._contents, list(self.__convert_samples(tup[index:])))
+    def _init_contents_with_tuple(self, tup, index):
+        setattr(self, self._contents, list(self._convert_samples(tup[index:])))
 
 
-    def __convert_types(self, key, entry):
+    def _convert_types(self, key, entry):
         match key:
             case "Type":
                 return entry.decode("ascii")
@@ -175,11 +181,11 @@ class _Snippet():
             case _:
                 return entry
 
-    def __convert_time(self, seconds, subsecs, freq=62500000):
+    def _convert_time(self, seconds, subsecs, freq=62500000):
         return seconds+subsecs/freq # divide by the clock frequency
 
 
-    def __convert_samples(self, tup):
+    def _convert_samples(self, tup):
         for ID, sample in enumerate(tup):
             # SOURCE https://realpython.com/python-bitwise-operators/#bitmasks
             t = bool((sample >> 15) & 1)  # Trigger flag
@@ -201,7 +207,7 @@ class _Snippet():
             #     "value": value,
             # }
 
-    def __calculate_stats(self):
+    def _calculate_stats(self):
         self.stats["min"] = min(self.samples)
         self.stats["max"] = max(self.samples)
         self.stats["trigger_count"] = len(self.trigger_IDs)
