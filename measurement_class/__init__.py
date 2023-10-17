@@ -298,6 +298,7 @@ class Measurement():
 
         path_keys = {
             "tek": {
+                "dir": f"\"E:{self.groupid}/data\"",
                 "set": f"\"E:{self.groupid}/data/{self.id}_tek.set\"",
                 "img": f"\"E:{self.groupid}/data/{self.id}_tek.png\"",
                 "wfm": f"\"E:{self.groupid}/data/{self.id}_tek.isf\"",
