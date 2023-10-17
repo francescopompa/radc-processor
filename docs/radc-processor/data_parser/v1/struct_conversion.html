@@ -26,27 +26,85 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python"># import struct
-# import collections
+<pre><code class="python">import struct
+import collections
 
-# from ..configuration import validate_config
-# CONFIG = validate_config(version=&#34;v1&#34;)
-
+from ..configuration import validate_config
 from ..common.struct_conversion import (
-    # endianness_struct_mapping,
-    _DataFile,
-    _Snippet
+    endianness_struct_mapping,
+    BaseDataFile,
+    BaseSnippet
 )
 
+CONFIG = validate_config(version=&#34;v1&#34;)
 
 
 
-class DataFile(_DataFile):
-    pass
+class DataFile(BaseDataFile):
 
-class Snippet(_Snippet):
+    _contents = &#34;snippets&#34;
 
-    def __convert_types(self, key, entry):
+    def _calculate_format_string(self, endianness=None, include_UDP_header=None):
+        if endianness is None:
+            endianness = self.__endianness
+        if include_UDP_header is None:
+            include_UDP_header = self.include_UDP_header
+
+        fsm = CONFIG[&#34;struct_fields_mapping&#34;]
+
+        if include_UDP_header is True:
+            package_header = &#39;&#39;.join([
+                value for value in fsm[&#34;UDP_header&#34;].values()
+            ])
+            self._validate_format_string(
+                package_header, CONFIG[&#34;udp_package_structure&#34;][&#34;udp_header_size_bytes&#34;]
+            )
+        else:
+            package_header = &#34;&#34;
+
+        snippet_header = &#39;&#39;.join([
+            value for value in fsm[&#34;Snippet_header&#34;].values()
+        ])
+
+        samples = f&#34;{self.tracelength}{fsm[&#39;Sample&#39;]}&#34;
+
+        self._validate_format_string(
+            snippet_header, CONFIG[&#34;udp_package_structure&#34;][&#34;snippet_header_size_bytes&#34;])
+        self._validate_format_string(
+            fsm[&#34;Sample&#34;], CONFIG[&#34;udp_package_structure&#34;][&#34;sample_size_bytes&#34;])
+
+        string = f&#34;{endianness_struct_mapping[endianness]} {package_header} {snippet_header} {samples}&#34;
+
+        self.snippet_size_bytes = struct.calcsize(string)
+
+        return string
+
+    def _convert_struct_to_snippet(self, structs):
+        if not isinstance(structs, collections.abc.Iterable):
+            return iter(Snippet(structs, include_UDP_header=self.include_UDP_header))
+
+        for istruct in structs:
+            yield Snippet(istruct, include_UDP_header=self.include_UDP_header)
+
+    def unpack(self):
+        with open(self.path, &#34;rb&#34;) as file:
+            filecontents = file.read()
+
+        structs = struct.iter_unpack(self.format, filecontents)
+        self.snippets = list(self._convert_struct_to_snippet(structs))
+
+    def get_records(self):
+        if len(self.snippets) == 0:
+            self.unpack()
+
+        for snippet in self.snippets:
+            yield snippet.get_record()
+
+
+
+class Snippet(BaseSnippet):
+
+    def _convert_types(self, key, entry):
         if key == &#34;Energy&#34;:
             # Reverse the Byte order
             return int.from_bytes(
@@ -67,35 +125,107 @@ class Snippet(_Snippet):
 <dl>
 <dt id="radc-processor.data_parser.v1.struct_conversion.DataFile"><code class="flex name class">
 <span>class <span class="ident">DataFile</span></span>
-<span>(</span><span>path, tracelength=700, endianness='little-endian')</span>
+<span>(</span><span>path, tracelength=700, endianness='little-endian', include_UDP_header=True)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>The base class for DataFile objects.
+This class is initialized with a path and provides methods to unpack
+data from this path.
+Unpacking and storing data in the correct hierarchy and fields is handled
+implicitely.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class DataFile(_DataFile):
-    pass</code></pre>
+<pre><code class="python">class DataFile(BaseDataFile):
+
+    _contents = &#34;snippets&#34;
+
+    def _calculate_format_string(self, endianness=None, include_UDP_header=None):
+        if endianness is None:
+            endianness = self.__endianness
+        if include_UDP_header is None:
+            include_UDP_header = self.include_UDP_header
+
+        fsm = CONFIG[&#34;struct_fields_mapping&#34;]
+
+        if include_UDP_header is True:
+            package_header = &#39;&#39;.join([
+                value for value in fsm[&#34;UDP_header&#34;].values()
+            ])
+            self._validate_format_string(
+                package_header, CONFIG[&#34;udp_package_structure&#34;][&#34;udp_header_size_bytes&#34;]
+            )
+        else:
+            package_header = &#34;&#34;
+
+        snippet_header = &#39;&#39;.join([
+            value for value in fsm[&#34;Snippet_header&#34;].values()
+        ])
+
+        samples = f&#34;{self.tracelength}{fsm[&#39;Sample&#39;]}&#34;
+
+        self._validate_format_string(
+            snippet_header, CONFIG[&#34;udp_package_structure&#34;][&#34;snippet_header_size_bytes&#34;])
+        self._validate_format_string(
+            fsm[&#34;Sample&#34;], CONFIG[&#34;udp_package_structure&#34;][&#34;sample_size_bytes&#34;])
+
+        string = f&#34;{endianness_struct_mapping[endianness]} {package_header} {snippet_header} {samples}&#34;
+
+        self.snippet_size_bytes = struct.calcsize(string)
+
+        return string
+
+    def _convert_struct_to_snippet(self, structs):
+        if not isinstance(structs, collections.abc.Iterable):
+            return iter(Snippet(structs, include_UDP_header=self.include_UDP_header))
+
+        for istruct in structs:
+            yield Snippet(istruct, include_UDP_header=self.include_UDP_header)
+
+    def unpack(self):
+        with open(self.path, &#34;rb&#34;) as file:
+            filecontents = file.read()
+
+        structs = struct.iter_unpack(self.format, filecontents)
+        self.snippets = list(self._convert_struct_to_snippet(structs))
+
+    def get_records(self):
+        if len(self.snippets) == 0:
+            self.unpack()
+
+        for snippet in self.snippets:
+            yield snippet.get_record()</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li>radc-processor.data_parser.common.struct_conversion._DataFile</li>
+<li><a title="radc-processor.data_parser.common.struct_conversion.BaseDataFile" href="../common/struct_conversion.html#radc-processor.data_parser.common.struct_conversion.BaseDataFile">BaseDataFile</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="radc-processor.data_parser.common.struct_conversion.BaseDataFile" href="../common/struct_conversion.html#radc-processor.data_parser.common.struct_conversion.BaseDataFile">BaseDataFile</a></b></code>:
+<ul class="hlist">
+<li><code><a title="radc-processor.data_parser.common.struct_conversion.BaseDataFile.get_records" href="../common/struct_conversion.html#radc-processor.data_parser.common.struct_conversion.BaseDataFile.get_records">get_records</a></code></li>
+<li><code><a title="radc-processor.data_parser.common.struct_conversion.BaseDataFile.unpack" href="../common/struct_conversion.html#radc-processor.data_parser.common.struct_conversion.BaseDataFile.unpack">unpack</a></code></li>
+</ul>
+</li>
 </ul>
 </dd>
 <dt id="radc-processor.data_parser.v1.struct_conversion.Snippet"><code class="flex name class">
 <span>class <span class="ident">Snippet</span></span>
-<span>(</span><span>tup, **kwargs)</span>
+<span>(</span><span>tup, include_UDP_header=True, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Within <strong>init</strong>, <code>self</code> will always match the baseclass/superclass.
+Name mangling (__method_name()) should therefore not be used for
+methods the subclasses want to overwrite.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class Snippet(_Snippet):
+<pre><code class="python">class Snippet(BaseSnippet):
 
-    def __convert_types(self, key, entry):
+    def _convert_types(self, key, entry):
         if key == &#34;Energy&#34;:
             # Reverse the Byte order
             return int.from_bytes(
@@ -106,7 +236,7 @@ class Snippet(_Snippet):
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li>radc-processor.data_parser.common.struct_conversion._Snippet</li>
+<li><a title="radc-processor.data_parser.common.struct_conversion.BaseSnippet" href="../common/struct_conversion.html#radc-processor.data_parser.common.struct_conversion.BaseSnippet">BaseSnippet</a></li>
 </ul>
 </dd>
 </dl>

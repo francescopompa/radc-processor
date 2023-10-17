@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>radc-processor.data_parser API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="Library for unpacking of binary data-files captured from the RADC-40 board
+with udp_receiver into pandas DataFrames.
+Can be extended to other file …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,18 +24,71 @@
 <h1 class="title">Module <code>radc-processor.data_parser</code></h1>
 </header>
 <section id="section-intro">
+<p>Library for unpacking of binary data-files captured from the RADC-40 board
+with udp_receiver into pandas DataFrames.
+Can be extended to other file structures and formats.</p>
+<p>The library includes two conversion schemes:
+- v1: is adequate for the old data-structure from the RADC firmware V1.X
+which uses simple snippets (one per pulse, each channel triggers independently).
+- v2: is adequate for the new data-structure from the RADC firmware V2.X
+which uses event frames containing up to 4 snippets each and additional
+context data like sum-channel trigger information.</p>
+<p>Usage of the conversion requires initialization of the library with the desired
+version:</p>
+<pre><code>import data_parser
+data_parser.init("vX")  # v1 or 1, v2 or 2, default is "v1"
+
+from data_parser import struct_conversion
+</code></pre>
+<p>Additionally this library provides:
+- data_io: helper functions to convert data-files to pandas DataFrames
+(requires <code><a title="radc-processor.data_parser.struct_conversion" href="struct_conversion.html">radc-processor.data_parser.struct_conversion</a></code> initialization).
+- dataFrame_helpers: helper functions for common information or manipulation
+calls about generated DataFrames.
+- plotting: functions to generate plots out of generated DataFrames.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python"># from . import data_io, dataFrame_helpers, plotting
+<pre><code class="python">&#34;&#34;&#34;
+Library for unpacking of binary data-files captured from the RADC-40 board
+with udp_receiver into pandas DataFrames.
+Can be extended to other file structures and formats.
+
+The library includes two conversion schemes:
+- v1: is adequate for the old data-structure from the RADC firmware V1.X
+    which uses simple snippets (one per pulse, each channel triggers independently).
+- v2: is adequate for the new data-structure from the RADC firmware V2.X
+    which uses event frames containing up to 4 snippets each and additional
+    context data like sum-channel trigger information.
+
+Usage of the conversion requires initialization of the library with the desired
+version:
+
+    import data_parser
+    data_parser.init(&#34;vX&#34;)  # v1 or 1, v2 or 2, default is &#34;v1&#34;
+
+    from data_parser import struct_conversion
+
+Additionally this library provides:
+- data_io: helper functions to convert data-files to pandas DataFrames
+    (requires `struct_conversion` initialization).
+- dataFrame_helpers: helper functions for common information or manipulation
+    calls about generated DataFrames.
+- plotting: functions to generate plots out of generated DataFrames.
+&#34;&#34;&#34;
+# from . import data_io, dataFrame_helpers, plotting
 
 VERSION = None
+&#34;&#34;&#34;Integer variable holding the current converter version. Initialized with `None`.&#34;&#34;&#34;
 VERSION_STR = &#34;&#34;
+&#34;&#34;&#34;String representation of the current converter version (&#34;vX&#34;).&#34;&#34;&#34;
 
 VERSIONS = [None, &#34;v1&#34;, &#34;v2&#34;]
+&#34;&#34;&#34;List of possible converter versions.&#34;&#34;&#34;
 
 DEFAULT_VERSION = &#34;v1&#34;
+&#34;&#34;&#34;Default converter version value.&#34;&#34;&#34;
 
 # __all__ = [
 #         &#34;data_io&#34;,
@@ -43,6 +98,14 @@ DEFAULT_VERSION = &#34;v1&#34;
 #     ]
 
 def init(_VERSION=DEFAULT_VERSION):
+    &#34;&#34;&#34;
+    Initialization function for this library.
+    `struct_conversion` implicitely loads the correct version of the unpacking
+    algorithm in accordance with the global variables defined in this module.
+    This function sets those variables and is required to use this library.
+
+    Default is &#34;v1&#34;.
+    &#34;&#34;&#34;
     global VERSION, VERSION_STR
     if VERSION is not None:
         return
@@ -95,6 +158,25 @@ Methods to ease manipulation of DataFrames and displaying information.</p></div>
 </dl>
 </section>
 <section>
+<h2 class="section-title" id="header-variables">Global variables</h2>
+<dl>
+<dt id="radc-processor.data_parser.DEFAULT_VERSION"><code class="name">var <span class="ident">DEFAULT_VERSION</span></code></dt>
+<dd>
+<div class="desc"><p>Default converter version value.</p></div>
+</dd>
+<dt id="radc-processor.data_parser.VERSION"><code class="name">var <span class="ident">VERSION</span></code></dt>
+<dd>
+<div class="desc"><p>Integer variable holding the current converter version. Initialized with <code>None</code>.</p></div>
+</dd>
+<dt id="radc-processor.data_parser.VERSIONS"><code class="name">var <span class="ident">VERSIONS</span></code></dt>
+<dd>
+<div class="desc"><p>List of possible converter versions.</p></div>
+</dd>
+<dt id="radc-processor.data_parser.VERSION_STR"><code class="name">var <span class="ident">VERSION_STR</span></code></dt>
+<dd>
+<div class="desc"><p>String representation of the current converter version ("vX").</p></div>
+</dd>
+</dl>
 </section>
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
@@ -103,12 +185,24 @@ Methods to ease manipulation of DataFrames and displaying information.</p></div>
 <span>def <span class="ident">init</span></span>(<span>)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Initialization function for this library.
+<code><a title="radc-processor.data_parser.struct_conversion" href="struct_conversion.html">radc-processor.data_parser.struct_conversion</a></code> implicitely loads the correct version of the unpacking
+algorithm in accordance with the global variables defined in this module.
+This function sets those variables and is required to use this library.</p>
+<p>Default is "v1".</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def init(_VERSION=DEFAULT_VERSION):
+    &#34;&#34;&#34;
+    Initialization function for this library.
+    `struct_conversion` implicitely loads the correct version of the unpacking
+    algorithm in accordance with the global variables defined in this module.
+    This function sets those variables and is required to use this library.
+
+    Default is &#34;v1&#34;.
+    &#34;&#34;&#34;
     global VERSION, VERSION_STR
     if VERSION is not None:
         return
@@ -148,6 +242,14 @@ Methods to ease manipulation of DataFrames and displaying information.</p></div>
 <li><code><a title="radc-processor.data_parser.struct_conversion" href="struct_conversion.html">radc-processor.data_parser.struct_conversion</a></code></li>
 <li><code><a title="radc-processor.data_parser.v1" href="v1/index.html">radc-processor.data_parser.v1</a></code></li>
 <li><code><a title="radc-processor.data_parser.v2" href="v2/index.html">radc-processor.data_parser.v2</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-variables">Global variables</a></h3>
+<ul class="">
+<li><code><a title="radc-processor.data_parser.DEFAULT_VERSION" href="#radc-processor.data_parser.DEFAULT_VERSION">DEFAULT_VERSION</a></code></li>
+<li><code><a title="radc-processor.data_parser.VERSION" href="#radc-processor.data_parser.VERSION">VERSION</a></code></li>
+<li><code><a title="radc-processor.data_parser.VERSIONS" href="#radc-processor.data_parser.VERSIONS">VERSIONS</a></code></li>
+<li><code><a title="radc-processor.data_parser.VERSION_STR" href="#radc-processor.data_parser.VERSION_STR">VERSION_STR</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>

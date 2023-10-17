@@ -27,7 +27,6 @@
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">import struct
-import collections
 
 from ..configuration import CONFIG
 
@@ -60,95 +59,91 @@ endianness_struct_mapping = {
 }
 
 
-class _DataFile():
+class BaseDataFile():
+    &#34;&#34;&#34;
+    The base class for DataFile objects.
+    This class is initialized with a path and provides methods to unpack
+    data from this path.
+    Unpacking and storing data in the correct hierarchy and fields is handled
+    implicitely.
+    &#34;&#34;&#34;
 
-    _contents = &#34;snippets&#34;
+    _contents = None
+    &#34;&#34;&#34;A string describing the kind of object this class holds.&#34;&#34;&#34;
 
     def __init__(self,
                  path,
                  tracelength=CONFIG[&#34;udp_package_structure&#34;][&#34;default_trace_length&#34;],
-                 endianness=&#34;little-endian&#34;
+                 endianness=&#34;little-endian&#34;,
+                 include_UDP_header=True
                  ) -&gt; None:
         self.path = path
         self.tracelength = tracelength
+        self.include_UDP_header = include_UDP_header
         setattr(self, self._contents, [])
         # self.snippets = []  # iter(())
         self.snippet_size_bytes = None
 
         self.__endianness = endianness
-        self.format = self.__calculate_format_string(self.__endianness)
+        self.format = self._calculate_format_string()
 
-    def __validate_format_string(self, string, size):
-        if struct.calcsize(string) != size:
+    def _validate_format_string(self, string, size, structname=&#34;&#34;):
+        if not any(
+            string.startswith(e) for e in endianness_struct_mapping.values()
+            ):
+            string = endianness_struct_mapping[self.__endianness] + string
+        structname += &#34; &#34; if structname else &#34;&#34;
+
+        calcsize = struct.calcsize(string)
+        if calcsize != size:
             raise ValueError(
-                f&#34;Struct Format string \&#34;{string}\&#34; does not match size {size} bytes.&#34;)
+                f&#34;{self.__class__.__name__}: {structname}struct Format string \&#34;{string}\&#34; of size {calcsize} does not match size {size} bytes.&#34;)
 
-    def __calculate_format_string(self, endianness=None):
-        if endianness is None:
-            endianness = self.__endianness
 
-        fsm = CONFIG[&#34;struct_fields_mapping&#34;]
-        package_header = &#39;&#39;.join([
-            value for value in fsm[&#34;UDP_header&#34;].values()
-        ])
-
-        snippet_header = &#39;&#39;.join([
-            value for value in fsm[&#34;Snippet_header&#34;].values()
-        ])
-
-        samples = self.tracelength * fsm[&#34;Sample&#34;]
-
-        self.__validate_format_string(
-            package_header, CONFIG[&#34;udp_package_structure&#34;][&#34;udp_header_size_bytes&#34;])
-        self.__validate_format_string(
-            snippet_header, CONFIG[&#34;udp_package_structure&#34;][&#34;snippet_header_size_bytes&#34;])
-        self.__validate_format_string(
-            fsm[&#34;Sample&#34;], CONFIG[&#34;udp_package_structure&#34;][&#34;sample_size_bytes&#34;])
-
-        string = f&#34;{endianness_struct_mapping[endianness]} {package_header} {snippet_header} {samples}&#34;
-
-        self.snippet_size_bytes = struct.calcsize(string)
-
-        return string
+    def _calculate_format_string(self, endianness=None, include_UDP_header=None):
+        &#34;&#34;&#34;
+        Method to generate the unpacking-format-descriptor for the struct package.
+        &#34;&#34;&#34;
+        raise NotImplementedError
 
     def unpack(self):
-        with open(self.path, &#34;rb&#34;) as file:
-            filecontents = file.read()
-
-        structs = struct.iter_unpack(self.format, filecontents)
-        self.snippets = list(self.__convert_struct_to_snippet(structs))
-
-    def __convert_struct_to_snippet(self, structs):
-        if not isinstance(structs, collections.abc.Iterable):
-            return iter(_Snippet(structs))
-
-        for istruct in structs:
-            yield _Snippet(istruct)
+        &#34;&#34;&#34;
+        This method starts the unpacking of the file into one single hierarchical
+        dictionnary containing all header and signal data.
+        &#34;&#34;&#34;
+        raise NotImplementedError
 
     def get_records(self):
-        if len(self.snippets) == 0:
-            self.unpack()
+        &#34;&#34;&#34;
+        Method returning a generator used by pandas to create a DataFrame from.
+        &#34;&#34;&#34;
+        raise NotImplementedError
 
-        for snippet in self.snippets:
-            yield snippet.get_record()
 
 
-class _Snippet():
+class BaseSnippet():
 
     _kwargs = []
     _contents = &#34;samples&#34;
     _mapping_dict = CONFIG[&#34;struct_fields_mapping&#34;]
+    _mapping_name = &#34;Snippet_header&#34;
     _stats_default = {
             &#34;min&#34;: 0,
             &#34;max&#34;: 0,
             &#34;trigger_count&#34;: 0,
         }
 
-    def __init__(self, tup, **kwargs) -&gt; None:
+    def __init__(self, tup, include_UDP_header=True, **kwargs) -&gt; None:
+        &#34;&#34;&#34;
+        Within __init__, `self` will always match the baseclass/superclass.
+        Name mangling (__method_name()) should therefore not be used for
+        methods the subclasses want to overwrite.
+        &#34;&#34;&#34;
         self.udp_header = {}
         self.header = {}
         # self.samples = []
         self.trigger_IDs = []
+        self.include_UDP_header = include_UDP_header
 
         self.stats = self._stats_default.copy()
 
@@ -156,34 +151,40 @@ class _Snippet():
             if key in self._kwargs:
                 setattr(self, key, val)
 
-        index = self.__init_header_with_tuple(tup)
-        self.__init_contents_with_tuple(tup, index)
-        self.__calculate_stats()
+        index = self._init_header_with_tuple(tup)
+        self._init_contents_with_tuple(tup, index)
+        self._calculate_stats()
 
-    def __init_header_with_tuple(self, tup):
+    def _init_header_with_tuple(self, tup):
+        #
+        # Implement event unpacking
+        #
+        print(tup)
         # if [&#34;UDP_header&#34;] is empty, i is not declared. Set to -1 as backup
         i = -1
 
-        for i, key in enumerate(self._mapping_dict[&#34;UDP_header&#34;], 0):
-            self.udp_header[key] = tup[i]
+        if self.include_UDP_header is True:
+            for i, key in enumerate(self._mapping_dict[&#34;UDP_header&#34;], 0):
+                self.udp_header[key] = tup[i]
+            print(self.udp_header, self.include_UDP_header)
 
         # Use previous counter (or -1) as offset:
-        for i, key in enumerate(self._mapping_dict[&#34;Snippet_header&#34;], i+1):
-            self.header[key] = self.__convert_types(key, tup[i])
+        for i, key in enumerate(self._mapping_dict[self._mapping_name], i+1):
+            self.header[key] = self._convert_types(key, tup[i])
 
         if all(key in self.header for key in [&#34;Seconds&#34;, &#34;Subsecs&#34;]):
-            self.header[&#34;Timestamp_s&#34;] = self.__convert_time(
+            self.header[&#34;Timestamp_s&#34;] = self._convert_time(
                 self.header[&#34;Seconds&#34;],
                 self.header[&#34;Subsecs&#34;],
             )
 
         return i+1
 
-    def __init_contents_with_tuple(self, tup, index):
-        setattr(self, self._contents, list(self.__convert_samples(tup[index:])))
+    def _init_contents_with_tuple(self, tup, index):
+        setattr(self, self._contents, list(self._convert_samples(tup[index:])))
 
 
-    def __convert_types(self, key, entry):
+    def _convert_types(self, key, entry):
         match key:
             case &#34;Type&#34;:
                 return entry.decode(&#34;ascii&#34;)
@@ -195,11 +196,11 @@ class _Snippet():
             case _:
                 return entry
 
-    def __convert_time(self, seconds, subsecs, freq=62500000):
+    def _convert_time(self, seconds, subsecs, freq=62500000):
         return seconds+subsecs/freq # divide by the clock frequency
 
 
-    def __convert_samples(self, tup):
+    def _convert_samples(self, tup):
         for ID, sample in enumerate(tup):
             # SOURCE https://realpython.com/python-bitwise-operators/#bitmasks
             t = bool((sample &gt;&gt; 15) &amp; 1)  # Trigger flag
@@ -221,7 +222,7 @@ class _Snippet():
             #     &#34;value&#34;: value,
             # }
 
-    def __calculate_stats(self):
+    def _calculate_stats(self):
         self.stats[&#34;min&#34;] = min(self.samples)
         self.stats[&#34;max&#34;] = max(self.samples)
         self.stats[&#34;trigger_count&#34;] = len(self.trigger_IDs)
@@ -243,6 +244,282 @@ class _Snippet():
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="radc-processor.data_parser.common.struct_conversion.BaseDataFile"><code class="flex name class">
+<span>class <span class="ident">BaseDataFile</span></span>
+<span>(</span><span>path, tracelength=700, endianness='little-endian', include_UDP_header=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The base class for DataFile objects.
+This class is initialized with a path and provides methods to unpack
+data from this path.
+Unpacking and storing data in the correct hierarchy and fields is handled
+implicitely.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class BaseDataFile():
+    &#34;&#34;&#34;
+    The base class for DataFile objects.
+    This class is initialized with a path and provides methods to unpack
+    data from this path.
+    Unpacking and storing data in the correct hierarchy and fields is handled
+    implicitely.
+    &#34;&#34;&#34;
+
+    _contents = None
+    &#34;&#34;&#34;A string describing the kind of object this class holds.&#34;&#34;&#34;
+
+    def __init__(self,
+                 path,
+                 tracelength=CONFIG[&#34;udp_package_structure&#34;][&#34;default_trace_length&#34;],
+                 endianness=&#34;little-endian&#34;,
+                 include_UDP_header=True
+                 ) -&gt; None:
+        self.path = path
+        self.tracelength = tracelength
+        self.include_UDP_header = include_UDP_header
+        setattr(self, self._contents, [])
+        # self.snippets = []  # iter(())
+        self.snippet_size_bytes = None
+
+        self.__endianness = endianness
+        self.format = self._calculate_format_string()
+
+    def _validate_format_string(self, string, size, structname=&#34;&#34;):
+        if not any(
+            string.startswith(e) for e in endianness_struct_mapping.values()
+            ):
+            string = endianness_struct_mapping[self.__endianness] + string
+        structname += &#34; &#34; if structname else &#34;&#34;
+
+        calcsize = struct.calcsize(string)
+        if calcsize != size:
+            raise ValueError(
+                f&#34;{self.__class__.__name__}: {structname}struct Format string \&#34;{string}\&#34; of size {calcsize} does not match size {size} bytes.&#34;)
+
+
+    def _calculate_format_string(self, endianness=None, include_UDP_header=None):
+        &#34;&#34;&#34;
+        Method to generate the unpacking-format-descriptor for the struct package.
+        &#34;&#34;&#34;
+        raise NotImplementedError
+
+    def unpack(self):
+        &#34;&#34;&#34;
+        This method starts the unpacking of the file into one single hierarchical
+        dictionnary containing all header and signal data.
+        &#34;&#34;&#34;
+        raise NotImplementedError
+
+    def get_records(self):
+        &#34;&#34;&#34;
+        Method returning a generator used by pandas to create a DataFrame from.
+        &#34;&#34;&#34;
+        raise NotImplementedError</code></pre>
+</details>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="radc-processor.data_parser.v1.struct_conversion.DataFile" href="../v1/struct_conversion.html#radc-processor.data_parser.v1.struct_conversion.DataFile">DataFile</a></li>
+<li><a title="radc-processor.data_parser.v2.struct_conversion.DataFile" href="../v2/struct_conversion.html#radc-processor.data_parser.v2.struct_conversion.DataFile">DataFile</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="radc-processor.data_parser.common.struct_conversion.BaseDataFile.get_records"><code class="name flex">
+<span>def <span class="ident">get_records</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Method returning a generator used by pandas to create a DataFrame from.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_records(self):
+    &#34;&#34;&#34;
+    Method returning a generator used by pandas to create a DataFrame from.
+    &#34;&#34;&#34;
+    raise NotImplementedError</code></pre>
+</details>
+</dd>
+<dt id="radc-processor.data_parser.common.struct_conversion.BaseDataFile.unpack"><code class="name flex">
+<span>def <span class="ident">unpack</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This method starts the unpacking of the file into one single hierarchical
+dictionnary containing all header and signal data.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def unpack(self):
+    &#34;&#34;&#34;
+    This method starts the unpacking of the file into one single hierarchical
+    dictionnary containing all header and signal data.
+    &#34;&#34;&#34;
+    raise NotImplementedError</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="radc-processor.data_parser.common.struct_conversion.BaseSnippet"><code class="flex name class">
+<span>class <span class="ident">BaseSnippet</span></span>
+<span>(</span><span>tup, include_UDP_header=True, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Within <strong>init</strong>, <code>self</code> will always match the baseclass/superclass.
+Name mangling (__method_name()) should therefore not be used for
+methods the subclasses want to overwrite.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class BaseSnippet():
+
+    _kwargs = []
+    _contents = &#34;samples&#34;
+    _mapping_dict = CONFIG[&#34;struct_fields_mapping&#34;]
+    _mapping_name = &#34;Snippet_header&#34;
+    _stats_default = {
+            &#34;min&#34;: 0,
+            &#34;max&#34;: 0,
+            &#34;trigger_count&#34;: 0,
+        }
+
+    def __init__(self, tup, include_UDP_header=True, **kwargs) -&gt; None:
+        &#34;&#34;&#34;
+        Within __init__, `self` will always match the baseclass/superclass.
+        Name mangling (__method_name()) should therefore not be used for
+        methods the subclasses want to overwrite.
+        &#34;&#34;&#34;
+        self.udp_header = {}
+        self.header = {}
+        # self.samples = []
+        self.trigger_IDs = []
+        self.include_UDP_header = include_UDP_header
+
+        self.stats = self._stats_default.copy()
+
+        for key, val in kwargs.items():
+            if key in self._kwargs:
+                setattr(self, key, val)
+
+        index = self._init_header_with_tuple(tup)
+        self._init_contents_with_tuple(tup, index)
+        self._calculate_stats()
+
+    def _init_header_with_tuple(self, tup):
+        #
+        # Implement event unpacking
+        #
+        print(tup)
+        # if [&#34;UDP_header&#34;] is empty, i is not declared. Set to -1 as backup
+        i = -1
+
+        if self.include_UDP_header is True:
+            for i, key in enumerate(self._mapping_dict[&#34;UDP_header&#34;], 0):
+                self.udp_header[key] = tup[i]
+            print(self.udp_header, self.include_UDP_header)
+
+        # Use previous counter (or -1) as offset:
+        for i, key in enumerate(self._mapping_dict[self._mapping_name], i+1):
+            self.header[key] = self._convert_types(key, tup[i])
+
+        if all(key in self.header for key in [&#34;Seconds&#34;, &#34;Subsecs&#34;]):
+            self.header[&#34;Timestamp_s&#34;] = self._convert_time(
+                self.header[&#34;Seconds&#34;],
+                self.header[&#34;Subsecs&#34;],
+            )
+
+        return i+1
+
+    def _init_contents_with_tuple(self, tup, index):
+        setattr(self, self._contents, list(self._convert_samples(tup[index:])))
+
+
+    def _convert_types(self, key, entry):
+        match key:
+            case &#34;Type&#34;:
+                return entry.decode(&#34;ascii&#34;)
+            case &#34;Energy&#34;:
+                # Reverse the Byte order
+                return int.from_bytes(
+                    bytes([entry[2], entry[1], entry[0]])
+                )
+            case _:
+                return entry
+
+    def _convert_time(self, seconds, subsecs, freq=62500000):
+        return seconds+subsecs/freq # divide by the clock frequency
+
+
+    def _convert_samples(self, tup):
+        for ID, sample in enumerate(tup):
+            # SOURCE https://realpython.com/python-bitwise-operators/#bitmasks
+            t = bool((sample &gt;&gt; 15) &amp; 1)  # Trigger flag
+            i = bool((sample &gt;&gt; 14) &amp; 1)  # Inhibit flag
+            # 16 bits incl. 14 ones.
+            unsigned_val = sample &amp; 0b0011111111111111
+            s = unsigned_val &gt;&gt; 13  # 1: negative, 0:positive
+
+            if (t and not i):
+                # Real trigger case that wasn&#39;t inhibited:
+                self.trigger_IDs.append(ID)
+
+            # Considering the ADC to use two&#39;s-complement signed values
+            yield -s*2**14 + unsigned_val
+
+            # yield {
+            #     # &#34;total&#34;: bin(sample),
+            #     &#34;trigger&#34;: ,
+            #     &#34;value&#34;: value,
+            # }
+
+    def _calculate_stats(self):
+        self.stats[&#34;min&#34;] = min(self.samples)
+        self.stats[&#34;max&#34;] = max(self.samples)
+        self.stats[&#34;trigger_count&#34;] = len(self.trigger_IDs)
+
+    def get_record(self):
+        return {
+            **self.udp_header,
+            **self.header,
+            **self.stats,
+            &#34;trigger_IDs&#34;: self.trigger_IDs,
+            &#34;samples&#34;: self.samples
+        }</code></pre>
+</details>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="radc-processor.data_parser.v1.struct_conversion.Snippet" href="../v1/struct_conversion.html#radc-processor.data_parser.v1.struct_conversion.Snippet">Snippet</a></li>
+<li><a title="radc-processor.data_parser.v2.struct_conversion.Event" href="../v2/struct_conversion.html#radc-processor.data_parser.v2.struct_conversion.Event">Event</a></li>
+<li><a title="radc-processor.data_parser.v2.struct_conversion.Snippet" href="../v2/struct_conversion.html#radc-processor.data_parser.v2.struct_conversion.Snippet">Snippet</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="radc-processor.data_parser.common.struct_conversion.BaseSnippet.get_record"><code class="name flex">
+<span>def <span class="ident">get_record</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_record(self):
+    return {
+        **self.udp_header,
+        **self.header,
+        **self.stats,
+        &#34;trigger_IDs&#34;: self.trigger_IDs,
+        &#34;samples&#34;: self.samples
+    }</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
 </section>
 </article>
 <nav id="sidebar">
@@ -254,6 +531,23 @@ class _Snippet():
 <li><h3>Super-module</h3>
 <ul>
 <li><code><a title="radc-processor.data_parser.common" href="index.html">radc-processor.data_parser.common</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="radc-processor.data_parser.common.struct_conversion.BaseDataFile" href="#radc-processor.data_parser.common.struct_conversion.BaseDataFile">BaseDataFile</a></code></h4>
+<ul class="">
+<li><code><a title="radc-processor.data_parser.common.struct_conversion.BaseDataFile.get_records" href="#radc-processor.data_parser.common.struct_conversion.BaseDataFile.get_records">get_records</a></code></li>
+<li><code><a title="radc-processor.data_parser.common.struct_conversion.BaseDataFile.unpack" href="#radc-processor.data_parser.common.struct_conversion.BaseDataFile.unpack">unpack</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="radc-processor.data_parser.common.struct_conversion.BaseSnippet" href="#radc-processor.data_parser.common.struct_conversion.BaseSnippet">BaseSnippet</a></code></h4>
+<ul class="">
+<li><code><a title="radc-processor.data_parser.common.struct_conversion.BaseSnippet.get_record" href="#radc-processor.data_parser.common.struct_conversion.BaseSnippet.get_record">get_record</a></code></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

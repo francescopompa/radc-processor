@@ -28,53 +28,68 @@
 </summary>
 <pre><code class="python">import os
 import struct
-# import collections
 
 from ..configuration import validate_config
-CONFIG = validate_config(version=&#34;v2&#34;)
-
 from ..common.struct_conversion import (
     endianness_struct_mapping,
-    _DataFile,
-    _Snippet
+    BaseDataFile,
+    BaseSnippet
 )
+
+CONFIG = validate_config(version=&#34;v2&#34;)
 
 sizes = CONFIG[&#34;udp_package_structure&#34;]
 
 
-class DataFile(_DataFile):
+class DataFile(BaseDataFile):
 
     _contents = &#34;events&#34;
 
-    def __calculate_format_string(self, endianness=None):
+    def _calculate_format_string(self, endianness=None, include_UDP_header=None):
         if endianness is None:
             endianness = self.__endianness
+        if include_UDP_header is None:
+            include_UDP_header = self.include_UDP_header
+        endian = endianness_struct_mapping[endianness]
 
         fsm = CONFIG[&#34;struct_fields_mapping&#34;]
-        package_header = &#39;&#39;.join([
-            value for value in fsm[&#34;UDP_header&#34;].values()
-        ])
+
+        if include_UDP_header is True:
+            package_header = &#39;&#39;.join([
+                value for value in fsm[&#34;UDP_header&#34;].values()
+            ])
+            self._validate_format_string(
+                package_header,
+                CONFIG[&#34;udp_package_structure&#34;][&#34;udp_header_size_bytes&#34;],
+                structname=&#34;package_header&#34;
+            )
+        else:
+            package_header = &#34;&#34;
+
 
         event_header = &#39;&#39;.join([
-            value for value in fsm[&#34;Snippet_header&#34;].values()
+            value for value in fsm[&#34;Event_header&#34;].values()
         ])
 
         snippet_header = &#39;&#39;.join([
             value for value in fsm[&#34;Snippet_header&#34;].values()
         ])
 
-        samples = self.tracelength * fsm[&#34;Sample&#34;]
+        samples = f&#34;{self.tracelength}{fsm[&#39;Sample&#39;]}&#34;
 
-        self.__validate_format_string(
-            package_header, CONFIG[&#34;udp_package_structure&#34;][&#34;udp_header_size_bytes&#34;])
-        self.__validate_format_string(
-            event_header, CONFIG[&#34;udp_package_structure&#34;][&#34;event_header_size_bytes&#34;])
-        self.__validate_format_string(
-            snippet_header, CONFIG[&#34;udp_package_structure&#34;][&#34;snippet_header_size_bytes&#34;])
-        self.__validate_format_string(
-            fsm[&#34;Sample&#34;], CONFIG[&#34;udp_package_structure&#34;][&#34;sample_size_bytes&#34;])
+        self._validate_format_string(
+            event_header,
+            CONFIG[&#34;udp_package_structure&#34;][&#34;event_header_size_bytes&#34;],
+            structname=&#34;event_header&#34;)
+        self._validate_format_string(
+            snippet_header,
+            CONFIG[&#34;udp_package_structure&#34;][&#34;snippet_header_size_bytes&#34;],
+            structname=&#34;snippet_header&#34;)
+        self._validate_format_string(
+            fsm[&#34;Sample&#34;],
+            CONFIG[&#34;udp_package_structure&#34;][&#34;sample_size_bytes&#34;],
+            structname=&#34;sample&#34;)
 
-        endian = endianness_struct_mapping[endianness]
         # string = f&#34;{endian} {package_header} {snippet_header} {samples}&#34;
         event_string = f&#34;{endian} {package_header} {event_header}&#34;
         snippet_string = f&#34;{endian} {snippet_header} {samples}&#34;
@@ -95,24 +110,26 @@ class DataFile(_DataFile):
         offset = 0
         filesize = os.stat(self.path).st_size
         with open(self.path, &#34;rb&#34;) as file:
-            # filecontents = file.read()
-            while offset &lt; filesize:
-                event = Event(
-                    tup=event_struct.unpack_from(file, offset=offset),
-                    snippet_length = snippet_struct.size,
-                    snippet_size_bytes = self.snippet_size_bytes
-                    )
+            filecontents = file.read()
+        while offset &lt; filesize:
+            event = Event(
+                tup=event_struct.unpack_from(filecontents, offset=offset),
+                snippet_length = snippet_struct.size,
+                snippet_size_bytes = self.snippet_size_bytes,
+                include_UDP_header = self.include_UDP_header
+                )
 
-                for i in range(event.stats[&#34;snippet_space&#34;]):
-                    event.snippets.append(Snippet(
-                        tup=snippet_struct.unpack_from(
-                            file,
-                            offset=offset+i*snippet_struct.size
-                            )
-                    ))
+            for i in range(event.stats[&#34;snippet_space&#34;]):
+                event.snippets.append(Snippet(
+                    tup=snippet_struct.unpack_from(
+                        filecontents,
+                        offset=offset+i*snippet_struct.size
+                        ),
+                    include_UDP_header=self.include_UDP_header
+                ))
 
-                offset += event.stats[&#34;length&#34;]
-                yield event
+            offset += event.stats[&#34;length&#34;]
+            yield event
 
 
     def unpack(self):
@@ -126,11 +143,12 @@ class DataFile(_DataFile):
             yield event.get_record()
 
 
-class Event(_Snippet):
+class Event(BaseSnippet):
 
     _kwargs = [&#34;snippet_length&#34;, &#34;snippet_size_bytes&#34;]
     _contents = &#34;snippets&#34;
     _mapping_dict = CONFIG[&#34;struct_fields_mapping&#34;]
+    _mapping_name = &#34;Event_header&#34;
     _stats_default = {
         &#34;length&#34;: (
             sizes[&#34;udp_header_size_bytes&#34;]
@@ -141,10 +159,10 @@ class Event(_Snippet):
         &#34;snippet_space&#34;: 0
         }
 
-    def __init_contents_with_tuple(self, tup, index):
+    def _init_contents_with_tuple(self, tup, index):
         setattr(self, self._contents, [])
 
-    def __convert_types(self, key, entry):
+    def _convert_types(self, key, entry):
         match key:
             case &#34;Type&#34;|&#34;Trigger_type&#34;:
                 return entry.decode(&#34;ascii&#34;)
@@ -156,10 +174,9 @@ class Event(_Snippet):
             case _:
                 return entry
 
-
-    def __calculate_stats(self):
+    def _calculate_stats(self):
         self.stats[&#34;length&#34;] = (
-            sizes[&#34;udp_header_size_bytes&#34;]
+            sizes[&#34;udp_header_size_bytes&#34;] if self.include_UDP_header is True else 0
             + sizes[&#34;event_header_size_bytes&#34;]
             + self.header[&#34;Snippet_count&#34;]
                 * self.snippet_length
@@ -167,7 +184,7 @@ class Event(_Snippet):
         self.stats[&#34;snippet_space&#34;] = (
             min(
                 self.header[&#34;Snippet_count&#34;],
-                ((CONFIG[&#34;udp_package_size_bytes&#34;]
+                ((sizes[&#34;udp_package_size_bytes&#34;]
                   - self.snippet_size_bytes[0])
                 // self.snippet_size_bytes[1])
             )
@@ -187,7 +204,7 @@ class Event(_Snippet):
 
 
 
-class Snippet(_Snippet):
+class Snippet(BaseSnippet):
     # Channel_number: &#34;B&#34;  # 1 Byte unsigned char integer
     # Energy: &#34;3s&#34;     # 3 Bytes arbitrary char
     # Timedelta_samples: &#34;h&#34;  # 2 Byte signed int (&#34;short&#34;)
@@ -207,47 +224,67 @@ class Snippet(_Snippet):
 <dl>
 <dt id="radc-processor.data_parser.v2.struct_conversion.DataFile"><code class="flex name class">
 <span>class <span class="ident">DataFile</span></span>
-<span>(</span><span>path, tracelength=700, endianness='little-endian')</span>
+<span>(</span><span>path, tracelength=700, endianness='little-endian', include_UDP_header=True)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>The base class for DataFile objects.
+This class is initialized with a path and provides methods to unpack
+data from this path.
+Unpacking and storing data in the correct hierarchy and fields is handled
+implicitely.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class DataFile(_DataFile):
+<pre><code class="python">class DataFile(BaseDataFile):
 
     _contents = &#34;events&#34;
 
-    def __calculate_format_string(self, endianness=None):
+    def _calculate_format_string(self, endianness=None, include_UDP_header=None):
         if endianness is None:
             endianness = self.__endianness
+        if include_UDP_header is None:
+            include_UDP_header = self.include_UDP_header
+        endian = endianness_struct_mapping[endianness]
 
         fsm = CONFIG[&#34;struct_fields_mapping&#34;]
-        package_header = &#39;&#39;.join([
-            value for value in fsm[&#34;UDP_header&#34;].values()
-        ])
+
+        if include_UDP_header is True:
+            package_header = &#39;&#39;.join([
+                value for value in fsm[&#34;UDP_header&#34;].values()
+            ])
+            self._validate_format_string(
+                package_header,
+                CONFIG[&#34;udp_package_structure&#34;][&#34;udp_header_size_bytes&#34;],
+                structname=&#34;package_header&#34;
+            )
+        else:
+            package_header = &#34;&#34;
+
 
         event_header = &#39;&#39;.join([
-            value for value in fsm[&#34;Snippet_header&#34;].values()
+            value for value in fsm[&#34;Event_header&#34;].values()
         ])
 
         snippet_header = &#39;&#39;.join([
             value for value in fsm[&#34;Snippet_header&#34;].values()
         ])
 
-        samples = self.tracelength * fsm[&#34;Sample&#34;]
+        samples = f&#34;{self.tracelength}{fsm[&#39;Sample&#39;]}&#34;
 
-        self.__validate_format_string(
-            package_header, CONFIG[&#34;udp_package_structure&#34;][&#34;udp_header_size_bytes&#34;])
-        self.__validate_format_string(
-            event_header, CONFIG[&#34;udp_package_structure&#34;][&#34;event_header_size_bytes&#34;])
-        self.__validate_format_string(
-            snippet_header, CONFIG[&#34;udp_package_structure&#34;][&#34;snippet_header_size_bytes&#34;])
-        self.__validate_format_string(
-            fsm[&#34;Sample&#34;], CONFIG[&#34;udp_package_structure&#34;][&#34;sample_size_bytes&#34;])
+        self._validate_format_string(
+            event_header,
+            CONFIG[&#34;udp_package_structure&#34;][&#34;event_header_size_bytes&#34;],
+            structname=&#34;event_header&#34;)
+        self._validate_format_string(
+            snippet_header,
+            CONFIG[&#34;udp_package_structure&#34;][&#34;snippet_header_size_bytes&#34;],
+            structname=&#34;snippet_header&#34;)
+        self._validate_format_string(
+            fsm[&#34;Sample&#34;],
+            CONFIG[&#34;udp_package_structure&#34;][&#34;sample_size_bytes&#34;],
+            structname=&#34;sample&#34;)
 
-        endian = endianness_struct_mapping[endianness]
         # string = f&#34;{endian} {package_header} {snippet_header} {samples}&#34;
         event_string = f&#34;{endian} {package_header} {event_header}&#34;
         snippet_string = f&#34;{endian} {snippet_header} {samples}&#34;
@@ -268,24 +305,26 @@ class Snippet(_Snippet):
         offset = 0
         filesize = os.stat(self.path).st_size
         with open(self.path, &#34;rb&#34;) as file:
-            # filecontents = file.read()
-            while offset &lt; filesize:
-                event = Event(
-                    tup=event_struct.unpack_from(file, offset=offset),
-                    snippet_length = snippet_struct.size,
-                    snippet_size_bytes = self.snippet_size_bytes
-                    )
+            filecontents = file.read()
+        while offset &lt; filesize:
+            event = Event(
+                tup=event_struct.unpack_from(filecontents, offset=offset),
+                snippet_length = snippet_struct.size,
+                snippet_size_bytes = self.snippet_size_bytes,
+                include_UDP_header = self.include_UDP_header
+                )
 
-                for i in range(event.stats[&#34;snippet_space&#34;]):
-                    event.snippets.append(Snippet(
-                        tup=snippet_struct.unpack_from(
-                            file,
-                            offset=offset+i*snippet_struct.size
-                            )
-                    ))
+            for i in range(event.stats[&#34;snippet_space&#34;]):
+                event.snippets.append(Snippet(
+                    tup=snippet_struct.unpack_from(
+                        filecontents,
+                        offset=offset+i*snippet_struct.size
+                        ),
+                    include_UDP_header=self.include_UDP_header
+                ))
 
-                offset += event.stats[&#34;length&#34;]
-                yield event
+            offset += event.stats[&#34;length&#34;]
+            yield event
 
 
     def unpack(self):
@@ -300,57 +339,36 @@ class Snippet(_Snippet):
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li>radc-processor.data_parser.common.struct_conversion._DataFile</li>
+<li><a title="radc-processor.data_parser.common.struct_conversion.BaseDataFile" href="../common/struct_conversion.html#radc-processor.data_parser.common.struct_conversion.BaseDataFile">BaseDataFile</a></li>
 </ul>
-<h3>Methods</h3>
-<dl>
-<dt id="radc-processor.data_parser.v2.struct_conversion.DataFile.get_records"><code class="name flex">
-<span>def <span class="ident">get_records</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_records(self):
-    if len(self.events) == 0:
-        self.unpack()
-
-    for event in self.events:
-        yield event.get_record()</code></pre>
-</details>
-</dd>
-<dt id="radc-processor.data_parser.v2.struct_conversion.DataFile.unpack"><code class="name flex">
-<span>def <span class="ident">unpack</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def unpack(self):
-    self.events = list(self._unpack_events())</code></pre>
-</details>
-</dd>
-</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="radc-processor.data_parser.common.struct_conversion.BaseDataFile" href="../common/struct_conversion.html#radc-processor.data_parser.common.struct_conversion.BaseDataFile">BaseDataFile</a></b></code>:
+<ul class="hlist">
+<li><code><a title="radc-processor.data_parser.common.struct_conversion.BaseDataFile.get_records" href="../common/struct_conversion.html#radc-processor.data_parser.common.struct_conversion.BaseDataFile.get_records">get_records</a></code></li>
+<li><code><a title="radc-processor.data_parser.common.struct_conversion.BaseDataFile.unpack" href="../common/struct_conversion.html#radc-processor.data_parser.common.struct_conversion.BaseDataFile.unpack">unpack</a></code></li>
+</ul>
+</li>
+</ul>
 </dd>
 <dt id="radc-processor.data_parser.v2.struct_conversion.Event"><code class="flex name class">
 <span>class <span class="ident">Event</span></span>
-<span>(</span><span>tup, **kwargs)</span>
+<span>(</span><span>tup, include_UDP_header=True, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Within <strong>init</strong>, <code>self</code> will always match the baseclass/superclass.
+Name mangling (__method_name()) should therefore not be used for
+methods the subclasses want to overwrite.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class Event(_Snippet):
+<pre><code class="python">class Event(BaseSnippet):
 
     _kwargs = [&#34;snippet_length&#34;, &#34;snippet_size_bytes&#34;]
     _contents = &#34;snippets&#34;
     _mapping_dict = CONFIG[&#34;struct_fields_mapping&#34;]
+    _mapping_name = &#34;Event_header&#34;
     _stats_default = {
         &#34;length&#34;: (
             sizes[&#34;udp_header_size_bytes&#34;]
@@ -361,10 +379,10 @@ class Snippet(_Snippet):
         &#34;snippet_space&#34;: 0
         }
 
-    def __init_contents_with_tuple(self, tup, index):
+    def _init_contents_with_tuple(self, tup, index):
         setattr(self, self._contents, [])
 
-    def __convert_types(self, key, entry):
+    def _convert_types(self, key, entry):
         match key:
             case &#34;Type&#34;|&#34;Trigger_type&#34;:
                 return entry.decode(&#34;ascii&#34;)
@@ -376,10 +394,9 @@ class Snippet(_Snippet):
             case _:
                 return entry
 
-
-    def __calculate_stats(self):
+    def _calculate_stats(self):
         self.stats[&#34;length&#34;] = (
-            sizes[&#34;udp_header_size_bytes&#34;]
+            sizes[&#34;udp_header_size_bytes&#34;] if self.include_UDP_header is True else 0
             + sizes[&#34;event_header_size_bytes&#34;]
             + self.header[&#34;Snippet_count&#34;]
                 * self.snippet_length
@@ -387,7 +404,7 @@ class Snippet(_Snippet):
         self.stats[&#34;snippet_space&#34;] = (
             min(
                 self.header[&#34;Snippet_count&#34;],
-                ((CONFIG[&#34;udp_package_size_bytes&#34;]
+                ((sizes[&#34;udp_package_size_bytes&#34;]
                   - self.snippet_size_bytes[0])
                 // self.snippet_size_bytes[1])
             )
@@ -405,7 +422,7 @@ class Snippet(_Snippet):
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li>radc-processor.data_parser.common.struct_conversion._Snippet</li>
+<li><a title="radc-processor.data_parser.common.struct_conversion.BaseSnippet" href="../common/struct_conversion.html#radc-processor.data_parser.common.struct_conversion.BaseSnippet">BaseSnippet</a></li>
 </ul>
 <h3>Methods</h3>
 <dl>
@@ -433,15 +450,17 @@ class Snippet(_Snippet):
 </dd>
 <dt id="radc-processor.data_parser.v2.struct_conversion.Snippet"><code class="flex name class">
 <span>class <span class="ident">Snippet</span></span>
-<span>(</span><span>tup, **kwargs)</span>
+<span>(</span><span>tup, include_UDP_header=True, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Within <strong>init</strong>, <code>self</code> will always match the baseclass/superclass.
+Name mangling (__method_name()) should therefore not be used for
+methods the subclasses want to overwrite.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class Snippet(_Snippet):
+<pre><code class="python">class Snippet(BaseSnippet):
     # Channel_number: &#34;B&#34;  # 1 Byte unsigned char integer
     # Energy: &#34;3s&#34;     # 3 Bytes arbitrary char
     # Timedelta_samples: &#34;h&#34;  # 2 Byte signed int (&#34;short&#34;)
@@ -451,7 +470,7 @@ class Snippet(_Snippet):
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li>radc-processor.data_parser.common.struct_conversion._Snippet</li>
+<li><a title="radc-processor.data_parser.common.struct_conversion.BaseSnippet" href="../common/struct_conversion.html#radc-processor.data_parser.common.struct_conversion.BaseSnippet">BaseSnippet</a></li>
 </ul>
 </dd>
 </dl>
@@ -472,10 +491,6 @@ class Snippet(_Snippet):
 <ul>
 <li>
 <h4><code><a title="radc-processor.data_parser.v2.struct_conversion.DataFile" href="#radc-processor.data_parser.v2.struct_conversion.DataFile">DataFile</a></code></h4>
-<ul class="">
-<li><code><a title="radc-processor.data_parser.v2.struct_conversion.DataFile.get_records" href="#radc-processor.data_parser.v2.struct_conversion.DataFile.get_records">get_records</a></code></li>
-<li><code><a title="radc-processor.data_parser.v2.struct_conversion.DataFile.unpack" href="#radc-processor.data_parser.v2.struct_conversion.DataFile.unpack">unpack</a></code></li>
-</ul>
 </li>
 <li>
 <h4><code><a title="radc-processor.data_parser.v2.struct_conversion.Event" href="#radc-processor.data_parser.v2.struct_conversion.Event">Event</a></code></h4>

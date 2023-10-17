@@ -372,13 +372,13 @@ class Measurement():
     def get_command(self, key):
         command_keys = {
             &#34;commander&#34;: (
-                &#34;python -m radc_commander&#34;
+                &#34;radc_commander&#34;
                 +(f&#34; -p \&#34;{self.get_path(&#39;commander&#39;, &#39;pbk&#39;)}\&#34;&#34;
                     if self.get_path(&#39;commander&#39;, &#39;pbk&#39;) else &#34;&#34;)
                 +f&#34; -c \&#34;{self.get_path(&#39;commander&#39;, &#39;conf&#39;)}\&#34;&#34;
                 ),
             &#34;receiver&#34;: (
-                &#34;python udp_receiver&#34;
+                &#34;radc_receiver&#34;
                 +f&#34; target_root=\&#34;{self.subgroup_path}\&#34;&#34;
                 +f&#34; target_dir=\&#34;{self.get_path(&#39;receiver&#39;, &#39;dir&#39;)}\&#34;&#34;
                 +f&#34; target_file=\&#34;{self.get_path(&#39;receiver&#39;, &#39;file&#39;)}\&#34;&#34;
@@ -767,13 +767,13 @@ class Measurement():
     def get_command(self, key):
         command_keys = {
             &#34;commander&#34;: (
-                &#34;python -m radc_commander&#34;
+                &#34;radc_commander&#34;
                 +(f&#34; -p \&#34;{self.get_path(&#39;commander&#39;, &#39;pbk&#39;)}\&#34;&#34;
                     if self.get_path(&#39;commander&#39;, &#39;pbk&#39;) else &#34;&#34;)
                 +f&#34; -c \&#34;{self.get_path(&#39;commander&#39;, &#39;conf&#39;)}\&#34;&#34;
                 ),
             &#34;receiver&#34;: (
-                &#34;python udp_receiver&#34;
+                &#34;radc_receiver&#34;
                 +f&#34; target_root=\&#34;{self.subgroup_path}\&#34;&#34;
                 +f&#34; target_dir=\&#34;{self.get_path(&#39;receiver&#39;, &#39;dir&#39;)}\&#34;&#34;
                 +f&#34; target_file=\&#34;{self.get_path(&#39;receiver&#39;, &#39;file&#39;)}\&#34;&#34;
@@ -908,13 +908,13 @@ def subgroup_path(self):
 <pre><code class="python">def get_command(self, key):
     command_keys = {
         &#34;commander&#34;: (
-            &#34;python -m radc_commander&#34;
+            &#34;radc_commander&#34;
             +(f&#34; -p \&#34;{self.get_path(&#39;commander&#39;, &#39;pbk&#39;)}\&#34;&#34;
                 if self.get_path(&#39;commander&#39;, &#39;pbk&#39;) else &#34;&#34;)
             +f&#34; -c \&#34;{self.get_path(&#39;commander&#39;, &#39;conf&#39;)}\&#34;&#34;
             ),
         &#34;receiver&#34;: (
-            &#34;python udp_receiver&#34;
+            &#34;radc_receiver&#34;
             +f&#34; target_root=\&#34;{self.subgroup_path}\&#34;&#34;
             +f&#34; target_dir=\&#34;{self.get_path(&#39;receiver&#39;, &#39;dir&#39;)}\&#34;&#34;
             +f&#34; target_file=\&#34;{self.get_path(&#39;receiver&#39;, &#39;file&#39;)}\&#34;&#34;

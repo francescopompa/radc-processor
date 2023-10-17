@@ -159,20 +159,36 @@ scenarios = {
         &#34;extreme&#34;: {
             &#34;eventRate&#34;: variables[&#34;neutronRate&#34;][&#34;highCalibration&#34;],
             &#34;snippetCount&#34;: 50,
-            &#34;snippetSize&#34;: bitmath.Byte(100), # Bytes
+            # &#34;snippetSize&#34;: bitmath.Byte(100), # Bytes
+            &#34;snippetSize&#34;: bitmath.Byte(136), # Bytes
         },
         &#34;maxEstimate&#34;: {
             # &#34;eventRate&#34;: variables[&#34;neutronRate&#34;][&#34;highCalibration&#34;],
             &#34;eventRate&#34;: variables[&#34;neutronRate&#34;][&#34;highEstimate&#34;],
             &#34;snippetCount&#34;: 50,
-            &#34;snippetSize&#34;: bitmath.Byte(100), # Bytes
+            # &#34;snippetSize&#34;: bitmath.Byte(100), # Bytes
+            &#34;snippetSize&#34;: bitmath.Byte(136), # Bytes
         },
         &#34;estimatedAverage&#34;: {
             &#34;eventRate&#34;: variables[&#34;neutronRate&#34;][&#34;estimate&#34;],
             &#34;snippetCount&#34;: 50,
-            &#34;snippetSize&#34;: bitmath.Byte(100), # Bytes
+            # &#34;snippetSize&#34;: bitmath.Byte(100), # Bytes
+            &#34;snippetSize&#34;: bitmath.Byte(136), # Bytes
+        },
+        &#34;calibrationExample&#34;: {
+            &#34;eventRate&#34;: 1000,
+            &#34;snippetCount&#34;: 50,
+            # &#34;snippetSize&#34;: bitmath.Byte(100), # Bytes
+            &#34;snippetSize&#34;: bitmath.Byte(136), # Bytes
         },
     },
+    # &#34;neutronCalibration&#34;: {
+    #     &#34;estimatedAverage&#34;: {
+    #         &#34;eventRate&#34;: 1000,
+    #         &#34;snippetCount&#34;: 50,
+    #         &#34;snippetSize&#34;: bitmath.Byte(136), # Bytes
+    #     },
+    # },
     &#34;Full-neutronCalibration&#34;: {
         &#34;worstCase&#34;: {
             &#34;eventRate&#34;: variables[&#34;neutronRate&#34;][&#34;highCalibration&#34;],
@@ -195,6 +211,18 @@ scenarios = {
 }
 
 
+
+
+def meas_raw_event_size_v2(
+    eventRate,
+    snippetCount, # Snippets
+    snippetSize=8+2*64, # Bytes
+    eventHeader=bitmath.Byte(14), # Bytes
+    eventRoom=bitmath.Byte(4),  # in snippets
+):
+    eventCount = math.ceil(snippetCount / eventRoom)
+    eventSize = eventHeader*eventCount + snippetCount*snippetSize
+    return eventSize, eventRate*eventSize
 
 
 def meas_raw_event_size(
@@ -262,6 +290,9 @@ Data transfer: {rate_2B.format(&#39;{value:.4g} {unit}&#39;)}/s ({rate_2b}/s){ha
 
 
 def format_buildup(dataRate, bandwidth, duration):
+    &#34;&#34;&#34;
+    In case of transfer to remote via same network connection.
+    &#34;&#34;&#34;
     free_bandwidth = bandwidth - dataRate
     volume = raw_data_volume(duration, dataRate)
 
@@ -398,7 +429,10 @@ def format_comparison_table(rate, volume):
         #print(index[i], *row)
 
 
-def process_scenario(durationName, scenarioName, variantName=&#34;worstCase&#34;):
+def process_scenario(durationName, scenarioName, variantName=&#34;worstCase&#34;, version=&#34;v2&#34;):
+
+    meas_raw_event = meas_raw_event_size_v2 if version == &#34;v2&#34; else meas_raw_event_size
+
     duration = variables[&#34;duration&#34;][durationName]
     scenario = scenarios[scenarioName][variantName]
     eventRate = scenario[&#39;eventRate&#39;]
@@ -408,10 +442,10 @@ def process_scenario(durationName, scenarioName, variantName=&#34;worstCase&#34;
         eventSize, dataRate = cali_raw_event_size(**scenario)
         icon = &#34;🎇&#34;
     elif scenarioName.endswith(&#34;Measurement&#34;):
-        eventSize, dataRate = meas_raw_event_size(**scenario)
+        eventSize, dataRate = meas_raw_event(**scenario)
         icon = &#34;🔎&#34;
     else:
-        eventSize, dataRate = meas_raw_event_size(**scenario)
+        eventSize, dataRate = meas_raw_event(**scenario)
         icon = &#34;🔌&#34;
 
     bandwidth = variables[&#34;bandwidth&#34;][&#34;max&#34;].to_Byte()
@@ -441,7 +475,7 @@ def process_scenario(durationName, scenarioName, variantName=&#34;worstCase&#34;
     format_comparison_table(dataRate, volume)
 
 
-def main():
+def main(version=&#34;v2&#34;):
     # print(&#34;Bandwidth limitations&#34;)
     process_scenario(&#34;threeMonths&#34;, &#34;fullBandwidth1Gbps&#34;, variantName=&#34;max&#34;)
     process_scenario(&#34;oneHour&#34;, &#34;fullBandwidth1Gbps&#34;, variantName=&#34;max&#34;)
@@ -459,6 +493,7 @@ def main():
     process_scenario(&#34;oneHour&#34;, &#34;neutronMeasurement&#34;, variantName=&#34;extreme&#34;)
 
     process_scenario(&#34;oneHour&#34;, &#34;gammaCalibration&#34;)
+    process_scenario(&#34;oneHour&#34;, &#34;neutronMeasurement&#34;, variantName=&#34;calibrationExample&#34;)
 
 
 
@@ -553,12 +588,15 @@ if __name__ == &#34;__main__&#34;:
 <span>def <span class="ident">format_buildup</span></span>(<span>dataRate, bandwidth, duration)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>In case of transfer to remote via same network connection.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def format_buildup(dataRate, bandwidth, duration):
+    &#34;&#34;&#34;
+    In case of transfer to remote via same network connection.
+    &#34;&#34;&#34;
     free_bandwidth = bandwidth - dataRate
     volume = raw_data_volume(duration, dataRate)
 
@@ -736,7 +774,7 @@ Data transfer: {rate_2B.format(&#39;{value:.4g} {unit}&#39;)}/s ({rate_2b}/s){ha
 </details>
 </dd>
 <dt id="radc-processor.scripts.dataRateCalculator.main"><code class="name flex">
-<span>def <span class="ident">main</span></span>(<span>)</span>
+<span>def <span class="ident">main</span></span>(<span>version='v2')</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -744,7 +782,7 @@ Data transfer: {rate_2B.format(&#39;{value:.4g} {unit}&#39;)}/s ({rate_2b}/s){ha
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def main():
+<pre><code class="python">def main(version=&#34;v2&#34;):
     # print(&#34;Bandwidth limitations&#34;)
     process_scenario(&#34;threeMonths&#34;, &#34;fullBandwidth1Gbps&#34;, variantName=&#34;max&#34;)
     process_scenario(&#34;oneHour&#34;, &#34;fullBandwidth1Gbps&#34;, variantName=&#34;max&#34;)
@@ -761,7 +799,8 @@ Data transfer: {rate_2B.format(&#39;{value:.4g} {unit}&#39;)}/s ({rate_2b}/s){ha
     process_scenario(&#34;oneDay&#34;, &#34;neutronMeasurement&#34;, variantName=&#34;extreme&#34;)
     process_scenario(&#34;oneHour&#34;, &#34;neutronMeasurement&#34;, variantName=&#34;extreme&#34;)
 
-    process_scenario(&#34;oneHour&#34;, &#34;gammaCalibration&#34;)</code></pre>
+    process_scenario(&#34;oneHour&#34;, &#34;gammaCalibration&#34;)
+    process_scenario(&#34;oneHour&#34;, &#34;neutronMeasurement&#34;, variantName=&#34;calibrationExample&#34;)</code></pre>
 </details>
 </dd>
 <dt id="radc-processor.scripts.dataRateCalculator.meas_raw_event_size"><code class="name flex">
@@ -782,8 +821,8 @@ Data transfer: {rate_2B.format(&#39;{value:.4g} {unit}&#39;)}/s ({rate_2b}/s){ha
     return eventSize, eventRate*eventSize</code></pre>
 </details>
 </dd>
-<dt id="radc-processor.scripts.dataRateCalculator.process_scenario"><code class="name flex">
-<span>def <span class="ident">process_scenario</span></span>(<span>durationName, scenarioName, variantName='worstCase')</span>
+<dt id="radc-processor.scripts.dataRateCalculator.meas_raw_event_size_v2"><code class="name flex">
+<span>def <span class="ident">meas_raw_event_size_v2</span></span>(<span>eventRate, snippetCount, snippetSize=136, eventHeader=Byte(14.0), eventRoom=Byte(4.0))</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -791,7 +830,31 @@ Data transfer: {rate_2B.format(&#39;{value:.4g} {unit}&#39;)}/s ({rate_2b}/s){ha
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def process_scenario(durationName, scenarioName, variantName=&#34;worstCase&#34;):
+<pre><code class="python">def meas_raw_event_size_v2(
+    eventRate,
+    snippetCount, # Snippets
+    snippetSize=8+2*64, # Bytes
+    eventHeader=bitmath.Byte(14), # Bytes
+    eventRoom=bitmath.Byte(4),  # in snippets
+):
+    eventCount = math.ceil(snippetCount / eventRoom)
+    eventSize = eventHeader*eventCount + snippetCount*snippetSize
+    return eventSize, eventRate*eventSize</code></pre>
+</details>
+</dd>
+<dt id="radc-processor.scripts.dataRateCalculator.process_scenario"><code class="name flex">
+<span>def <span class="ident">process_scenario</span></span>(<span>durationName, scenarioName, variantName='worstCase', version='v2')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def process_scenario(durationName, scenarioName, variantName=&#34;worstCase&#34;, version=&#34;v2&#34;):
+
+    meas_raw_event = meas_raw_event_size_v2 if version == &#34;v2&#34; else meas_raw_event_size
+
     duration = variables[&#34;duration&#34;][durationName]
     scenario = scenarios[scenarioName][variantName]
     eventRate = scenario[&#39;eventRate&#39;]
@@ -801,10 +864,10 @@ Data transfer: {rate_2B.format(&#39;{value:.4g} {unit}&#39;)}/s ({rate_2b}/s){ha
         eventSize, dataRate = cali_raw_event_size(**scenario)
         icon = &#34;🎇&#34;
     elif scenarioName.endswith(&#34;Measurement&#34;):
-        eventSize, dataRate = meas_raw_event_size(**scenario)
+        eventSize, dataRate = meas_raw_event(**scenario)
         icon = &#34;🔎&#34;
     else:
-        eventSize, dataRate = meas_raw_event_size(**scenario)
+        eventSize, dataRate = meas_raw_event(**scenario)
         icon = &#34;🔌&#34;
 
     bandwidth = variables[&#34;bandwidth&#34;][&#34;max&#34;].to_Byte()
@@ -887,6 +950,7 @@ Data transfer: {rate_2B.format(&#39;{value:.4g} {unit}&#39;)}/s ({rate_2b}/s){ha
 <li><code><a title="radc-processor.scripts.dataRateCalculator.format_volume" href="#radc-processor.scripts.dataRateCalculator.format_volume">format_volume</a></code></li>
 <li><code><a title="radc-processor.scripts.dataRateCalculator.main" href="#radc-processor.scripts.dataRateCalculator.main">main</a></code></li>
 <li><code><a title="radc-processor.scripts.dataRateCalculator.meas_raw_event_size" href="#radc-processor.scripts.dataRateCalculator.meas_raw_event_size">meas_raw_event_size</a></code></li>
+<li><code><a title="radc-processor.scripts.dataRateCalculator.meas_raw_event_size_v2" href="#radc-processor.scripts.dataRateCalculator.meas_raw_event_size_v2">meas_raw_event_size_v2</a></code></li>
 <li><code><a title="radc-processor.scripts.dataRateCalculator.process_scenario" href="#radc-processor.scripts.dataRateCalculator.process_scenario">process_scenario</a></code></li>
 <li><code><a title="radc-processor.scripts.dataRateCalculator.raw_data_volume" href="#radc-processor.scripts.dataRateCalculator.raw_data_volume">raw_data_volume</a></code></li>
 </ul>
