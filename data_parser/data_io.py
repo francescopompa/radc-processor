@@ -17,8 +17,10 @@ def datafile_to_df(file: DataFile) -> pd.DataFrame:
         exclude=None,
         columns=None,
     )
-    # df["Datetime"] = pd.to_datetime(df["Timestamp_s"]),
-    df["Datetime"] = df["Timestamp_s"].apply(pd.Timestamp)
+
+    if "Timestamp_s" in df:
+        # df["Datetime"] = pd.to_datetime(df["Timestamp_s"]),
+        df["Datetime"] = df["Timestamp_s"].apply(pd.Timestamp)
 
     return df
 

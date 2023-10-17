@@ -47,7 +47,7 @@ class DataFile(_DataFile):
             value for value in fsm["Snippet_header"].values()
         ])
 
-        samples = self.tracelength * fsm["Sample"]
+        samples = f"{self.tracelength}{fsm['Sample']}"
 
         self._validate_format_string(
             event_header,
