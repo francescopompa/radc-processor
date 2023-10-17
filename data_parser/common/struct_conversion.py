@@ -31,7 +31,7 @@ endianness_struct_mapping = {
 }
 
 
-class _DataFile():
+class BaseDataFile():
     """
     The base class for DataFile objects.
     This class is initialized with a path and provides methods to unpack
@@ -93,7 +93,7 @@ class _DataFile():
 
 
 
-class _Snippet():
+class BaseSnippet():
 
     _kwargs = []
     _contents = "samples"

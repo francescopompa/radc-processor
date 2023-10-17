@@ -4,8 +4,8 @@ import struct
 from ..configuration import validate_config
 from ..common.struct_conversion import (
     endianness_struct_mapping,
-    _DataFile,
-    _Snippet
+    BaseDataFile,
+    BaseSnippet
 )
 
 CONFIG = validate_config(version="v2")
@@ -13,7 +13,7 @@ CONFIG = validate_config(version="v2")
 sizes = CONFIG["udp_package_structure"]
 
 
-class DataFile(_DataFile):
+class DataFile(BaseDataFile):
 
     _contents = "events"
 
@@ -115,7 +115,7 @@ class DataFile(_DataFile):
             yield event.get_record()
 
 
-class Event(_Snippet):
+class Event(BaseSnippet):
 
     _kwargs = ["snippet_length", "snippet_size_bytes"]
     _contents = "snippets"
@@ -176,7 +176,7 @@ class Event(_Snippet):
 
 
 
-class Snippet(_Snippet):
+class Snippet(BaseSnippet):
     # Channel_number: "B"  # 1 Byte unsigned char integer
     # Energy: "3s"     # 3 Bytes arbitrary char
     # Timedelta_samples: "h"  # 2 Byte signed int ("short")

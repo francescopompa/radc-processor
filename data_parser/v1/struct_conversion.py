@@ -4,15 +4,15 @@ import collections
 from ..configuration import validate_config
 from ..common.struct_conversion import (
     endianness_struct_mapping,
-    _DataFile,
-    _Snippet
+    BaseDataFile,
+    BaseSnippet
 )
 
 CONFIG = validate_config(version="v1")
 
 
 
-class DataFile(_DataFile):
+class DataFile(BaseDataFile):
 
     _contents = "snippets"
 
@@ -74,7 +74,7 @@ class DataFile(_DataFile):
 
 
 
-class Snippet(_Snippet):
+class Snippet(BaseSnippet):
 
     def _convert_types(self, key, entry):
         if key == "Energy":
