@@ -131,20 +131,36 @@ scenarios = {
         "extreme": {
             "eventRate": variables["neutronRate"]["highCalibration"],
             "snippetCount": 50,
-            "snippetSize": bitmath.Byte(100), # Bytes
+            # "snippetSize": bitmath.Byte(100), # Bytes
+            "snippetSize": bitmath.Byte(136), # Bytes
         },
         "maxEstimate": {
             # "eventRate": variables["neutronRate"]["highCalibration"],
             "eventRate": variables["neutronRate"]["highEstimate"],
             "snippetCount": 50,
-            "snippetSize": bitmath.Byte(100), # Bytes
+            # "snippetSize": bitmath.Byte(100), # Bytes
+            "snippetSize": bitmath.Byte(136), # Bytes
         },
         "estimatedAverage": {
             "eventRate": variables["neutronRate"]["estimate"],
             "snippetCount": 50,
-            "snippetSize": bitmath.Byte(100), # Bytes
+            # "snippetSize": bitmath.Byte(100), # Bytes
+            "snippetSize": bitmath.Byte(136), # Bytes
+        },
+        "calibrationExample": {
+            "eventRate": 1000,
+            "snippetCount": 50,
+            # "snippetSize": bitmath.Byte(100), # Bytes
+            "snippetSize": bitmath.Byte(136), # Bytes
         },
     },
+    # "neutronCalibration": {
+    #     "estimatedAverage": {
+    #         "eventRate": 1000,
+    #         "snippetCount": 50,
+    #         "snippetSize": bitmath.Byte(136), # Bytes
+    #     },
+    # },
     "Full-neutronCalibration": {
         "worstCase": {
             "eventRate": variables["neutronRate"]["highCalibration"],
@@ -167,6 +183,18 @@ scenarios = {
 }
 
 
+
+
+def meas_raw_event_size_v2(
+    eventRate,
+    snippetCount, # Snippets
+    snippetSize=8+2*64, # Bytes
+    eventHeader=bitmath.Byte(14), # Bytes
+    eventRoom=bitmath.Byte(4),  # in snippets
+):
+    eventCount = math.ceil(snippetCount / eventRoom)
+    eventSize = eventHeader*eventCount + snippetCount*snippetSize
+    return eventSize, eventRate*eventSize
 
 
 def meas_raw_event_size(
@@ -234,6 +262,9 @@ Data transfer: {rate_2B.format('{value:.4g} {unit}')}/s ({rate_2b}/s){halfEventR
 
 
 def format_buildup(dataRate, bandwidth, duration):
+    """
+    In case of transfer to remote via same network connection.
+    """
     free_bandwidth = bandwidth - dataRate
     volume = raw_data_volume(duration, dataRate)
 
@@ -370,7 +401,10 @@ def format_comparison_table(rate, volume):
         #print(index[i], *row)
 
 
-def process_scenario(durationName, scenarioName, variantName="worstCase"):
+def process_scenario(durationName, scenarioName, variantName="worstCase", version="v2"):
+
+    meas_raw_event = meas_raw_event_size_v2 if version == "v2" else meas_raw_event_size
+
     duration = variables["duration"][durationName]
     scenario = scenarios[scenarioName][variantName]
     eventRate = scenario['eventRate']
@@ -380,10 +414,10 @@ def process_scenario(durationName, scenarioName, variantName="worstCase"):
         eventSize, dataRate = cali_raw_event_size(**scenario)
         icon = "🎇"
     elif scenarioName.endswith("Measurement"):
-        eventSize, dataRate = meas_raw_event_size(**scenario)
+        eventSize, dataRate = meas_raw_event(**scenario)
         icon = "🔎"
     else:
-        eventSize, dataRate = meas_raw_event_size(**scenario)
+        eventSize, dataRate = meas_raw_event(**scenario)
         icon = "🔌"
 
     bandwidth = variables["bandwidth"]["max"].to_Byte()
@@ -413,7 +447,7 @@ def process_scenario(durationName, scenarioName, variantName="worstCase"):
     format_comparison_table(dataRate, volume)
 
 
-def main():
+def main(version="v2"):
     # print("Bandwidth limitations")
     process_scenario("threeMonths", "fullBandwidth1Gbps", variantName="max")
     process_scenario("oneHour", "fullBandwidth1Gbps", variantName="max")
@@ -431,6 +465,7 @@ def main():
     process_scenario("oneHour", "neutronMeasurement", variantName="extreme")
 
     process_scenario("oneHour", "gammaCalibration")
+    process_scenario("oneHour", "neutronMeasurement", variantName="calibrationExample")
 
 
 
