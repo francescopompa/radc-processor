@@ -275,6 +275,9 @@ class Measurement():
             case "attempt_number":
                 self.attempt_number = self._increment_number(self.attempt_number)
             case "suffixes":
+                #
+                # todo: add case dictionnary
+                #
                 if isinstance(val, list):
                     for i,e in enumerate(val):
                         self.suffixes[idx+i] = str(e)

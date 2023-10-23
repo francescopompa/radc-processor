@@ -46,6 +46,7 @@ class Receiver():
         if split is True:
             self._ftype = "split"
         elif any(
+            # todo replace with simple or-test: chunk_1 or chunk_2
             i is not None
             for i in [chunk_max_events, chunk_max_volume, chunk_max_time]
             ):
@@ -77,6 +78,9 @@ class Receiver():
 
         self.__do_split = split
         self.current_split = 1
+        #
+        # Todo: check where used and replace with count of packages:
+        #
         self.__split_size = 2*self.tracelength + RADC_HEADER_SIZE + RADC_PKG_HEADER_SIZE
 
         self.__do_readout = False
