@@ -10,9 +10,9 @@ start=process_time()
 data_dir='.'
 out_dir='.'
 
-namefile_data=sys.argv[0]
-namefile_output=sys.argv[1]
-tracelength=int(sys.argv[2])
+namefile_data=sys.argv[1]
+namefile_output=sys.argv[2]
+tracelength=int(sys.argv[3])
 
 data_to_root(data_dir,namefile_data,tracelength,out_dir,namefile_output)
 
