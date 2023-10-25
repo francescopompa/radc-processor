@@ -1,6 +1,7 @@
 import pandas as pd
 # from . import struct_conversion
 from .struct_conversion import DataFile
+from ..preprocess_data import peak_finding_algorithms as pf
 
 
 
@@ -40,3 +41,9 @@ def make_total_dataFrame(files: list|str) -> pd.DataFrame:
         load_files_to_df(files),
         ignore_index=True
         )
+
+def make_total_rootfile(files:list|str,out_dir,namefile_output):
+
+    df=make_total_dataFrame(files)
+    pf.df_to_root_file(df,out_dir,namefile_output)
+
