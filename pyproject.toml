@@ -32,6 +32,7 @@ measurement_class = "measurement_class"
 pulse_analysis = "pulse_analysis"
 udp_receiver = "udp_receiver"
 import_helper = "import_helper"
+preprocess_data = "preprocess_data"
 
 [options.packages_data]
 "*" = ["pyproject.toml"]
