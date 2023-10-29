@@ -356,7 +356,7 @@ class Receiver():
 
         timeout = socket.getdefaulttimeout()
 
-        with open(filepath, "wb") as file:
+        with open(filepath, "ab") as file:
             while self.__do_readout is True or self.__data_queue.empty() is False:
                 if stop_event.is_set():
                     break
