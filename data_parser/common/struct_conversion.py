@@ -56,14 +56,14 @@ class BaseDataFile():
         # self.snippets = []  # iter(())
         self.snippet_size_bytes = None
 
-        self.__endianness = endianness
+        self._endianness = endianness
         self.format = self._calculate_format_string()
 
     def _validate_format_string(self, string, size, structname=""):
         if not any(
             string.startswith(e) for e in endianness_struct_mapping.values()
             ):
-            string = endianness_struct_mapping[self.__endianness] + string
+            string = endianness_struct_mapping[self._endianness] + string
         structname += " " if structname else ""
 
         calcsize = struct.calcsize(string)
@@ -131,7 +131,7 @@ class BaseSnippet():
         #
         # Implement event unpacking
         #
-        print(tup)
+        # print(tup)
         # if ["UDP_header"] is empty, i is not declared. Set to -1 as backup
         i = -1
 

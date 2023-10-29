@@ -18,7 +18,7 @@ class DataFile(BaseDataFile):
 
     def _calculate_format_string(self, endianness=None, include_UDP_header=None):
         if endianness is None:
-            endianness = self.__endianness
+            endianness = self._endianness
         if include_UDP_header is None:
             include_UDP_header = self.include_UDP_header
 
