@@ -288,7 +288,8 @@ class Measurement():
                         except ValueError:
                             val = self._increment_letter(self.suffixes[idx])
                     self.suffixes[idx] = str(val)
-                self.measurement_number = self._increment_number(self.measurement_number)
+                if desc != "skip":
+                    self.measurement_number = self._increment_number(self.measurement_number)
             case _:
                 raise ValueError(f"Key unknown: {key}")
 
@@ -340,6 +341,7 @@ class Measurement():
                 self.make_radc_commander_config(path)
         elif (key, subkey) == ("commander", "pbk"):
             if not path.exists():
+                print(f"Playbook path {path} could not be found!")
                 return None
 
         return path
@@ -357,6 +359,10 @@ class Measurement():
                 +f" target_root=\"{self.subgroup_path}\""
                 +f" target_dir=\"{self.get_path('receiver', 'dir')}\""
                 +f" target_file=\"{self.get_path('receiver', 'file')}\""
+            ),
+            "switch": (
+                "switch"
+                +f" {self.get_path('receiver', 'file')}"
             ),
             "dump_filter": (
                 f"RADC save_filter_settings {self.get_path('commander', 'filter_dump')}"
