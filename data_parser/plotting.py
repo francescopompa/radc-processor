@@ -77,8 +77,11 @@ def _plot_dataFrame(df, ax_flags, ax_samples, cmap, **kwargs):
 
     # srange = (0, max(df["samples"].map(len)))
     srange = (min(df['Event_ID']), max(df['Event_ID']))
+    crange = sorted(df["Channel_number"].unique())
 
     suptitle = f"Plots of events {srange[0]}-{srange[1]}"
+    suptitle += f"\nChannels {crange}"
+
     title = kwargs.get("title") or ""
 
     return nrows, srange, title, suptitle
