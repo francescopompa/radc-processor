@@ -40,7 +40,7 @@ class Measurement():
         "attempt_number": lambda x: x.isdigit() and len(x)==1,
         "group_desc": lambda x: x is None or x.isascii(),
         "subgroup_desc": lambda x: x is None or x.isascii(),
-        "suffixes": lambda x: all([i.isascii() for i in x])
+        "suffixes": lambda x: all(i.isascii() and "_" not in i for i in x)
     }
 
     def __init__(
@@ -165,8 +165,10 @@ class Measurement():
         for key, func in self._validation_functions.items():
             val = getattr(self, key)
             if not func(val):
+                if key == "suffix":
+                    print()
                 raise ValueError(
-                    f"Wrong value for {key}: {val}"
+                    f"Wrong value for {key}: {val}{ 'Underscores not allowed in suffixes' if key == 'suffixes' else ''}"
                     )
 
     @property
