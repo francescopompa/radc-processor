@@ -138,7 +138,7 @@ class BaseSnippet():
         if self.include_UDP_header is True:
             for i, key in enumerate(self._mapping_dict["UDP_header"], 0):
                 self.udp_header[key] = tup[i]
-            print(self.udp_header, self.include_UDP_header)
+            # print(self.udp_header, self.include_UDP_header)
 
         # Use previous counter (or -1) as offset:
         for i, key in enumerate(self._mapping_dict[self._mapping_name], i+1):
