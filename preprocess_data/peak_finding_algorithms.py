@@ -162,7 +162,7 @@ def pulse_operations(samples: list | pd.Series):
         )
 
         baseline_sample = samples[start_pulse-10 -
-                                  Parameters.n_samples_baseline-start_pulse-10]
+                                  Parameters.n_samples_baseline:start_pulse-10]
         if len(baseline_sample) > 0:
             baseline = np.mean(baseline_sample)
         else:
@@ -246,9 +246,9 @@ def single_dataset_to_root(data_dir: str, input_filename: str, out_dir: str, out
 
 if __name__ == '__main__':
     df = struct_conversion.DataFile(
-        "/Users/francesco/Desktop/neutron_detector/electronics/radc-processor/preprocess_data/BC230705b_04-2_65ns_60mv_stretched_readout.bin",
+        "BC230705b_04-2_65ns_60mv_stretched_readout.bin",
         tracelength=100
-        #"/Users/francesco/Desktop/neutron_detector/electronics/radc-processor/preprocess_data/BG231005b_05-1_Switch-Delock_0dB_30-8_65ns_60mV_10_readout.01.bin"
+        #"BG231005b_05-1_Switch-Delock_0dB_30-8_65ns_60mV_10_readout.01.bin"
     )
 
     pdf = data_io.make_total_dataFrame([df])
