@@ -116,7 +116,7 @@ def pulse_operations(samples: list | pd.Series):
     4. For each peak, the pulse parameters are computed once for the first time to determine the start of the pulse
     5. The baseline is computed with samples before the pulse
     6. The parameters of the pulse are computed again and returned
-    For now only one pulse per snippet 
+    Support for multiple pulses per snippet
     """
     samples = np.array(samples)
     sig_boxcar = sp.ndimage.uniform_filter1d(
@@ -128,16 +128,24 @@ def pulse_operations(samples: list | pd.Series):
         height=Parameters.sp_height * Parameters.sp_width,
         distance=Parameters.sp_distance,
     )
+    successes = []
+    max_indices = []
+    pulse_heights = []
+    pulse_widths = []
+    areas = []
+    starts = []
+    ends = []
+
 
     num_pulses = min(len(peaks), Parameters.max_number_of_pulses)
     if num_pulses == 0:
-        success = False
-        max_index = 0
-        pulse_height = 0
-        pulse_width = 0
-        area = 0
-        start = 0
-        end = 0
+        successes.append(False)
+        max_indices.append(0)
+        pulse_heights.append(0)
+        pulse_widths.append(0)
+        areas.append(0) 
+        starts.append(0)
+        ends.append(0)
 
     index_of_peak_sorted = np.argsort(peak_properties["peak_heights"])
     peaks_sorted = np.flip(peaks[index_of_peak_sorted])
@@ -168,8 +176,15 @@ def pulse_operations(samples: list | pd.Series):
             Parameters.width,
             Parameters.number_of_sample_below_thres_for_range
         )
+        successes.append(success)
+        max_indices.append(max_index)
+        pulse_heights.append(pulse_height)
+        pulse_widths.append(pulse_width)
+        areas.append(area) 
+        starts.append(start)
+        ends.append(end)
 
-    return success, max_index, pulse_height, pulse_width, area, start, end
+    return successes, max_indices, pulse_heights, pulse_widths, areas, starts, ends
 
 
 def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
@@ -181,8 +196,19 @@ def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
     #     np.row_stack(np.vectorize(pulse_operations, otypes=['O'])(df['samples'])),
     #     index=df.index
     #     )
-    df[['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
-        'StartPulse', 'EndPulse']] = df['samples'].apply(pulse_operations).to_list()
+    tmp = df['samples'].apply(pulse_operations)
+    
+    df['IsPulse'] = [tmp[i][0] for i,_ in enumerate(tmp)]
+    df['MaxIndex'] = [tmp[i][1] for i,_ in enumerate(tmp)]
+    df['PulseHeight'] = [tmp[i][2] for i,_ in enumerate(tmp)]
+    df['PulseWidth'] = [tmp[i][3] for i,_ in enumerate(tmp)]
+    df['Charge'] = [tmp[i][4] for i,_ in enumerate(tmp)]
+    df['StartPulse'] = [tmp[i][5] for i,_ in enumerate(tmp)]
+    df['EndPulse'] = [tmp[i][6] for i,_ in enumerate(tmp)]
+    df = df.explode(['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
+        'StartPulse', 'EndPulse']).reset_index(drop=True)
+
+
     return df
 
 
@@ -191,6 +217,7 @@ def df_to_root_file(pdf: pd.DataFrame, out_dir: str, namefile: str) -> uproot.wr
     It creates the root file using the dataframe. Some columns are converted to suitable 
     types for uproot
     '''
+
     pdf = pdf[pdf.IsPulse == True]
     pdf.loc[:, 'Datetime'] = pdf['Datetime'].dt.strftime('%Y%m%d')
     pdf.loc[:, 'Datetime'] = pdf.Datetime.astype('int64')
@@ -218,9 +245,9 @@ def single_dataset_to_root(data_dir: str, input_filename: str, out_dir: str, out
 
 if __name__ == '__main__':
     df = struct_conversion.DataFile(
-        #"/Users/francesco/Desktop/neutron_detector/electronics/radc-processor/preprocess_data/BC230705b_04-2_65ns_60mv_stretched_readout.bin",
-        #tracelength=100
-        "/Users/francesco/Desktop/neutron_detector/electronics/radc-processor/preprocess_data/BG231005b_05-1_Switch-Delock_0dB_30-8_65ns_60mV_10_readout.01.bin"
+        "/Users/francesco/Desktop/neutron_detector/electronics/radc-processor/preprocess_data/BC230705b_04-2_65ns_60mv_stretched_readout.bin",
+        tracelength=100
+        #"/Users/francesco/Desktop/neutron_detector/electronics/radc-processor/preprocess_data/BG231005b_05-1_Switch-Delock_0dB_30-8_65ns_60mV_10_readout.01.bin"
     )
 
     pdf = data_io.make_total_dataFrame([df])
