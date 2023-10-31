@@ -7,6 +7,7 @@ import numpy as np
 import data_parser
 data_parser.init("v1")
 from data_parser import data_io, struct_conversion
+from time import process_time
 
 
 class Parameters:
@@ -161,7 +162,7 @@ def pulse_operations(samples: list | pd.Series):
         )
 
         baseline_sample = samples[start_pulse-10 -
-                                  Parameters.n_samples_baseline:start_pulse-10]
+                                  Parameters.n_samples_baseline-start_pulse-10]
         if len(baseline_sample) > 0:
             baseline = np.mean(baseline_sample)
         else:
@@ -198,13 +199,13 @@ def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
     #     )
     tmp = df['samples'].apply(pulse_operations)
     
-    df['IsPulse'] = [tmp[i][0] for i,_ in enumerate(tmp)]
-    df['MaxIndex'] = [tmp[i][1] for i,_ in enumerate(tmp)]
-    df['PulseHeight'] = [tmp[i][2] for i,_ in enumerate(tmp)]
-    df['PulseWidth'] = [tmp[i][3] for i,_ in enumerate(tmp)]
-    df['Charge'] = [tmp[i][4] for i,_ in enumerate(tmp)]
-    df['StartPulse'] = [tmp[i][5] for i,_ in enumerate(tmp)]
-    df['EndPulse'] = [tmp[i][6] for i,_ in enumerate(tmp)]
+    df['IsPulse'] = [row[0] for row in tmp]
+    df['MaxIndex'] = [row[1] for row in tmp]
+    df['PulseHeight'] = [row[2] for row in tmp]
+    df['PulseWidth'] = [row[3] for row in tmp]
+    df['Charge'] = [row[4] for row in tmp]
+    df['StartPulse'] = [row[5] for row in tmp]
+    df['EndPulse'] = [row[6] for row in tmp]
     df = df.explode(['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
         'StartPulse', 'EndPulse']).reset_index(drop=True)
 
@@ -251,7 +252,9 @@ if __name__ == '__main__':
     )
 
     pdf = data_io.make_total_dataFrame([df])
+    start = process_time()
     pdf = update_dataframe_with_pulses(pdf)
+    print(f'Time needed to process the dataset: {process_time() - start: .2f} s.')
     selectedPulses = pdf.Charge[(pdf.Charge < 980) & (pdf.Charge > 860)]
     print(f'Area = ({np.mean(selectedPulses):.1f} +/- {np.std(selectedPulses):.1f}) ADC counts')
     print(f'Total number of pulses: {len(pdf.Charge[pdf.IsPulse==True])}.')
