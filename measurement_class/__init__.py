@@ -300,7 +300,7 @@ class Measurement():
         print("New id:", self.id)
 
 
-    def get_path(self, key, subkey, create=True):
+    def get_path(self, key, subkey=None, create=True):
 
         path_keys = {
             "tek": {
@@ -333,6 +333,17 @@ class Measurement():
                     f"{self.subgroup_path}",
                     f"{self.groupid}_DataFrame.{pickle.HIGHEST_PROTOCOL}pickle"
                     )
+            },
+            "tex": {
+                None: Path(
+                    "C:/Users/utrfh/WS22-23 (MA) Masterarbeit/LaTeX Thesis/meas",
+                    f"{self.groupid}",
+                    ),
+                "table": Path(
+                    "C:/Users/utrfh/WS22-23 (MA) Masterarbeit/LaTeX Thesis/meas",
+                    f"{self.groupid}",
+                    f"{self.groupid}.tex"
+                    ),
             }
         }
 
@@ -395,6 +406,6 @@ class Measurement():
         }
 
         with open(path, 'w', encoding="utf-8") as file:
-            json.dump(d, file)
+            json.dump(d, file, indent=4)
         print(f"Created {path}")
         print(json.dumps(d, indent=4))
