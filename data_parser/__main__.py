@@ -46,4 +46,5 @@ def main():
 
 
 if __name__ == "__main__":
+    raise NotImplementedError("data_parser is not executable for now. Please import it where needed.")
     main()

@@ -40,10 +40,12 @@ def plot_data(index, data, ax):
 
 def _plot_row(row, ax_flags, ax_samples, **kwargs):
     #
-    # Todo: plot points above 8192 in other color/mark them
+    # Todo: plot points above 8192-1 in other color/mark them
     #
-    color = kwargs.get("color")
-    minor_locator = kwargs.get("minor_locator") or 10.0
+    # color = kwargs.get("color")
+    # minor_locator = kwargs.get("minor_locator") or 10.0
+    color = kwargs.pop("color")
+    minor_locator = kwargs.pop("minor_locator", 10.0)# or 10.0
 
     x_array = range(len(row.samples))
     flags = [1 if i in row.trigger_IDs else 0 for i in x_array]
@@ -57,7 +59,8 @@ def _plot_row(row, ax_flags, ax_samples, **kwargs):
         x_array,
         row.samples,
         label=row.Event_ID,
-        color=color, linewidth=1, alpha=0.7)
+        color=color, linewidth=1, alpha=0.7,
+        **kwargs)
 
     loc = plticker.MultipleLocator(base=minor_locator) # this locator puts ticks at regular intervals
     ax_samples.xaxis.set_minor_locator(loc)
@@ -119,8 +122,8 @@ def plot_rows(rows, **kwargs):
         )
     cmap = plt.colormaps["copper"]  # See also: viridis, brg, winter, copper, plasma
 
-    xlim = kwargs.get("xlim")
-    ylim = kwargs.get("ylim")
+    xlim = kwargs.pop("xlim", None)
+    ylim = kwargs.pop("ylim", None)
     if xlim: ax_flags.set_xlim(xlim)
     if xlim: ax_samples.set_xlim(xlim)
     if ylim: ax_samples.set_ylim(ylim)
