@@ -3,6 +3,7 @@ Module providing calculation functions for found pulses.
 """
 import numpy as np
 import pandas as pd
+import itertools
 
 
 def get_baseline_avg(row):
@@ -106,7 +107,7 @@ def detect_saturation(row, column="samples"):
     If no saturation is detected, the returned list is empty ([]).
     Using pandas, test the presence/absence of saturation using
 
-        .astype(bool)
+        .astype(bool)   # False if is an empty list
 
     The value range is determined as 2**13-1 (for 14bit signed integers)
     """
@@ -120,3 +121,26 @@ def detect_saturation(row, column="samples"):
         ]
     # [i for j,i in enumerate(high) if j>0 and i == high[j-1]+1]
 
+
+def detect_flatlines(row, column="samples", bandwidth=5):
+    """
+    Returns True if the value range of a waveform is limited to
+    bandwidth, hinting at a (mostly) flat waveform not showing any information.
+
+    Returns False if max(samples) - min(samples) > bandwidth
+
+    Rightmost samples with value 0 are stripped from the waveform beforehand.
+    """
+    samples = row[column] if column else row
+
+    # strip zero values at (right) end of the samples
+    stripped_samples = list(itertools.dropwhile(lambda x: x == 0, samples[::-1]))
+
+    # Compare value range to bandwidth
+    return (max(stripped_samples)-min(stripped_samples)) <= bandwidth
+
+    #
+    # Todo:
+    # Expand by giving a threshold of n waveforms to keep, and increase
+    # bandwidth parameter until onle n waveforms remain.
+    #
