@@ -304,10 +304,10 @@ class Measurement():
 
         path_keys = {
             "tek": {
-                "dir": f"\"E:{self.groupid}/data\"",
-                "set": f"\"E:{self.groupid}/data/{self.id}_tek.set\"",
-                "img": f"\"E:{self.groupid}/data/{self.id}_tek.png\"",
-                "wfm": f"\"E:{self.groupid}/data/{self.id}_tek.isf\"",
+                "dir": f"E:/{self.groupid}/data",
+                "set": f"\"E:/{self.groupid}/data/{self.id}_tek.set\"",
+                "img": f"\"E:/{self.groupid}/data/{self.id}_tek.png\"",
+                "wfm": f"\"E:/{self.groupid}/data/{self.id}_tek.isf\"",
             },
             "pgen": {
                 "file": Path(self.subgroup_path, "data", f"{self.id}_pgen.json")
