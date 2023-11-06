@@ -11,8 +11,8 @@ def print_df_properties(df: pd.DataFrame) -> None:
     print(cols)
     files = df.index.unique("File")
     print("Files:", len(files))
-    print(files)
-    print("Snippets", df.shape[0])
+    # print(files)
+    print("Snippets:", df.shape[0])
     for file in files:
         sub_df = df.loc[file]
         print(">", file)
