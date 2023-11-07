@@ -2,7 +2,6 @@
 # UDP Structure
 udp_package_structure:
   udp_package_size_bytes: 1420 # 1480
-  udp_header_size_bytes: 4
   event_header_size_bytes: 14
   snippet_header_size_bytes: 8
   sample_size_bytes: 2
@@ -12,11 +11,6 @@ udp_package_structure:
 
 # Struct field formatting description
 struct_fields_mapping:
-  # UDP Package header
-  UDP_header:
-    Type: "c"    # 1 Byte char
-    Number: "B"  # 1 Byte unsigned char
-    Rest: "2s"   # 2 Bytes char
 
   # RADC Header for each event
   Event_header:

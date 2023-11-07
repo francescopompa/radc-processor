@@ -17,27 +17,12 @@ class DataFile(BaseDataFile):
 
     _contents = "events"
 
-    def _calculate_format_string(self, endianness=None, include_UDP_header=None):
+    def _calculate_format_string(self, endianness=None):
         if endianness is None:
             endianness = self._endianness
-        if include_UDP_header is None:
-            include_UDP_header = self.include_UDP_header
         endian = endianness_struct_mapping[endianness]
 
         fsm = CONFIG["struct_fields_mapping"]
-
-        if include_UDP_header is True:
-            package_header = ''.join([
-                value for value in fsm["UDP_header"].values()
-            ])
-            self._validate_format_string(
-                package_header,
-                CONFIG["udp_package_structure"]["udp_header_size_bytes"],
-                structname="package_header"
-            )
-        else:
-            package_header = ""
-
 
         event_header = ''.join([
             value for value in fsm["Event_header"].values()
@@ -63,7 +48,7 @@ class DataFile(BaseDataFile):
             structname="sample")
 
         # string = f"{endian} {package_header} {snippet_header} {samples}"
-        event_string = f"{endian} {package_header} {event_header}"
+        event_string = f"{endian} {event_header}"
         snippet_string = f"{endian} {snippet_header} {samples}"
 
         self.snippet_size_bytes = (
@@ -88,17 +73,18 @@ class DataFile(BaseDataFile):
                 tup=event_struct.unpack_from(filecontents, offset=offset),
                 snippet_length = snippet_struct.size,
                 snippet_size_bytes = self.snippet_size_bytes,
-                include_UDP_header = self.include_UDP_header
                 )
 
             for i in range(event.stats["snippet_space"]):
-                event.snippets.append(Snippet(
-                    tup=snippet_struct.unpack_from(
+                try:
+                    _tup=snippet_struct.unpack_from(
                         filecontents,
                         offset=offset+i*snippet_struct.size
-                        ),
-                    include_UDP_header=self.include_UDP_header
-                ))
+                        )
+                except struct.error as e:
+                    print(f"Struct error while unpacking {self.path}", e)
+
+                event.snippets.append(Snippet(_tup))
 
             offset += event.stats["length"]
             yield event
@@ -119,12 +105,12 @@ class Event(BaseSnippet):
 
     _kwargs = ["snippet_length", "snippet_size_bytes"]
     _contents = "snippets"
+    _include_UDP_header_default = False
     _mapping_dict = CONFIG["struct_fields_mapping"]
     _mapping_name = "Event_header"
     _stats_default = {
         "length": (
-            sizes["udp_header_size_bytes"]
-            + sizes["event_header_size_bytes"]
+            sizes["event_header_size_bytes"]
             + sizes["snippet_header_size_bytes"]
             + sizes["default_trace_length"]*sizes["sample_size_bytes"]
         ),
@@ -148,8 +134,7 @@ class Event(BaseSnippet):
 
     def _calculate_stats(self):
         self.stats["length"] = (
-            sizes["udp_header_size_bytes"] if self.include_UDP_header is True else 0
-            + sizes["event_header_size_bytes"]
+            sizes["event_header_size_bytes"]
             + self.header["Snippet_count"]
                 * self.snippet_length
             )
@@ -164,7 +149,6 @@ class Event(BaseSnippet):
 
     def get_record(self):
         return {
-            **self.udp_header,
             **self.header,
             **self.stats,
             "snippets": [
@@ -182,4 +166,6 @@ class Snippet(BaseSnippet):
     # Timedelta_samples: "h"  # 2 Byte signed int ("short")
     # Snippet_number: "B" # 1 Byte unsigned int
     # Info_flags: "c" # 1 Byte bits
+    _include_UDP_header_default = False
+
     pass

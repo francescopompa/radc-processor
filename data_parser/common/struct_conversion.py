@@ -97,6 +97,7 @@ class BaseSnippet():
 
     _kwargs = []
     _contents = "samples"
+    _include_UDP_header_default = True
     _mapping_dict = CONFIG["struct_fields_mapping"]
     _mapping_name = "Snippet_header"
     _stats_default = {
@@ -105,7 +106,7 @@ class BaseSnippet():
             "trigger_count": 0,
         }
 
-    def __init__(self, tup, include_UDP_header=True, **kwargs) -> None:
+    def __init__(self, tup, include_UDP_header=None, **kwargs) -> None:
         """
         Within __init__, `self` will always match the baseclass/superclass.
         Name mangling (__method_name()) should therefore not be used for
@@ -115,7 +116,7 @@ class BaseSnippet():
         self.header = {}
         # self.samples = []
         self.trigger_IDs = []
-        self.include_UDP_header = include_UDP_header
+        self.include_UDP_header = include_UDP_header or self._include_UDP_header_default
 
         self.stats = self._stats_default.copy()
 
