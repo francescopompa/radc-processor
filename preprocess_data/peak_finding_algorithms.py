@@ -153,7 +153,7 @@ def pulse_operations(samples: list | pd.Series):
 
     for _, peak in enumerate(peaks_sorted[:num_pulses]):
 
-        _, _, _, _, _, start_pulse, _ = calc_puls_params(
+        _, _, _, _, _, start_pulse, end_pulse = calc_puls_params(
             samples,
             peak,
             Parameters.height,
@@ -161,12 +161,19 @@ def pulse_operations(samples: list | pd.Series):
             Parameters.number_of_sample_below_thres_for_range
         )
 
-        baseline_sample = samples[start_pulse-10 -
-                                  Parameters.n_samples_baseline:start_pulse-10]
-        if len(baseline_sample) > 0:
+        if len(samples[:start_pulse-10]) >= Parameters.n_samples_baseline:
+            baseline_sample = samples[start_pulse-10 -
+                                      Parameters.n_samples_baseline:start_pulse-10]
+            baseline = np.mean(baseline_sample)
+        elif len(samples[end_pulse + 10:]) >= Parameters.n_samples_baseline:
+            baseline_sample = samples[end_pulse+10:
+                                      Parameters.n_samples_baseline + end_pulse + 10]
             baseline = np.mean(baseline_sample)
         else:
             baseline = 0
+            RuntimeWarning(
+                'Numbers of samples for the baseline may not be enough.')
+
         # subtract them to create baselined signal
         samples = samples - baseline*np.ones(len(samples))
 
