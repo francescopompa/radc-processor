@@ -229,7 +229,9 @@ def df_to_root_file(pdf: pd.DataFrame, out_dir: str, namefile: str) -> uproot.wr
     pdf.loc[:, 'Type'] = pdf.Type.astype('str')
     pdf.loc[:, 'Rest'] = pdf.Rest.astype('str')
     pdf = pdf.drop(columns='IsPulse')
-    file = uproot.recreate(Path(out_dir).mkdir(parents=True, exist_ok=True) / (namefile + ".root"))
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    file = uproot.recreate(out / (namefile + ".root"))
     file['eventsTree'] = pdf
     return file
 
