@@ -206,13 +206,10 @@ def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
     #     )
     tmp = df['samples'].apply(pulse_operations)
     
-    df['IsPulse'] = [row[0] for row in tmp]
-    df['MaxIndex'] = [row[1] for row in tmp]
-    df['PulseHeight'] = [row[2] for row in tmp]
-    df['PulseWidth'] = [row[3] for row in tmp]
-    df['Charge'] = [row[4] for row in tmp]
-    df['StartPulse'] = [row[5] for row in tmp]
-    df['EndPulse'] = [row[6] for row in tmp]
+    columns=['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
+        'StartPulse', 'EndPulse']
+    for i,col in enumerate(columns):
+        df[col] = [row[i] for row in tmp]
     df = df.explode(['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
         'StartPulse', 'EndPulse']).reset_index(drop=True)
 
