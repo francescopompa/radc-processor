@@ -220,7 +220,7 @@ def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
 def df_to_root_file(pdf: pd.DataFrame, out_dir: str, namefile: str) -> uproot.writing.writable.WritableDirectory:
     '''
     It creates the root file using the dataframe. Some columns are converted to suitable 
-    types for uproot
+    types for uproot. Attention: it creates automatically the folder
     '''
 
     pdf = pdf[pdf.IsPulse == True]
@@ -229,7 +229,7 @@ def df_to_root_file(pdf: pd.DataFrame, out_dir: str, namefile: str) -> uproot.wr
     pdf.loc[:, 'Type'] = pdf.Type.astype('str')
     pdf.loc[:, 'Rest'] = pdf.Rest.astype('str')
     pdf = pdf.drop(columns='IsPulse')
-    file = uproot.recreate(Path(out_dir) / (namefile + ".root"))
+    file = uproot.recreate(Path(out_dir).mkdir(parents=True, exist_ok=True) / (namefile + ".root"))
     file['eventsTree'] = pdf
     return file
 
