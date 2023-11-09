@@ -1,5 +1,6 @@
 import os
 import struct
+import time
 
 from ..configuration import validate_config
 from ..common.struct_conversion import (
@@ -222,11 +223,13 @@ class Event(BaseSnippet):
     def _convert_types(self, key, entry):
         match key:
             case "Type"|"Trigger_type":
+                # print(key, entry)
                 return entry.decode("ascii")
             case "Event_ID":
                 # Reverse the Byte order
                 return int.from_bytes(
-                    bytes([entry[2], entry[1], entry[0]])
+                    entry[::-1]
+                    # bytes([entry[2], entry[1], entry[0]])
                 )
             case _:
                 return entry
