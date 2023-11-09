@@ -213,6 +213,12 @@ class Event(BaseSnippet):
     def _init_contents_with_tuple(self, tup, index):
         setattr(self, self._contents, [])
 
+    def _check_integrity(self):
+        return (
+            self.header["Trigger_type"] == "E" #in ["E", "T", "S"]
+            and self.header["Timestamp_s"] < time.time()
+            )
+
     def _convert_types(self, key, entry):
         match key:
             case "Type"|"Trigger_type":

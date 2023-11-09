@@ -155,11 +155,17 @@ class BaseSnippet():
                 self.header["Subsecs"],
             )
 
+        if not self._check_integrity():
+            raise ValueError(f"Wrong values for event in header {self.header}")
+
         return i+1
 
     def _init_contents_with_tuple(self, tup, index):
         setattr(self, self._contents, list(self._convert_samples(tup[index:])))
 
+
+    def _check_integrity(self):
+        return True
 
     def _convert_types(self, key, entry):
         match key:
