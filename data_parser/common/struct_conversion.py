@@ -54,6 +54,10 @@ class BaseDataFile():
         self.include_UDP_header = include_UDP_header
         setattr(self, self._contents, [])
         # self.snippets = []  # iter(())
+
+        self.skipped_bytes = []
+        self.skipped_bytes_total = 0
+
         self.snippet_size_bytes = None
 
         self._endianness = endianness
