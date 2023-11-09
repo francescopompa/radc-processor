@@ -100,7 +100,7 @@ class BaseDataFile():
 
 class BaseSnippet():
 
-    _kwargs = []
+    _kwargs = {}
     _contents = "samples"
     _include_UDP_header_default = True
     _mapping_dict = CONFIG["struct_fields_mapping"]
@@ -125,9 +125,8 @@ class BaseSnippet():
 
         self.stats = self._stats_default.copy()
 
-        for key, val in kwargs.items():
-            if key in self._kwargs:
-                setattr(self, key, val)
+        for key, default in self._kwargs.items():
+            setattr(self, key, kwargs.pop(key, default))
 
         index = self._init_header_with_tuple(tup)
         self._init_contents_with_tuple(tup, index)

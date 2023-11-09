@@ -193,7 +193,10 @@ class DataFile(BaseDataFile):
 
 class Event(BaseSnippet):
 
-    _kwargs = ["snippet_length", "snippet_size_bytes"]
+    _kwargs = {
+        "snippet_length": 64,
+        "snippet_size_bytes": (14, 136),
+        }
     _contents = "snippets"
     _include_UDP_header_default = False
     _mapping_dict = CONFIG["struct_fields_mapping"]
