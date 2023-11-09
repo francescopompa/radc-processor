@@ -1,4 +1,5 @@
 import struct
+from pathlib import Path
 
 from ..configuration import CONFIG
 
@@ -49,7 +50,7 @@ class BaseDataFile():
                  endianness="little-endian",
                  include_UDP_header=True
                  ) -> None:
-        self.path = path
+        self.path = Path(path)
         self.tracelength = tracelength
         self.include_UDP_header = include_UDP_header
         setattr(self, self._contents, [])
