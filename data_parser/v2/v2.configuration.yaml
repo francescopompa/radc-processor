@@ -1,7 +1,8 @@
 
 # UDP Structure
 udp_package_structure:
-  udp_package_size_bytes: 1420 # 1480
+  # udp_package_size_bytes: 1420 # 1480
+  udp_package_size_bytes: 1480 # 1480
   event_header_size_bytes: 14
   snippet_header_size_bytes: 8
   sample_size_bytes: 2
