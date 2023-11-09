@@ -95,6 +95,15 @@ def adjust_baseline(data):
     data["Sum"] = data[["samples", "Limits", "BaselineCorr"]].apply(add_samples, axis=1)
 
 
+def get_peak_to_peak(row, column="samples"):
+    """
+    Returns peak-to-peak distance of the samples within the samples list.
+    Uses a simple abs(max()-min()) calculation and no statistics/averaging.
+    """
+    samples = row[column] if column else row
+    return abs(max(samples)-min(samples))
+
+
 def detect_saturation(row, column="samples"):
     """
     Returns the list of sample indices from the samples list;
@@ -144,3 +153,26 @@ def detect_flatlines(row, column="samples", bandwidth=5):
     # Expand by giving a threshold of n waveforms to keep, and increase
     # bandwidth parameter until onle n waveforms remain.
     #
+
+
+def detect_sharp_peaks(row, column="samples", threshold=4096, count=5):
+    """
+    Returns True if the samples list contains single samples that are
+    at least `threshold` above from their neighbours.
+    """
+    samples = row[column] if column else row
+    exceeding = [
+        i for i,s in enumerate(samples[1:-1])
+        if s - samples[i-1+1] > threshold
+        and s - samples[i+1+1]> threshold
+    ]
+    return len(exceeding) > 0
+    # nb_samples = len(samples)
+    # average = sum(samples)/nb_samples
+    # above = [s for s in samples if s > average]
+    # return len(above) < count
+
+    # for i in exceeding:
+    #     samples[i] = (samples[i+1]+samples[i-1])/2
+
+    # return samples
