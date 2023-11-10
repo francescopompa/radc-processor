@@ -332,6 +332,13 @@ class Measurement():
                 "save": Path(
                     f"{self.subgroup_path}",
                     f"{self.groupid}_DataFrame.{pickle.HIGHEST_PROTOCOL}pickle"
+                    ),
+                "processed": Path(
+                    self.base_path,
+                    "processed",
+                    f"{self.group} - {self.group_desc}",
+                    f"{self.date}{self.subgroup} {self.subgroup_desc}",
+                    f"{self.groupid}_DataFrame_results.{pickle.HIGHEST_PROTOCOL}pickle"
                     )
             },
             "tex": {
