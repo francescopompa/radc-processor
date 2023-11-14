@@ -346,6 +346,10 @@ class Measurement():
                     "C:/Users/utrfh/WS22-23 (MA) Masterarbeit/LaTeX Thesis/meas",
                     f"{self.groupid}",
                     ),
+                "pdf": Path(
+                    "C:/Users/utrfh/WS22-23 (MA) Masterarbeit/LaTeX Thesis/meas",
+                    f"{self.groupid}.pdf",
+                    ),
                 "table": Path(
                     "C:/Users/utrfh/WS22-23 (MA) Masterarbeit/LaTeX Thesis/meas",
                     f"{self.groupid}",
