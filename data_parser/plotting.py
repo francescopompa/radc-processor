@@ -127,18 +127,6 @@ def plot_rows(rows, **kwargs):
     if xlim: ax_flags.set_xlim(xlim)
     if xlim: ax_samples.set_xlim(xlim)
     if ylim: ax_samples.set_ylim(ylim)
-    # if isinstance(xlim, Iterable):
-    #     ax_flags.set_xlim(*xlim)
-    #     ax_samples.set_xlim(*xlim)
-    # elif isinstance(xlim, (int, float)) and not isinstance(xlim, bool):
-    #     ax_flags.set_xlim(xlim)
-    #     ax_samples.set_xlim(xlim)
-
-    # if isinstance(ylim, Iterable):
-    #     ax_samples.set_ylim(*ylim)
-    # elif isinstance(ylim, (int, float)) and not isinstance(ylim, bool):
-    #     ax_samples.set_ylim(ylim)
-
 
     if isinstance(rows, pd.core.frame.DataFrame):
         nrows, srange, title, suptitle = _plot_dataFrame(rows, ax_flags, ax_samples, cmap, **kwargs)
@@ -146,7 +134,8 @@ def plot_rows(rows, **kwargs):
         # It's a single row
         nrows, srange, title, suptitle = _plot_series(rows, ax_flags, ax_samples, cmap, **kwargs)
     # List of lists
-    # List of samples
+    # Series of lists (column)
+    # List of samples (single entry)
     else:
         raise TypeError(f"Invalid type to plot {type(rows)}")
 

@@ -124,9 +124,11 @@ def detect_saturation(row, column="samples"):
     max = 2**13-1
 
     return [
-        i
-        for i,s in enumerate(samples)
-        if i>0 and s>=max and (s==samples[i-1] or s==samples[i+1])
+        i+1
+        for i,s in enumerate(samples[1:-1])
+        # if i>0
+        if s>=max
+        and (s==samples[i-1+1] or s==samples[i+1+1])
         ]
     # [i for j,i in enumerate(high) if j>0 and i == high[j-1]+1]
 
@@ -162,7 +164,8 @@ def detect_sharp_peaks(row, column="samples", threshold=4096, count=5):
     """
     samples = row[column] if column else row
     exceeding = [
-        i for i,s in enumerate(samples[1:-1])
+        i+1
+        for i,s in enumerate(samples[1:-1])
         if s - samples[i-1+1] > threshold
         and s - samples[i+1+1]> threshold
     ]
