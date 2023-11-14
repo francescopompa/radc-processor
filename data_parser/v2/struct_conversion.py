@@ -218,6 +218,7 @@ class Event(BaseSnippet):
         return (
             self.header["Trigger_type"] == "E" #in ["E", "T", "S"]
             and self.header["Timestamp_s"] < time.time()
+            and self.header["Timestamp_s"] > 1699000000
             )
 
     def _convert_types(self, key, entry):
