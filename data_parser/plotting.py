@@ -9,8 +9,36 @@ from collections.abc import Iterable
 from .configuration import CONFIG
 
 # CONFIG = configuration.CONFIG
+CONVERSIONS = {
+    "time_ns": {
+        "from_adc": 16,
+        "to_adc": 1/16
+    },
+    "voltage_mv": {
+        #
+        # Todo: replace with fitted values?
+        #
+        "from_adc": 2000/2**14,
+        "to_adc": 2**14/2000
+    }
+}
 
+def convert_adc_ns(adc: Iterable|int) -> Iterable|int:
+    factor = CONVERSIONS["time_ns"]["from_adc"]
+    if isinstance(adc, Iterable):
+        return (e*factor for e in adc)
+    else:
+        return adc*factor
 
+def convert_adc_mV(adc: Iterable|int) -> Iterable|int:
+    #
+    # Todo: replace with axis-rescale method?
+    #
+    factor = CONVERSIONS["voltage_mv"]["from_adc"]
+    if isinstance(adc, Iterable):
+        return (e*factor for e in adc)
+    else:
+        return adc*factor
 
 def _get_samples_data(entry, key="samples"):
 
@@ -114,6 +142,11 @@ def _plot_series(series, ax_flags, ax_samples, cmap, **kwargs):
 
 
 def plot_rows(rows, **kwargs):
+    # https://stackoverflow.com/questions/37725462/how-can-i-rescale-axis-without-scaling-the-image-in-an-image-plot-with-matplotli
+    # https://stackoverflow.com/questions/30883933/matplotlib-rescale-axis-labels
+    # https://stackoverflow.com/questions/68847226/how-to-rescale-an-axis-with-matplotlib
+    #
+    #
 
     fig, (ax_flags, ax_samples) = plt.subplots(
         2,1,
