@@ -9,6 +9,11 @@ data_parser.init("v1")
 from data_parser import data_io, struct_conversion
 from time import process_time
 
+#
+# Todo: Split uproot and root export in separate file to keep dependencies minimal
+# Todo: add uproot to requirements.txt (generate as described in README)
+#
+
 
 class Parameters:
     # these first 3 are only for the scipy function to find the peaks
