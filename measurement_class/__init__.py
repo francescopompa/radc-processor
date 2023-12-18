@@ -14,11 +14,7 @@ from pathlib import Path
 #
 class Measurement():
 
-    _base_path = (
-        "C:/Users/utrfh/WS22-23 (MA) Masterarbeit/Measurements/"
-            if os.getlogin() == "utrfh" else
-        "/data/umeasurements"
-            )
+    _base_path = "/data/DAQMeasurements"
 
     key_defaults = {
         # "group" has no default as it has to be set explicitely.
@@ -67,8 +63,7 @@ class Measurement():
         self.subgroup_desc = subgroup_desc
         self.suffixes = suffixes
 
-        if base_path is None:
-            self.base_path = self._base_path
+        self.base_path = base_path or self._base_path
 
         if id is not None:
             self._init_with_id(id)
