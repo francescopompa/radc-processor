@@ -145,6 +145,7 @@ class Receiver():
         If you pass a duration, the receiver will .stop() itself after
         `duration` seconds have passed.
         """
+        os.system('radc_nd_reg 192.168.1.200 6000 FeControl.EnTr 1')
         if self.__do_readout is True:
             print("Receiver is already running.")
             return
@@ -406,7 +407,7 @@ class Receiver():
 
                 total_rate = total_data / run_time
 
-                print(f"Received: {count} packages in {int(run_time)}s for {total_data} Bytes in total. ({total_rate:.2}B/s) Chunks: {self.current_chunk}, Splits:{self.current_split}",
+                print(f"Received: {count} packages in {int(run_time)} s for {total_data} Bytes in total. ({total_rate:.2} B/s) Chunks: {self.current_chunk}, Splits:{self.current_split}",
                     end="\r",
                     # file=sys.stdout, # Necessary?
                     flush = True
@@ -417,7 +418,7 @@ class Receiver():
         # else:
         if self.__update_queue.empty() is True:
             print("Summary:")
-            print(f"Received: {count} packages in {int(run_time)}s for {total_data} Bytes in total. ({total_rate:.2}B/s) Chunks: {self.current_chunk}, Splits:{self.current_split}")
+            print(f"Received: {count} packages in {int(run_time)} s for {total_data} Bytes in total. ({total_rate:.2} B/s) Chunks: {self.current_chunk}, Splits:{self.current_split}")
             self.results = {
                 "received_packages": count,
                 "received_bytes": total_data,
