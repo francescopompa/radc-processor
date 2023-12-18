@@ -229,7 +229,7 @@ class Event(BaseSnippet):
             case "Event_ID":
                 # Reverse the Byte order
                 return int.from_bytes(
-                    entry[::-1]
+                    entry[::-1], "big"
                     # bytes([entry[2], entry[1], entry[0]])
                 )
             case _:

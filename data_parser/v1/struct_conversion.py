@@ -80,7 +80,7 @@ class Snippet(BaseSnippet):
         if key == "Energy":
             # Reverse the Byte order
             return int.from_bytes(
-                bytes([entry[2], entry[1], entry[0]])
+                bytes([entry[2], entry[1], entry[0]],"big")
             )
         else:
             return entry

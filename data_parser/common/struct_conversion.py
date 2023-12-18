@@ -174,7 +174,7 @@ class BaseSnippet():
             case "Energy":
                 # Reverse the Byte order
                 return int.from_bytes(
-                    bytes([entry[2], entry[1], entry[0]])
+                    bytes([entry[2], entry[1], entry[0]]), "big"
                 )
             case _:
                 return entry
