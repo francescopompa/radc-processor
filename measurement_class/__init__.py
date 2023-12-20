@@ -300,7 +300,12 @@ class Measurement():
         print("New id:", self.id)
 
 
-    def get_path(self, key, subkey=None, create=True):
+    def get_path(self, key, subkey=None, create=True, suffix=None):
+
+        if isinstance(suffix, str) and any(s in suffix for s in [" ", "_"]):
+            raise ValueError(f"Suffix {suffix} should not contain _ or spaces.")
+
+        suffix = f"-{suffix}" if suffix else ""
 
         path_keys = {
             "tek": {
@@ -348,12 +353,12 @@ class Measurement():
                     ),
                 "pdf": Path(
                     "C:/Users/utrfh/WS22-23 (MA) Masterarbeit/LaTeX Thesis/meas",
-                    f"{self.groupid}.pdf",
+                    f"{self.groupid}{suffix}.pdf",
                     ),
                 "table": Path(
                     "C:/Users/utrfh/WS22-23 (MA) Masterarbeit/LaTeX Thesis/meas",
                     f"{self.groupid}",
-                    f"{self.groupid}.tex"
+                    f"{self.groupid}{suffix}.tex"
                     ),
             }
         }
