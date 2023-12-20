@@ -47,6 +47,7 @@ def make_total_dataFrame(files: list|str) -> pd.DataFrame:
 def make_total_rootfile(files:list|str,out_dir: str = '.',namefile_output: str = 'test'):
 
     df=make_total_dataFrame(files)
-    df=pf.update_dataframe_with_pulses(df)
-    pf.df_to_root_file(df,out_dir,namefile_output)
+    df_updated=pf.update_dataframe_with_pulses(df)
+    root_file = pf.df_to_root_file(df_updated,out_dir,namefile_output)
+    return df, df_updated, root_file
 
