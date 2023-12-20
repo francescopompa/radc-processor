@@ -145,7 +145,7 @@ class Receiver():
         If you pass a duration, the receiver will .stop() itself after
         `duration` seconds have passed.
         """
-        os.system('radc_nd_reg 192.168.1.200 6000 FeControl.EnTr 1')
+        os.system(f'radc_nd_reg {self.host} 6000 FeControl.EnTr 1')
         if self.__do_readout is True:
             print("Receiver is already running.")
             return
@@ -269,11 +269,12 @@ class Receiver():
 
     def trigger(self, number=1):
         """Send a software-trigger signal to the board. Making it send the
-        current waveforms without pulse-filtering."""
+        current waveforms without pulse-filtering. The acquisition rate is fixed to 10 kHz"""
         for i in range(number):
             self.__sock.send('w_00000001_00000001'.encode())
             # self.__sock.sendto('w_00000001_00000001'.encode(), (self.host, 5000))
-            time.sleep(self.tracelength*16*10**-9)
+            # time.sleep(self.tracelength*16*10**-9)
+            time.sleep(400e-6) #it must be greater that 200e-6, in theory 199 doesn´t work
 
     def switch_file(self, filename):
         # filename += "" if filename.endswith(".bin") else "_readout.bin"
