@@ -5,7 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import data_parser
-data_parser.init("v1")
+data_parser.init("v2")
 from data_parser import data_io, struct_conversion
 from time import process_time
 
@@ -209,6 +209,10 @@ def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
     #     np.row_stack(np.vectorize(pulse_operations, otypes=['O'])(df['samples'])),
     #     index=df.index
     #     )
+    if data_parser.VERSION == 2:
+        df = df.join(
+            pd.json_normalize(df.explode("snippets").dropna()['snippets'], max_level=1)
+        ).drop('snippets', axis='columns')
     tmp = df['samples'].apply(pulse_operations)
     
     columns=['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
@@ -227,12 +231,16 @@ def df_to_root_file(pdf: pd.DataFrame, out_dir: str, namefile: str) -> uproot.wr
     It creates the root file using the dataframe. Some columns are converted to suitable 
     types for uproot. Attention: it creates automatically the folder
     '''
-
+    if data_parser.VERSION == 2:
+        pdf=pdf.explode(['trigger_IDs']).reset_index(drop=True)
+        pdf.loc[:, 'Info_flags'] = pdf.Info_flags.astype('str')
+    if data_parser.VERSION == 1:
+        pdf.loc[:, 'Type'] = pdf.Type.astype('str')
+        pdf.loc[:, 'Rest'] = pdf.Rest.astype('str')
+    
     pdf = pdf[pdf.IsPulse == True]
     pdf.loc[:, 'Datetime'] = pdf['Datetime'].dt.strftime('%Y%m%d')
     pdf.loc[:, 'Datetime'] = pdf.Datetime.astype('int64')
-    pdf.loc[:, 'Type'] = pdf.Type.astype('str')
-    pdf.loc[:, 'Rest'] = pdf.Rest.astype('str')
     pdf = pdf.drop(columns='IsPulse')
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -256,6 +264,7 @@ def single_dataset_to_root(data_dir: str, input_filename: str, out_dir: str, out
 
 
 if __name__ == '__main__':
+    data_parser.init('v1')
     df = struct_conversion.DataFile(
         "BC230705b_04-2_65ns_60mv_stretched_readout.bin",
         tracelength=100
