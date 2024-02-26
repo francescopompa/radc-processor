@@ -51,3 +51,8 @@ def make_total_rootfile(files:list|str,out_dir: str = '.',namefile_output: str =
     root_file = pf.df_to_root_file(df_updated,out_dir,namefile_output)
     return df, df_updated, root_file
 
+def explode_dataframe(df):
+    return df.join(
+            pd.json_normalize(df.explode("snippets").dropna()['snippets'], max_level=1)
+        ).drop('snippets', axis='columns')
+
