@@ -199,8 +199,10 @@ def pulse_operations(samples: list | pd.Series):
 
     return successes, max_indices, pulse_heights, pulse_widths, areas, starts, ends
 
+def getAbsoluteTime(timedelta_samples,subsecs,window_length = 200):
+    return (timedelta_samples - subsecs % 2**16)/2**16*window_length
 
-def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
+def update_dataframe_with_pulses(df: pd.DataFrame,window_length = 200) -> pd.DataFrame:
     '''
     It adds the columns with the pulses parameters to the dataframe
     '''
@@ -209,10 +211,8 @@ def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
     #     np.row_stack(np.vectorize(pulse_operations, otypes=['O'])(df['samples'])),
     #     index=df.index
     #     )
-    if data_parser.VERSION == 2:
-        df = df.join(
-            pd.json_normalize(df.explode("snippets").dropna()['snippets'], max_level=1)
-        ).drop('snippets', axis='columns')
+    if 'snippets' in df.columns:
+        df = data_io.explode_dataframe(df)
     tmp = df['samples'].apply(pulse_operations)
     
     columns=['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
@@ -221,7 +221,7 @@ def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
         df[col] = [row[i] for row in tmp]
     df = df.explode(['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
         'StartPulse', 'EndPulse']).reset_index(drop=True)
-
+    df['deltaT'] = df.apply(lambda x: getAbsoluteTime(x['Timedelta_samples'],x['Subsecs']),axis=1)
 
     return df
 
@@ -253,14 +253,18 @@ def single_dataset_to_root(data_dir: str, input_filename: str, out_dir: str, out
     '''
     Function to convert the datafile directly to a rootdir
     '''
+    tracelength = kwargs.pop('tracelength',64)
+    window_length = kwargs.pop('window_length',200)
     df = struct_conversion.DataFile(
         Path(data_dir) / input_filename,
-        kwargs
+        tracelength=tracelength
     )
     pdf = data_io.make_total_dataFrame([df])
-    pdf = update_dataframe_with_pulses(pdf)
+    pdf = update_dataframe_with_pulses(pdf,window_length = window_length)
     file = df_to_root_file(pdf, out_dir, output_filename)
     return file
+
+
 
 
 if __name__ == '__main__':
