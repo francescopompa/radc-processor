@@ -267,7 +267,7 @@ def plot_events_coincidence(df: pd.DataFrame, window_length = 200):
         # find a way to convert to more informative energy units
         # 
         absoluteTime = (deltaT_samples - subsecs % 2**16)/65536*window_length
-        fig,ax=plt.subplots(ncols=1,nrows=2,figsize=(12,10))
+        fig,ax=plt.subplots(ncols=1,nrows=2,layout='constrained')
         for i in range(event_DF['Snippet_count'].iloc[0]):
             ax[0].plot(event_DF['samples'].iloc[i],label=f'Snippet {i+1}')
             ax[0].legend()
@@ -280,7 +280,6 @@ def plot_events_coincidence(df: pd.DataFrame, window_length = 200):
         ax[1].set_xlabel(r'Time ($\mu$s)')
         ax[0].set_title(f'Event {event_ID[0]}')
         ax[1].set_ylabel('Boxcar energy (ADCC)')
-        ax[1].legend()
         ax[1].set_box_aspect(1/5)
-        fig.tight_layout()
+        # fig.tight_layout()
         plt.show()
