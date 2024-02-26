@@ -23,5 +23,5 @@ def print_df_properties(df: pd.DataFrame) -> None:
 
 
 def group_by_events(df: pd.DataFrame) -> pd.core.groupby.DataFrameGroupBy:
-    return df.groupby(["File", "Event_ID"])
+    return df.groupby(["Event_ID"])
 
