@@ -7,6 +7,7 @@ from collections.abc import Iterable
 # from configuration import CONFIG
 # import configuration #.CONFIG as CONFIG
 from .configuration import CONFIG
+from pathlib import Path
 
 # CONFIG = configuration.CONFIG
 CONVERSIONS = {
@@ -254,10 +255,12 @@ def plot_events(df: pd.DataFrame, **kwargs):
             kwargs["xlim"] = kwargs.get("xlim") or (min(left_bases), max(right_bases))
         plot_rows(event_DF, **kwargs)
 
-def plot_events_coincidence(df: pd.DataFrame, window_length = 200):
+def plot_events_coincidence(df: pd.DataFrame, window_length = 200, n_events = 50, save = False, outDir = "./images"):
     from .dataFrame_helpers import group_by_events
     # plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.tab20c.colors)
-
+    if save == True:
+        p = Path(outDir)
+        p.mkdir(parents=True, exist_ok=True)
     events = group_by_events(df)
     for (event_ID), event_DF in events:
         deltaT_samples = event_DF['Timedelta_samples']
@@ -283,3 +286,7 @@ def plot_events_coincidence(df: pd.DataFrame, window_length = 200):
         ax[1].set_box_aspect(1/5)
         # fig.tight_layout()
         plt.show()
+        if save == True:
+            fig.savefig(outDir + f'/Event{event_ID[0]}.pdf')
+        if event_ID[0] >= (n_events-1):
+            break
