@@ -262,7 +262,9 @@ def plot_events_coincidence(df: pd.DataFrame, window_length = 200, n_events = 50
         p = Path(outDir)
         p.mkdir(parents=True, exist_ok=True)
     events = group_by_events(df)
+    counter =0
     for (event_ID), event_DF in events:
+        counter += 1
         deltaT_samples = event_DF['Timedelta_samples']
         subsecs = event_DF['Subsecs']
         energies = event_DF['Energy']
@@ -288,5 +290,5 @@ def plot_events_coincidence(df: pd.DataFrame, window_length = 200, n_events = 50
         plt.show()
         if save == True:
             fig.savefig(outDir + f'/Event{event_ID[0]}.pdf')
-        if event_ID[0] >= (n_events-1):
+        if counter >= n_events:
             break
