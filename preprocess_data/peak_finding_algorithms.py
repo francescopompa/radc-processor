@@ -199,8 +199,6 @@ def pulse_operations(samples: list | pd.Series):
 
     return successes, max_indices, pulse_heights, pulse_widths, areas, starts, ends
 
-def getAbsoluteTime(timedelta_samples,subsecs,window_length = 200):
-    return (timedelta_samples - subsecs % 2**16)/2**16*window_length
 
 def update_dataframe_with_pulses(df: pd.DataFrame,window_length = 200) -> pd.DataFrame:
     '''
@@ -221,7 +219,6 @@ def update_dataframe_with_pulses(df: pd.DataFrame,window_length = 200) -> pd.Dat
         df[col] = [row[i] for row in tmp]
     df = df.explode(['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
         'StartPulse', 'EndPulse']).reset_index(drop=True)
-    df['deltaT'] = df.apply(lambda x: getAbsoluteTime(x['Timedelta_samples'],x['Subsecs']),axis=1)
 
     return df
 
@@ -233,7 +230,8 @@ def df_to_root_file(pdf: pd.DataFrame, out_dir: str, namefile: str) -> uproot.wr
     '''
     if data_parser.VERSION == 2:
         pdf=pdf.explode(['trigger_IDs']).reset_index(drop=True)
-        pdf.loc[:, 'Info_flags'] = pdf.Info_flags.astype('str')
+        #pdf.loc[:, 'Info_flags'] = pdf.Info_flags.astype('str')
+        pdf=pdf.drop(columns='Info_flags')
     if data_parser.VERSION == 1:
         pdf.loc[:, 'Type'] = pdf.Type.astype('str')
         pdf.loc[:, 'Rest'] = pdf.Rest.astype('str')
