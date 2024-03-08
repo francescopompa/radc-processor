@@ -166,18 +166,16 @@ def pulse_operations(samples: list | pd.Series):
             Parameters.number_of_sample_below_thres_for_range
         )
 
-        if len(samples[:start_pulse-10]) >= Parameters.n_samples_baseline:
+        if len(samples[:start_pulse]) >= Parameters.n_samples_baseline:
             baseline_sample = samples[start_pulse -
                                       Parameters.n_samples_baseline:start_pulse]
             baseline = np.mean(baseline_sample)
-        elif len(samples[end_pulse + 10:]) >= Parameters.n_samples_baseline:
+        elif len(samples[end_pulse:]) >= Parameters.n_samples_baseline:
             baseline_sample = samples[end_pulse:
                                       Parameters.n_samples_baseline + end_pulse]
             baseline = np.mean(baseline_sample)
         else:
             baseline = 0
-            print(
-                'Numbers of samples for the baseline may not be enough.')
 
         # subtract them to create baselined signal
         samples = samples - baseline*np.ones(len(samples))
