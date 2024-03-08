@@ -19,7 +19,7 @@ class Parameters:
     # these first 3 are only for the scipy function to find the peaks
     sp_height = 10
     sp_width = int(12)
-    sp_distance = int(2)  # samples #it's for sure more
+    sp_distance = int(2)  # samples 
 
     height = 10  # it was 0.6 mV for now it's in ADC counts
     width = int(12)
@@ -27,7 +27,7 @@ class Parameters:
     number_of_sample_below_thres_for_range = int(3)
     max_number_of_pulses = int(1)
     sample_width = int(16)  # ns
-    n_samples_baseline = int(50)
+    n_samples_baseline = int(10)
 
 
 def find_first_n_less(min_value, vector, n):
@@ -167,16 +167,16 @@ def pulse_operations(samples: list | pd.Series):
         )
 
         if len(samples[:start_pulse-10]) >= Parameters.n_samples_baseline:
-            baseline_sample = samples[start_pulse-10 -
-                                      Parameters.n_samples_baseline:start_pulse-10]
+            baseline_sample = samples[start_pulse -
+                                      Parameters.n_samples_baseline:start_pulse]
             baseline = np.mean(baseline_sample)
         elif len(samples[end_pulse + 10:]) >= Parameters.n_samples_baseline:
-            baseline_sample = samples[end_pulse+10:
-                                      Parameters.n_samples_baseline + end_pulse + 10]
+            baseline_sample = samples[end_pulse:
+                                      Parameters.n_samples_baseline + end_pulse]
             baseline = np.mean(baseline_sample)
         else:
             baseline = 0
-            RuntimeWarning(
+            print(
                 'Numbers of samples for the baseline may not be enough.')
 
         # subtract them to create baselined signal
