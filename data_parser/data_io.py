@@ -44,7 +44,7 @@ def make_total_dataFrame(files: list|str) -> pd.DataFrame:
         ignore_index=True
         )
 
-def make_total_rootfile(files:list|str,out_dir: str = '.',namefile_output: str = 'test'):
+def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str):
 
     df=make_total_dataFrame(files)
     df_updated=pf.update_dataframe_with_pulses(df)
@@ -52,7 +52,8 @@ def make_total_rootfile(files:list|str,out_dir: str = '.',namefile_output: str =
     return df, df_updated, root_file
 
 def explode_dataframe(df):
-    return df.join(
-            pd.json_normalize(df.explode("snippets").dropna()['snippets'], max_level=1)
-        ).drop('snippets', axis='columns')
+    dfc=df.explode('snippets').reset_index(drop=True)
+    df=dfc.join(pd.json_normalize(dfc['snippets'])).drop(columns='snippets')
+    print(df.head(10))
+    return df
 
