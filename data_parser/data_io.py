@@ -26,7 +26,7 @@ def datafile_to_df(file: DataFile) -> pd.DataFrame:
     return df
 
 
-def load_files_to_df(files: list) -> pd.DataFrame:
+def load_files_to_df(files: list):
     for file in files:
         if isinstance(file, DataFile):
             yield datafile_to_df(file)
@@ -54,6 +54,5 @@ def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str):
 def explode_dataframe(df):
     dfc=df.explode('snippets').reset_index(drop=True)
     df=dfc.join(pd.json_normalize(dfc['snippets'])).drop(columns='snippets')
-    print(df.head(10))
     return df
 
