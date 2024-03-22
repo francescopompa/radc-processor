@@ -21,13 +21,13 @@ class Parameters:
     sp_width = int(12)
     sp_distance = int(2)  # samples 
 
-    height = 10  # it was 0.6 mV for now it's in ADC counts
+    height = 50  # it was 0.6 mV for now it's in ADC counts
     width = int(12)
 
     number_of_sample_below_thres_for_range = int(3)
     max_number_of_pulses = int(1)
     sample_width = int(16)  # ns
-    n_samples_baseline = int(10)
+    n_samples_baseline = int(5)
 
 
 def find_first_n_less(min_value, vector, n):
@@ -125,9 +125,13 @@ def pulse_operations(samples: list | pd.Series):
     Support for multiple pulses per snippet
     """
     samples = np.array(samples)
-    sig_boxcar = sp.ndimage.uniform_filter1d(
-        samples * Parameters.sp_width, size=Parameters.sp_width
-    )
+    if samples.any() == np.nan: samples = np.zeros(64)
+    try:
+        sig_boxcar = sp.ndimage.uniform_filter1d(
+            samples * Parameters.sp_width, size=Parameters.sp_width
+        )
+    except np.AxisError:
+        return False,0,0,0,0,0,0        
 
     peaks, peak_properties = sp.signal.find_peaks(
         sig_boxcar,
@@ -168,18 +172,17 @@ def pulse_operations(samples: list | pd.Series):
 
         if len(samples[:start_pulse]) >= Parameters.n_samples_baseline:
             baseline_sample = samples[start_pulse -
-                                      Parameters.n_samples_baseline:start_pulse]
+                                      Parameters.n_samples_baseline:start_pulse+1]
             baseline = np.mean(baseline_sample)
         elif len(samples[end_pulse:]) >= Parameters.n_samples_baseline:
             baseline_sample = samples[end_pulse:
-                                      Parameters.n_samples_baseline + end_pulse]
+                                      Parameters.n_samples_baseline + end_pulse +1]
             baseline = np.mean(baseline_sample)
         else:
-            baseline = 0
+            baseline = np.mean(samples[-5:])
 
         # subtract them to create baselined signal
-        samples = samples - baseline*np.ones(len(samples))
-
+        samples = samples - baseline
         success, max_index, pulse_height, pulse_width, area, start, end = calc_puls_params(
             samples,
             peak,
@@ -197,8 +200,7 @@ def pulse_operations(samples: list | pd.Series):
 
     return successes, max_indices, pulse_heights, pulse_widths, areas, starts, ends
 
-
-def update_dataframe_with_pulses(df: pd.DataFrame,window_length = 200) -> pd.DataFrame:
+def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
     '''
     It adds the columns with the pulses parameters to the dataframe
     '''
@@ -227,7 +229,7 @@ def df_to_root_file(pdf: pd.DataFrame, out_dir: str, namefile: str) -> uproot.wr
     types for uproot. Attention: it creates automatically the folder
     '''
     if data_parser.VERSION == 2:
-        pdf=pdf.explode(['trigger_IDs']).reset_index(drop=True)
+        #pdf=pdf.explode(['trigger_IDs']).reset_index(drop=True)
         #pdf.loc[:, 'Info_flags'] = pdf.Info_flags.astype('str')
         pdf=pdf.drop(columns='Info_flags')
     if data_parser.VERSION == 1:
@@ -250,13 +252,12 @@ def single_dataset_to_root(data_dir: str, input_filename: str, out_dir: str, out
     Function to convert the datafile directly to a rootdir
     '''
     tracelength = kwargs.pop('tracelength',64)
-    window_length = kwargs.pop('window_length',200)
     df = struct_conversion.DataFile(
         Path(data_dir) / input_filename,
         tracelength=tracelength
     )
     pdf = data_io.make_total_dataFrame([df])
-    pdf = update_dataframe_with_pulses(pdf,window_length = window_length)
+    pdf = update_dataframe_with_pulses(pdf)
     file = df_to_root_file(pdf, out_dir, output_filename)
     return file
 
