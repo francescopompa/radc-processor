@@ -8,6 +8,7 @@ from collections.abc import Iterable
 # import configuration #.CONFIG as CONFIG
 from .configuration import CONFIG
 from pathlib import Path
+import numpy as np
 
 # CONFIG = configuration.CONFIG
 CONVERSIONS = {
@@ -255,7 +256,7 @@ def plot_events(df: pd.DataFrame, **kwargs):
             kwargs["xlim"] = kwargs.get("xlim") or (min(left_bases), max(right_bases))
         plot_rows(event_DF, **kwargs)
 
-def plot_events_coincidence(df: pd.DataFrame, window_length = 200, n_events = 50, save = False, outDir = "./images"):
+def plot_events_coincidence(df: pd.DataFrame, postTriggerTime = 800, n_events = 50, save = False, outDir = "./images"):
     from .dataFrame_helpers import group_by_events
     # plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.tab20c.colors)
     if save == True:
@@ -266,28 +267,30 @@ def plot_events_coincidence(df: pd.DataFrame, window_length = 200, n_events = 50
     for (event_ID), event_DF in events:
         counter += 1
         deltaT_samples = event_DF['Timedelta_samples']
-        subsecs = event_DF['Subsecs']
         energies = event_DF['Energy']
+        channels = event_DF['Channel_number']
         # to do 
         # find a way to convert to more informative energy units
         # 
-        absoluteTime = (deltaT_samples - subsecs % 2**16)/65536*window_length
+        relativeTime = ((deltaT_samples + 2**16 - deltaT_samples.iloc[0]) % 2**16)*16e-3
+        relativeTime = pd.Series([(r - 2**16*16e-3) if np.abs(r) > (postTriggerTime*16e-3) else r for r in relativeTime])
         fig,ax=plt.subplots(ncols=1,nrows=2,layout='constrained')
-        for i in range(event_DF['Snippet_count'].iloc[0]):
-            ax[0].plot(event_DF['samples'].iloc[i],label=f'Snippet {i+1}')
+        for i in range(len(event_DF.index)):
+            ax[0].plot(event_DF['samples'].iloc[i],label=f'{i+1}: channel {channels.iloc[i]}')
             ax[0].legend()
-            ax[1].plot(absoluteTime.iloc[i],energies.iloc[i],'o',label = f'Snippet {i+1}')
+            ax[1].plot(relativeTime.iloc[i],energies.iloc[i],'o',label = f'Snippet {i+1}')
 
         ax[0].set_xlabel('Sample ID')
         ax[0].set_ylabel('ADC counts')
-        ax[1].set_xlim(-window_length/2*1.1,window_length/2*1.1)
-        ax[1].set_ylim(0,max(energies)*1.2)
+        #ax[1].set_xlim(-5,max(relativeTime)*1.2)
+        #ax[1].set_ylim(min(energies)*0.8+0.01,max(energies)*1.2+0.01)
         ax[1].set_xlabel(r'Time ($\mu$s)')
         ax[0].set_title(f'Event {event_ID[0]}')
         ax[1].set_ylabel('Boxcar energy (ADCC)')
         ax[1].set_box_aspect(1/5)
         # fig.tight_layout()
         plt.show()
+        plt.close()
         if save == True:
             fig.savefig(outDir + f'/Event{event_ID[0]}.pdf')
         if counter >= n_events:
