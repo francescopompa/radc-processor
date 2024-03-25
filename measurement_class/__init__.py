@@ -183,11 +183,11 @@ class Measurement():
     def path(self, key=None):
         group_path = Path(
             self.base_path,
-            f"{self.group} - {self.group_desc}"
+            f"{self.group}_{self.group_desc}"
         )
         subgroup_path = Path(
            group_path,
-           f"{self.date}{self.subgroup} {self.subgroup_desc}"
+           f"{self.date}{self.subgroup}_{self.subgroup_desc}"
         )
         return group_path, subgroup_path
 
