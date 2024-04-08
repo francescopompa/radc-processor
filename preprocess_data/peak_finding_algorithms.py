@@ -207,6 +207,7 @@ def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
     df = df.explode(['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
         'StartPulse', 'EndPulse']).reset_index(drop=True)
     df['Charge_keV'] = df.apply(lambda x: energyConversion(x['Charge'],x['Channel_number'],Parameters.gain),axis=1)
+    df['samples_mV'] = df.apply(lambda x: ADC_to_mV_conversion(x['samples'],x['Channel_number']),axis=1)
 
     return df
 
@@ -265,6 +266,21 @@ def energyConversion(charge,channel,gain='matched'):
     else:
         return E_keV * gain / 2e6
 
+def ADC_to_mV_conversion(samples,channel):
+    samples=np.array(samples)
+    if channel in range(8):
+        return list((samples - 13)/31.06)
+    elif channel in range(8,16):
+        return list((samples - 19)/30.68)
+    elif channel in range(16,24):
+        return list((samples - 19)/31.07)
+    elif channel in range(24,32):
+        return list((samples - 14.06)/30.07)
+    elif channel in range(32,36):
+        return list((samples - 18)/30.66)
+    else:
+        print(f'The channel {channel} does not exist!')
+        exit(-1)
 
 
 
