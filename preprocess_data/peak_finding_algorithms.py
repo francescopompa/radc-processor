@@ -8,26 +8,13 @@ import data_parser
 data_parser.init("v2")
 from data_parser import data_io, struct_conversion
 from time import process_time
+from . import Parameters
 
 #
 # Todo: Split uproot and root export in separate file to keep dependencies minimal
 # Todo: add uproot to requirements.txt (generate as described in README)
 #
 
-
-class Parameters:
-    # these first 3 are only for the scipy function to find the peaks
-    sp_height = 10
-    sp_width = int(12)
-    sp_distance = int(2)  # samples 
-
-    height = 50  # it was 0.6 mV for now it's in ADC counts
-    width = int(12)
-
-    number_of_sample_below_thres_for_range = int(3)
-    max_number_of_pulses = int(1)
-    sample_width = int(16)  # ns
-    n_samples_baseline = int(5)
 
 
 def find_first_n_less(min_value, vector, n):
@@ -219,6 +206,7 @@ def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
         df[col] = [row[i] for row in tmp]
     df = df.explode(['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
         'StartPulse', 'EndPulse']).reset_index(drop=True)
+    df['Charge_keV'] = df.apply(lambda x: energyConversion(x['Charge'],x['Channel_number'],Parameters.gain),axis=1)
 
     return df
 
@@ -260,6 +248,22 @@ def single_dataset_to_root(data_dir: str, input_filename: str, out_dir: str, out
     pdf = update_dataframe_with_pulses(pdf)
     file = df_to_root_file(pdf, out_dir, output_filename)
     return file
+
+def energyConversion(charge,channel,gain='matched'):
+    '''
+    Function to convert ADCC to energy. 
+    This function gives reliable results only in the case of full detector,
+    otherwise for now it's necessary to convert in postprocessing or to use always the same channel
+    with the same module
+    '''
+    df=pd.read_csv(Path(__file__).parent /'channel_map_energy.csv')
+    pmt=df.PMT[df['DAQ'] == channel]
+    rescalingFactor = float((df.CE[df.PMT == 292].item() / df.CE[pmt.index].item()))
+    E_keV=(charge + 624)/16.36 * rescalingFactor
+    if gain=='matched':
+        return E_keV
+    else:
+        return E_keV * gain / 2e6
 
 
 
