@@ -208,6 +208,7 @@ def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
         'StartPulse', 'EndPulse']).reset_index(drop=True)
     df['Charge_keV'] = df.apply(lambda x: energyConversion(x['Charge'],x['Channel_number'],Parameters.gain),axis=1)
     df['samples_mV'] = df.apply(lambda x: ADC_to_mV_conversion(x['samples'],x['Channel_number']),axis=1)
+    df['deltaT_us']=df.apply(lambda x: getRelativeTimeSnippets(x['Subsecs'],x['Timedelta_samples']),axis=1)
 
     return df
 
@@ -281,6 +282,15 @@ def ADC_to_mV_conversion(samples,channel):
     else:
         print(f'The channel {channel} does not exist!')
         exit(-1)
+    
+def getRelativeTimeSnippets(subseconds,timedelta_samples):
+    sampling_period=16e-3
+    dT = (subseconds % 2**16) - timedelta_samples
+
+    if dT < 0:
+        return ( (2**16 + dT) ) * sampling_period
+    else:
+        return dT*sampling_period
 
 
 
