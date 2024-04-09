@@ -3,4 +3,5 @@
 **/*bin*
 .vscode/**
 **/*.backup
+**/*.ipynb_checkpoints
 radc_processor.egg-info
