@@ -6,6 +6,7 @@ import threading as thr
 import queue
 import signal
 import json
+from time import gmtime, strftime
 
 from .file_class import TargetFiles
 
@@ -269,12 +270,12 @@ class Receiver():
 
     def trigger(self, number=1):
         """Send a software-trigger signal to the board. Making it send the
-        current waveforms without pulse-filtering. The acquisition rate is fixed to 10 kHz"""
+        current waveforms without pulse-filtering. The acquisition rate is fixed to 2.5 kHz"""
         for i in range(number):
             self.__sock.send('w_00000001_00000001'.encode())
             # self.__sock.sendto('w_00000001_00000001'.encode(), (self.host, 5000))
             # time.sleep(self.tracelength*16*10**-9)
-            time.sleep(400e-6) #it must be greater that 200e-6, in theory 199 doesn´t work
+            time.sleep(400e-6) #it must be greater than 200e-6 or so, but it's actually limited by the laptop
 
     def switch_file(self, filename):
         # filename += "" if filename.endswith(".bin") else "_readout.bin"
@@ -390,7 +391,7 @@ class Receiver():
         # Todo: split update from printing
         # Todo: allow mode-selection between interactive and single stdout-return
         #
-
+        
         run_time = 0
         total_rate = 0.
         timeout = socket.getdefaulttimeout()
@@ -408,7 +409,7 @@ class Receiver():
 
                 total_rate = total_data / run_time
 
-                print(f"Received: {count} packages in {int(run_time)} s for {total_data} Bytes in total. ({total_rate:.2} B/s) Chunks: {self.current_chunk}, Splits:{self.current_split}",
+                print(f"Received: {count} packages in {convert_seconds(int(run_time))} for {convert_bytes(total_data)} in total. ({convert_bytes(total_rate)}/s) Chunks: {self.current_chunk}, Splits:{self.current_split}",
                     end="\r",
                     # file=sys.stdout, # Necessary?
                     flush = True
@@ -516,8 +517,22 @@ class Receiver():
     #     print(f"Replaced {old_target} with {new_target} to avoid overwrite. ({self.__suffixes})")
     #     return new_target
 
+#these need to be tested
+def convert_bytes(size):
+    for x in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if size < 1024.0:
+            return "%3.0f %s" % (size, x)
+        size /= 1024.0
 
+    return size
 
+def convert_seconds(seconds):
+    if seconds < 3600:
+        return strftime('%M:%S',gmtime(seconds))
+    elif seconds < (3600*24):
+        return strftime('%H:%M:%S',gmtime(seconds))
+    else:
+        return strftime('%D d %H:%M:%S',gmtime(seconds))
 
 
 
