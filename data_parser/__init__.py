@@ -35,7 +35,7 @@ VERSION_STR = ""
 VERSIONS = [None, "v1", "v2"]
 """List of possible converter versions."""
 
-DEFAULT_VERSION = "v1"
+DEFAULT_VERSION = "v2"
 """Default converter version value."""
 
 # __all__ = [
