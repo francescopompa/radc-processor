@@ -9,6 +9,7 @@ from collections.abc import Iterable
 from .configuration import CONFIG
 from pathlib import Path
 import numpy as np
+from preprocess_data.peak_finding_algorithms import getRelativeTimeSnippets
 
 # CONFIG = configuration.CONFIG
 CONVERSIONS = {
@@ -256,7 +257,7 @@ def plot_events(df: pd.DataFrame, **kwargs):
             kwargs["xlim"] = kwargs.get("xlim") or (min(left_bases), max(right_bases))
         plot_rows(event_DF, **kwargs)
 
-def plot_events_coincidence(df: pd.DataFrame, postTriggerTime = 800, n_events = 50, save = False, outDir = "./images"):
+def plot_events_coincidence(df: pd.DataFrame, timeWindow= 12500, n_events = 50, save = False, outDir = "./images"):
     from .dataFrame_helpers import group_by_events
     # plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.tab20c.colors)
     if save == True:
@@ -269,19 +270,24 @@ def plot_events_coincidence(df: pd.DataFrame, postTriggerTime = 800, n_events = 
         deltaT_samples = event_DF['Timedelta_samples']
         energies = event_DF['Energy']
         channels = event_DF['Channel_number']
+        subsecs = event_DF['Subsecs'].iloc[0]
+        sampling_period=16e-3
         # to do 
         # find a way to convert to more informative energy units
-        # 
-        relativeTime = ((deltaT_samples + 2**16 - deltaT_samples.iloc[0]) % 2**16)*16e-3
-        relativeTime = pd.Series([(r - 2**16*16e-3) if np.abs(r) > (postTriggerTime*16e-3) else r for r in relativeTime])
+        
+        relativeTime=[getRelativeTimeSnippets(subsecs,d) for d in deltaT_samples]
+        
+        # correct but not the way Denis uses
+        # relativeTime = ((deltaT_samples + 2**16 - deltaT_samples.iloc[0]) % 2**16)*16e-3
+        # relativeTime = pd.Series([(r - 2**16*16e-3) if np.abs(r) > (timeWindow*16e-3) else r for r in relativeTime])
         fig,ax=plt.subplots(ncols=1,nrows=2,layout='constrained')
         for i in range(len(event_DF.index)):
             ax[0].plot(event_DF['samples'].iloc[i],label=f'{i+1}: channel {channels.iloc[i]}')
-            ax[0].legend()
-            ax[1].plot(relativeTime.iloc[i],energies.iloc[i],'o',label = f'Snippet {i+1}')
+            ax[1].plot(relativeTime[i],energies.iloc[i],'o')
 
         ax[0].set_xlabel('Sample ID')
         ax[0].set_ylabel('ADC counts')
+        ax[0].legend()
         #ax[1].set_xlim(-5,max(relativeTime)*1.2)
         #ax[1].set_ylim(min(energies)*0.8+0.01,max(energies)*1.2+0.01)
         ax[1].set_xlabel(r'Time ($\mu$s)')
