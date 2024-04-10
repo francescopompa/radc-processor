@@ -265,7 +265,7 @@ def energyConversion(charge,channel,gain='matched'):
     if gain=='matched':
         return E_keV
     else:
-        return E_keV * gain / 2e6
+        return E_keV / gain * 2e6
 
 def ADC_to_mV_conversion(samples,channel):
     samples=np.array(samples)
