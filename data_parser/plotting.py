@@ -271,7 +271,6 @@ def plot_events_coincidence(df: pd.DataFrame, timeWindow= 12500, n_events = 50, 
         energies = event_DF['Energy']
         channels = event_DF['Channel_number']
         subsecs = event_DF['Subsecs'].iloc[0]
-        sampling_period=16e-3
         # to do 
         # find a way to convert to more informative energy units
         
@@ -283,13 +282,15 @@ def plot_events_coincidence(df: pd.DataFrame, timeWindow= 12500, n_events = 50, 
         fig,ax=plt.subplots(ncols=1,nrows=2,layout='constrained')
         for i in range(len(event_DF.index)):
             ax[0].plot(event_DF['samples'].iloc[i],label=f'{i+1}: channel {channels.iloc[i]}')
-            ax[1].plot(relativeTime[i],energies.iloc[i],'o')
+            plot=ax[1].plot(relativeTime[i],energies.iloc[i],'o')
+            color=plot[0].get_color()
+            ax[1].vlines(relativeTime[i],0,energies.iloc[i],color=color)
 
         ax[0].set_xlabel('Sample ID')
         ax[0].set_ylabel('ADC counts')
         ax[0].legend()
         #ax[1].set_xlim(-5,max(relativeTime)*1.2)
-        #ax[1].set_ylim(min(energies)*0.8+0.01,max(energies)*1.2+0.01)
+        ax[1].set_ylim(0,max(energies)*1.2+0.01)
         ax[1].set_xlabel(r'Time ($\mu$s)')
         ax[0].set_title(f'Event {event_ID[0]}')
         ax[1].set_ylabel('Boxcar energy (ADCC)')
@@ -301,3 +302,47 @@ def plot_events_coincidence(df: pd.DataFrame, timeWindow= 12500, n_events = 50, 
             fig.savefig(outDir + f'/Event{event_ID[0]}.pdf')
         if counter >= n_events:
             break
+
+def statisticalPlot(df,columns:str|list,outDir='./images',save=False):
+    variables_axis_titles={'PulseHeight':'Pulse height (mV)','Charge': 'Pulse area (ADCC)','Charge_keV': 'Energy (keV)','PulseWidth': 'Pulse width (keV)','Channel_number': 'Channel','deltaT_us': r'$\Delta t (\mu s)$','Timedelta_samples': r'$\Delta t$ (samples)','Trigger_IDs': 'Trigger ID','StartPulse': 'Pulse start (sample)','EndPulse': 'Pulse end (sample)'}
+    
+    if isinstance(columns,str):
+        columns=[columns]
+    if len(columns) == 1:
+        plt.hist(df[columns],bins=100)
+        plt.xlabel(variables_axis_titles[columns[0]])
+        namefig=f'hist{columns[0]}'
+        plt.show()
+    elif len(columns) == 2:
+        if len(df.index) < 10000:
+            plt.plot(df[columns[0]],df[columns[1]],'o',alpha=0.7,markersize=5)
+        else:
+            idx=np.random.randint(low=df.index[0],high=df.index[-1],size = 10000)
+            plt.plot(df[columns[0]].iloc[idx],df[columns[1]].iloc[idx],'o',alpha=0.7,markersize=5)
+        plt.xlabel(variables_axis_titles[columns[0]])
+        plt.ylabel(variables_axis_titles[columns[1]])
+        namefig = f'scatter{columns[0]}{columns[1]}'
+        plt.show()
+    else:
+        raise NotImplementedError('For now only up to two variables have been implemented')
+    
+    if(save == True):
+        p = Path(outDir)
+        p.mkdir(parents=True, exist_ok=True)
+        plt.tight_layout()
+        plt.savefig(f'{outDir}/{namefig}.pdf')
+    plt.close()
+
+def plotFullDiagnostics(df,outDir='./images',save=False,timeWindow=12500,n_events=50):
+    if ('Charge' in df.columns) & ('PulseHeight' in df.columns) & ('deltaT_us' in df.columns):
+        statisticalPlot(df,'Charge',outDir=outDir,save=save)
+        statisticalPlot(df,'PulseHeight',outDir=outDir,save=save)
+        statisticalPlot(df,['PulseHeight','Charge'],outDir=outDir,save=save)
+        statisticalPlot(df,'deltaT_us',outDir=outDir,save=save)
+    else:
+        print('Warning: preprocess the data to get the full diagnostics!')
+    statisticalPlot(df,'Channel_number',outDir=outDir,save=save)
+    plot_events_coincidence(df,timeWindow=timeWindow,n_events=50,save=save,outDir=f'{outDir}/waveforms')
+    fig=plot_rows(df)
+    if save==True:
+        fig.savefig(f'{outDir}/plotWfmTrigger.pdf')
