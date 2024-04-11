@@ -304,13 +304,14 @@ def plot_events_coincidence(df: pd.DataFrame, timeWindow= 12500, n_events = 50, 
             break
 
 def statisticalPlot(df,columns:str|list,outDir='./images',save=False):
-    variables_axis_titles={'PulseHeight':'Pulse height (mV)','Charge': 'Pulse area (ADCC)','Charge_keV': 'Energy (keV)','PulseWidth': 'Pulse width (keV)','Channel_number': 'Channel','deltaT_us': r'$\Delta t (\mu s)$','Timedelta_samples': r'$\Delta t$ (samples)','Trigger_IDs': 'Trigger ID','StartPulse': 'Pulse start (sample)','EndPulse': 'Pulse end (sample)'}
+    variables_axis_titles={'PulseHeight':'Pulse height (mV)','Charge': 'Pulse area (ADCC)','Charge_keV': 'Energy (keV)','PulseWidth': 'Pulse width (keV)','Channel_number': 'Channel','deltaT_us': r'$\Delta t$ ($\mu$ s)','Timedelta_samples': r'$\Delta t$ (samples)','Trigger_IDs': 'Trigger ID','StartPulse': 'Pulse start (sample)','EndPulse': 'Pulse end (sample)'}
     
     if isinstance(columns,str):
         columns=[columns]
     if len(columns) == 1:
         plt.hist(df[columns],bins=100)
         plt.xlabel(variables_axis_titles[columns[0]])
+        plt.ylabel('Counts')
         namefig=f'hist{columns[0]}'
         plt.show()
     elif len(columns) == 2:
