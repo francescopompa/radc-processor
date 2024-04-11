@@ -206,34 +206,41 @@ def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
         df[col] = [row[i] for row in tmp]
     df = df.explode(['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
         'StartPulse', 'EndPulse']).reset_index(drop=True)
+    length_original = len(df.index)
+    df=df[df.Channel_number == df.Channel_number] # check if channel number is nan
+    if len(df.index) < length_original:
+        print(f'Now the total number of events is {len(df.index)/length_original:.1%} of the original due to corrupted data.')
     df['Charge_keV'] = df.apply(lambda x: energyConversion(x['Charge'],x['Channel_number'],Parameters.gain),axis=1)
     df['samples_mV'] = df.apply(lambda x: ADC_to_mV_conversion(x['samples'],x['Channel_number']),axis=1)
     df['deltaT_us']=df.apply(lambda x: getRelativeTimeSnippets(x['Subsecs'],x['Timedelta_samples']),axis=1)
 
+    if data_parser.VERSION == 2:
+        # df['trigger_IDs']=[p[0] if len(p)==1 else 0 for p in df['trigger_IDs']]
+        #pdf.loc[:, 'Info_flags'] = pdf.Info_flags.astype('str')
+        df=df.drop(columns='Info_flags')
+    if data_parser.VERSION == 1:
+        df.loc[:, 'Type'] = df.Type.astype('str')
+        df.loc[:, 'Rest'] = df.Rest.astype('str')
+    
+    df = df[df.IsPulse == True]
+    df.loc[:, 'Datetime'] = df['Datetime'].dt.strftime('%Y%m%d')
+    df.loc[:, 'Datetime'] = df.Datetime.astype('int64')
+    # set explicit types to columns if possible
+    df = df.drop(columns='IsPulse')
+    df.index = pd.RangeIndex(len(df.index))
+    df.index = range(len(df.index))
+
     return df
 
 
-def df_to_root_file(pdf: pd.DataFrame, out_dir: str, namefile: str) -> uproot.writing.writable.WritableDirectory:
+def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str) -> uproot.writing.writable.WritableDirectory:
     '''
-    It creates the root file using the dataframe. Some columns are converted to suitable 
-    types for uproot. Attention: it creates automatically the folder
+    It creates the root file using the dataframe. Attention: it creates automatically the folder
     '''
-    if data_parser.VERSION == 2:
-        #pdf=pdf.explode(['trigger_IDs']).reset_index(drop=True)
-        #pdf.loc[:, 'Info_flags'] = pdf.Info_flags.astype('str')
-        pdf=pdf.drop(columns='Info_flags')
-    if data_parser.VERSION == 1:
-        pdf.loc[:, 'Type'] = pdf.Type.astype('str')
-        pdf.loc[:, 'Rest'] = pdf.Rest.astype('str')
-    
-    pdf = pdf[pdf.IsPulse == True]
-    pdf.loc[:, 'Datetime'] = pdf['Datetime'].dt.strftime('%Y%m%d')
-    pdf.loc[:, 'Datetime'] = pdf.Datetime.astype('int64')
-    pdf = pdf.drop(columns='IsPulse')
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     file = uproot.recreate(out / (namefile + ".root"))
-    file['eventsTree'] = pdf
+    file['eventsTree'] = df
     return file
 
 
