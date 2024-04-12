@@ -7,6 +7,7 @@ import queue
 import signal
 import json
 from time import gmtime, strftime
+import subprocess
 
 from .file_class import TargetFiles
 
@@ -239,6 +240,14 @@ class Receiver():
         #
         # Todo: clear how this affects current or future readouts...
         #
+        registers = ['PostTriggerTime','TimeWindow','FilterSet.T_Time','FilterSet.BP_Time','FilterSet.BS_Time','ThresholdSum']
+        thresholds = [f'Threshold[{i}]' for i in range(36)]
+        registers = [*registers, *thresholds]
+        for r in registers:
+            output = subprocess.Popen(['radc_nd_table_reg.sh',r],stdout=subprocess.PIPE, text=True)
+            line=output.stdout.readlines()[-1]
+            value = int(line.split(';')[-1])
+            self.results[r]=value
         with open(filepath, 'a', encoding="utf-8") as file:
             json.dump(self.results, file, indent=4)
         print(f"Dumped results to {filepath}")
