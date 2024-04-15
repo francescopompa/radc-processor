@@ -48,13 +48,13 @@ def make_total_dataFrame_processed(files: list|str) -> pd.DataFrame:
 
     if not isinstance(files, list):
         files = [files]
-
-    return pf.update_dataframe_with_pulses(
-        pd.concat(
+    df= pd.concat(
         load_files_to_df(files),
         ignore_index=True
     )
-    )
+    df_updated=pf.update_dataframe_with_pulses(df)
+
+    return df, df_updated
     
 def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str):
     
