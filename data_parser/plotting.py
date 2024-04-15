@@ -271,14 +271,13 @@ def plot_events_coincidence(df: pd.DataFrame, timeWindow= 12500, n_events = 50, 
         energies = event_DF['Energy']
         channels = event_DF['Channel_number']
         subsecs = event_DF['Subsecs'].iloc[0]
+        if 'BoxcarSum' in event_DF.columns:
+            energies2=event_DF['BoxcarSum']
         # to do 
         # find a way to convert to more informative energy units
         
         relativeTime=[getRelativeTimeSnippets(subsecs,d) for d in deltaT_samples]
-        
-        # correct but not the way Denis uses
-        # relativeTime = ((deltaT_samples + 2**16 - deltaT_samples.iloc[0]) % 2**16)*16e-3
-        # relativeTime = pd.Series([(r - 2**16*16e-3) if np.abs(r) > (timeWindow*16e-3) else r for r in relativeTime])
+       
         fig,ax=plt.subplots(ncols=1,nrows=2,layout='constrained')
         for i in range(len(event_DF.index)):
             ax[0].plot(event_DF['samples'].iloc[i],label=f'{i+1}: channel {channels.iloc[i]}')
@@ -286,11 +285,14 @@ def plot_events_coincidence(df: pd.DataFrame, timeWindow= 12500, n_events = 50, 
             color=plot[0].get_color()
             ax[1].vlines(relativeTime[i],0,energies.iloc[i],color=color)
 
+            if 'BoxcarSum' in event_DF.columns:
+                ax[1].plot(relativeTime[i],energies2.iloc[i],'o',color=color,alpha=0.5)
+
         ax[0].set_xlabel('Sample ID')
         ax[0].set_ylabel('ADC counts')
         ax[0].legend()
         #ax[1].set_xlim(-5,max(relativeTime)*1.2)
-        ax[1].set_ylim(0,max(energies)*1.2+0.01)
+        ax[1].set_ylim(0,max((*energies,*energies2))*1.2)
         ax[1].set_xlabel(r'Time ($\mu$s)')
         ax[0].set_title(f'Event {event_ID[0]}')
         ax[1].set_ylabel('Boxcar energy (ADCC)')
@@ -336,14 +338,14 @@ def statisticalPlot(df,columns:str|list,outDir='./images',save=False):
 
 def plotFullDiagnostics(df,outDir='./images',save=False,timeWindow=12500,n_events=50):
     if ('Charge' in df.columns) & ('PulseHeight' in df.columns) & ('deltaT_us' in df.columns):
-        statisticalPlot(df,'Charge',outDir=outDir,save=save)
+        statisticalPlot(df,'Charge_keV',outDir=outDir,save=save)
         statisticalPlot(df,'PulseHeight',outDir=outDir,save=save)
         statisticalPlot(df,['PulseHeight','Charge'],outDir=outDir,save=save)
         statisticalPlot(df,'deltaT_us',outDir=outDir,save=save)
     else:
         print('Warning: preprocess the data to get the full diagnostics!')
     statisticalPlot(df,'Channel_number',outDir=outDir,save=save)
-    plot_events_coincidence(df,timeWindow=timeWindow,n_events=50,save=save,outDir=f'{outDir}/waveforms')
+    plot_events_coincidence(df,timeWindow=timeWindow,n_events=50,save=save,outDir=f'{outDir}/waveforms',n_events=n_events)
     fig=plot_rows(df)
     if save==True:
         fig.savefig(f'{outDir}/plotWfmTrigger.pdf')
