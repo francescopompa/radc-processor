@@ -212,7 +212,7 @@ def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
         print(f'Now the total number of events is {len(df.index)/length_original:.1%} of the original due to corrupted data.')
     df['Charge_keV'] = df.apply(lambda x: energyConversion(x['Charge'],x['Channel_number'],Parameters.gain),axis=1)
     df['samples_mV'] = df.apply(lambda x: ADC_to_mV_conversion(x['samples'],x['Channel_number']),axis=1)
-    df['deltaT_us']=df.apply(lambda x: getRelativeTimeSnippets(x['Subsecs'],x['Timedelta_samples']),axis=1)
+    df['deltaT_us']=df.apply(lambda x: getRelativeTimeSnippets(x['Subsecs'],x['Timedelta_samples'],Parameters.PostTriggerTime),axis=1)
 
     if data_parser.VERSION == 2:
         # df['trigger_IDs']=[p[0] if len(p)==1 else 0 for p in df['trigger_IDs']]
@@ -300,14 +300,14 @@ def ADC_to_mV_conversion(samples,channel):
         print(f'The channel {channel} does not exist!')
         return list(samples / 32.7)
     
-def getRelativeTimeSnippets(subseconds,timedelta_samples):
+def getRelativeTimeSnippets(subseconds,timedelta_samples, PostTriggerTime):
     sampling_period=16e-3
     dT = (subseconds % 2**16) - timedelta_samples
 
     if dT < 0:
-        return ( (2**16 + dT) ) * sampling_period
+        return ( (2**16 + dT) ) * sampling_period - PostTriggerTime
     else:
-        return dT*sampling_period
+        return dT*sampling_period - PostTriggerTime
 
 def getBoxcarSum(samples):
     samples_averaged=np.convolve(samples, np.ones(4)/4, mode='valid')
