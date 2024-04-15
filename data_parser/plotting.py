@@ -345,7 +345,7 @@ def plotFullDiagnostics(df,outDir='./images',save=False,timeWindow=12500,n_event
     else:
         print('Warning: preprocess the data to get the full diagnostics!')
     statisticalPlot(df,'Channel_number',outDir=outDir,save=save)
-    plot_events_coincidence(df,timeWindow=timeWindow,n_events=50,save=save,outDir=f'{outDir}/waveforms',n_events=n_events)
+    plot_events_coincidence(df,timeWindow=timeWindow,n_events=n_events,save=save,outDir=f'{outDir}/waveforms')
     fig=plot_rows(df)
     if save==True:
         fig.savefig(f'{outDir}/plotWfmTrigger.pdf')
