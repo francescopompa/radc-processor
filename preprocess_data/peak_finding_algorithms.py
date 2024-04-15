@@ -227,6 +227,16 @@ def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
     df.loc[:, 'Datetime'] = df.Datetime.astype('int64')
     # set explicit types to columns if possible
     df = df.drop(columns='IsPulse')
+    df['BoxcarSum']=df['samples'].apply(getBoxcarSum)
+
+    # this part is necessary to reindex the snippets in case of bad data
+    tmp = df.groupby('Event_ID')
+    for (event_ID), event_DF in tmp:
+        if len(event_DF.index) < event_DF['snippet_space'].iloc[0]:
+            df.loc[df['Event_ID']== event_ID,'snippet_space'] = len(event_DF.index)
+            df.loc[df['Event_ID']== event_ID,'Snippet_number'] = range(1,len(event_DF.index)+1)
+
+    df= df.sort_values(['Event_ID','Snippet_number'])
     df.index = pd.RangeIndex(len(df.index))
     df.index = range(len(df.index))
 
@@ -288,7 +298,7 @@ def ADC_to_mV_conversion(samples,channel):
         return list((samples - 18)/30.66)
     else:
         print(f'The channel {channel} does not exist!')
-        exit(-1)
+        return list(samples / 32.7)
     
 def getRelativeTimeSnippets(subseconds,timedelta_samples):
     sampling_period=16e-3
@@ -299,6 +309,10 @@ def getRelativeTimeSnippets(subseconds,timedelta_samples):
     else:
         return dT*sampling_period
 
+def getBoxcarSum(samples):
+    samples_averaged=np.convolve(samples, np.ones(4)/4, mode='valid')
+    rolling_sum = np.convolve(samples_averaged, np.ones(Parameters.T_time), mode='valid')
+    return max(rolling_sum)
 
 
 if __name__ == '__main__':

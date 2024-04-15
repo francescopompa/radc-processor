@@ -11,3 +11,4 @@ max_number_of_pulses = int(1)
 sample_width = int(16)  # ns
 n_samples_baseline = int(5)
 gain = 'matched'
+T_time = 10
