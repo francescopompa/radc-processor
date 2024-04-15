@@ -8,6 +8,8 @@ import json
 
 from pathlib import Path
 
+import data_parser.plotting as pl
+from data_parser.data_io import make_total_dataFrame_processed
 #
 # Todo: replace point_number with suffix of variable length
 # Todo: fix setting new id on increment
@@ -420,3 +422,22 @@ class Measurement():
             json.dump(d, file, indent=4)
         print(f"Created {path}")
         print(json.dumps(d, indent=4))
+
+    def getFile(self, measurement_number):
+        path = self.get_path('receiver', 'root')
+        data_dir = self.get_path('receiver', 'dir')
+        file = self.get_path('receiver', 'file')
+        file = f'{file.split(".")[0]}.{measurement_number:02d}.bin'
+        fullpath = f'{path}/{data_dir}/{file}'
+
+        return fullpath
+
+    def getDataframes(self,measurement_number):
+        file = self.getFile(measurement_number)
+        df,processed_df= make_total_dataFrame_processed(file)
+        return df, processed_df
+
+    def plotFullDiagnostics(self,measurement_number):
+        _, df = self.getDataframes(measurement_number)
+        pl.plotFullDiagnostics(df)
+
