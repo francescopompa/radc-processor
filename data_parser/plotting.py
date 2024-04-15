@@ -9,7 +9,7 @@ from collections.abc import Iterable
 from .configuration import CONFIG
 from pathlib import Path
 import numpy as np
-from preprocess_data.peak_finding_algorithms import getRelativeTimeSnippets
+from preprocess_data.peak_finding_algorithms import getRelativeTimeSnippets, Parameters
 
 # CONFIG = configuration.CONFIG
 CONVERSIONS = {
@@ -276,7 +276,7 @@ def plot_events_coincidence(df: pd.DataFrame, timeWindow= 12500, n_events = 50, 
         # to do 
         # find a way to convert to more informative energy units
         
-        relativeTime=[getRelativeTimeSnippets(subsecs,d) for d in deltaT_samples]
+        relativeTime=[getRelativeTimeSnippets(subsecs,d,Parameters.PostTriggerTime) for d in deltaT_samples]
        
         fig,ax=plt.subplots(ncols=1,nrows=2,layout='constrained')
         for i in range(len(event_DF.index)):
