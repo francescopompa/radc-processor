@@ -2,6 +2,7 @@ import pandas as pd
 # from . import struct_conversion
 from .struct_conversion import DataFile
 from preprocess_data import peak_finding_algorithms as pf
+import json
 
 
 
@@ -57,9 +58,29 @@ def make_total_dataFrame_processed(files: list|str) -> pd.DataFrame:
     return df, df_updated
     
 def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str):
+    # to do: add json handling (input and output)
+    if isinstance(files,str):
+        files = [files]
+    input_json=[f'{f.split(".")[0]}_results.{f.split(".")[1]}.json' for f in files]
+    parameters = {'total_time':0, 'rate': 0, 'ThresholdSum' : [], 'PostTriggerTime': [], 'TimeWindow': [], 'FilterSet.T_Time': [], 'FilterSet.BP_Time': [], 'FilterSet.BS_Time': []}
+    for i in range(36):
+        parameters[f'Threshold[{i}]'] = []
     
+    for j in input_json:
+        with open(j,"r") as file:
+            info = json.load(file)
+            parameters['total_time'] += info['reception_time']
+            for p in parameters:
+                if p in info:
+                    parameters[p].append(info[p])
+
     df=make_total_dataFrame(files)
+    df = explode_dataframe(df)
     df_updated=pf.update_dataframe_with_pulses(df)
+    parameters['rate'] = len(df_updated.index) / parameters['total_time']
+    parameters['pulse_detection_efficiency'] = len(df_updated.index) / len(df.index)
+    with open(f'{out_dir}/{namefile_output}.json','w') as f:
+        json.dump(parameters,f,indent=4)
     root_file = pf.df_to_root_file(df_updated,out_dir,namefile_output)
     return df, df_updated, root_file
 
