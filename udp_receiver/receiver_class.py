@@ -282,9 +282,7 @@ class Receiver():
         current waveforms without pulse-filtering. The acquisition rate is fixed to 2.5 kHz"""
         for i in range(number):
             self.__sock.send('w_00000001_00000001'.encode())
-            # self.__sock.sendto('w_00000001_00000001'.encode(), (self.host, 5000))
-            # time.sleep(self.tracelength*16*10**-9)
-            time.sleep(400e-6) #it must be greater than 200e-6 or so, but it's actually limited by the laptop
+            time.sleep(400e-6)
 
     def switch_file(self, filename):
         # filename += "" if filename.endswith(".bin") else "_readout.bin"
