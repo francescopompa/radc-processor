@@ -69,7 +69,7 @@ def calc_puls_params(samples, peak, min_threshold_height, window_size, n_below_m
     # finds the pulse start by finding in reverse the first index where signal is less than height
     pulse_start = peak_max_index - \
         find_first_n_less(min_threshold_height,
-                          averaged_sig_window, n_below_min)
+                          averaged_sig_window, n_below_min) - 2
     # same for the pulse_end
     # 3 wide box car average centered on each value (-1 current_index +1)
     sig_windows_end = samples[peak_max_index - 1:]
@@ -77,7 +77,7 @@ def calc_puls_params(samples, peak, min_threshold_height, window_size, n_below_m
         sig_windows_end[1:-1] + sig_windows_end[2:]
     averaged_sig_window = np.multiply(averaged_sig_window, 1./3.)
 
-    pulse_end = peak_max_index + find_first_n_less(min_threshold_height, averaged_sig_window, n_below_min)
+    pulse_end = peak_max_index + find_first_n_less(min_threshold_height, averaged_sig_window, n_below_min) + 2
 
     if pulse_start >= len(samples):
         pulse_start = len(samples) - 1
@@ -305,9 +305,9 @@ def getRelativeTimeSnippets(subseconds,timedelta_samples, PostTriggerTime):
     dT = (subseconds % 2**16) - timedelta_samples
 
     if dT < 0:
-        return ( (2**16 + dT) ) * sampling_period - PostTriggerTime
+        return ( (2**16 + dT) - PostTriggerTime) * sampling_period 
     else:
-        return dT*sampling_period - PostTriggerTime
+        return (dT - PostTriggerTime)*sampling_period 
 
 def getBoxcarSum(samples):
     samples_averaged=np.convolve(samples, np.ones(4)/4, mode='valid')
