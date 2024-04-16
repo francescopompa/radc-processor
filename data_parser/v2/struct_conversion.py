@@ -215,17 +215,16 @@ class Event(BaseSnippet):
         setattr(self, self._contents, [])
 
     def _check_integrity(self):
-        return (
-            self.header["Trigger_type"] == "E" #in ["E", "T", "S"]
-            and self.header["Timestamp_s"] < time.time()
-            and self.header["Timestamp_s"] > 1699000000
-            )
+        return True
 
     def _convert_types(self, key, entry):
         match key:
             case "Type"|"Trigger_type":
                 # print(key, entry)
-                return entry.decode("ascii")
+                return int.from_bytes(
+                    entry[::-1], "big"
+                    # bytes([entry[2], entry[1], entry[0]])
+                )
             case "Event_ID":
                 # Reverse the Byte order
                 return int.from_bytes(

@@ -91,7 +91,10 @@ def calc_puls_params(samples, peak, min_threshold_height, window_size, n_below_m
         # Area via trapezoid integration from pulse start to end
         # ,dx=sample_width) #16 ns sample width
         pulse_area = np.trapz(samples[pulse_start: pulse_end + 1])
-        pulse_max_index = pulse_start + np.argmax(samples[pulse_start: pulse_end + 1])
+        try:
+            pulse_max_index = pulse_start + np.argmax(samples[pulse_start: pulse_end + 1])
+        except ValueError:
+            return False, 0, 0, 0, 0, 0, 0
         if pulse_max_index <= pulse_start or pulse_end <= pulse_max_index:
             # max height could not be found so just using peak from smoothed signal
             pulse_max_index = peak
@@ -118,8 +121,8 @@ def pulse_operations(samples: list | pd.Series):
             samples * Parameters.sp_width, size=Parameters.sp_width
         )
     except np.AxisError:
-        return False,0,0,0,0,0,0        
-
+        return False,0,0,0,0,0,0
+    
     peaks, peak_properties = sp.signal.find_peaks(
         sig_boxcar,
         height=Parameters.sp_height * Parameters.sp_width,
@@ -191,11 +194,7 @@ def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
     '''
     It adds the columns with the pulses parameters to the dataframe
     '''
-    # they took the same time
-    # df[['IsPulse', 'MaxIndex', 'PulseHeight','PulseWidth','Charge','StartPulse','EndPulse']] = pd.DataFrame(
-    #     np.row_stack(np.vectorize(pulse_operations, otypes=['O'])(df['samples'])),
-    #     index=df.index
-    #     )
+    
     if 'snippets' in df.columns:
         df = data_io.explode_dataframe(df)
     tmp = df['samples'].apply(pulse_operations)
@@ -207,12 +206,6 @@ def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
     df = df.explode(['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
         'StartPulse', 'EndPulse']).reset_index(drop=True)
     length_original = len(df.index)
-    df=df[df.Channel_number == df.Channel_number] # check if channel number is nan
-    if len(df.index) < length_original:
-        print(f'Now the total number of events is {len(df.index)/length_original:.1%} of the original due to corrupted data.')
-    df['Charge_keV'] = df.apply(lambda x: energyConversion(x['Charge'],x['Channel_number'],Parameters.gain),axis=1)
-    df['samples_mV'] = df.apply(lambda x: ADC_to_mV_conversion(x['samples'],x['Channel_number']),axis=1)
-    df['deltaT_us']=df.apply(lambda x: getRelativeTimeSnippets(x['Subsecs'],x['Timedelta_samples'],Parameters.PostTriggerTime),axis=1)
 
     if data_parser.VERSION == 2:
         # df['trigger_IDs']=[p[0] if len(p)==1 else 0 for p in df['trigger_IDs']]
@@ -222,11 +215,19 @@ def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
         df.loc[:, 'Type'] = df.Type.astype('str')
         df.loc[:, 'Rest'] = df.Rest.astype('str')
     
+    # checking data corruption
+    # this part will be removed later to find the pulse detection efficiency
     df = df[df.IsPulse == True]
+    df = df.drop(columns='IsPulse')
+    df=df[(df.Channel_number < 36) & (df.Channel_number >= 0) ] 
+    
+    df['Charge_keV'] = df.apply(lambda x: energyConversion(x['Charge'],x['Channel_number'],Parameters.gain),axis=1)
+    df['samples_mV'] = df.apply(lambda x: ADC_to_mV_conversion(x['samples'],x['Channel_number']),axis=1)
+    df['deltaT_us']=df.apply(lambda x: getRelativeTimeSnippets(x['Subsecs'],x['Timedelta_samples'],Parameters.PostTriggerTime),axis=1)
+
     df.loc[:, 'Datetime'] = df['Datetime'].dt.strftime('%Y%m%d')
     df.loc[:, 'Datetime'] = df.Datetime.astype('int64')
     # set explicit types to columns if possible
-    df = df.drop(columns='IsPulse')
     df['BoxcarSum']=df['samples'].apply(getBoxcarSum)
 
     # this part is necessary to reindex the snippets in case of bad data
@@ -239,7 +240,9 @@ def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
     df= df.sort_values(['Event_ID','Snippet_number'])
     df.index = pd.RangeIndex(len(df.index))
     df.index = range(len(df.index))
-
+    if len(df.index) < length_original:
+        print(f'The total number of events is {len(df.index)/length_original:.1%} of the original due to corrupted data.')
+    print(f'Number of events: {len(df.index)}')
     return df
 
 
@@ -276,8 +279,11 @@ def energyConversion(charge,channel,gain='matched'):
     with the same module
     '''
     df=pd.read_csv(Path(__file__).parent /'channel_map_energy.csv')
-    pmt=df.PMT[df['DAQ'] == channel]
-    rescalingFactor = float((df.CE[df.PMT == 292].item() / df.CE[pmt.index].item()))
+    try:
+        pmt=df.PMT[df['DAQ'] == channel]
+        rescalingFactor = float((df.CE[df.PMT == 292].item() / df.CE[pmt.index].item()))
+    except ValueError:
+        return -1
     E_keV=(charge + 624)/16.36 * rescalingFactor
     if gain=='matched':
         return E_keV
