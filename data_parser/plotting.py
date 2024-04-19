@@ -299,7 +299,7 @@ def plot_events_coincidence(df: pd.DataFrame, n_events = 50, save = False, outDi
         plt.show()
         plt.close()
         if save == True:
-            fig.savefig(outDir + f'/Event{event_ID[0]}.pdf')
+            fig.savefig(f'{outDir}/Event{event_ID[0]}.pdf')
         if counter >= n_events:
             break
 
@@ -343,8 +343,8 @@ def statisticalPlot(df,columns:str|list,outDir='./images',save=False):
         if len(df.index) < 10000:
             plt.plot(df[columns[0]],df[columns[1]],'o',alpha=0.7,markersize=5)
         else:
-            idx=np.random.randint(low=df.index[0],high=df.index[-1],size = 10000)
-            plt.plot(df[columns[0]].iloc[idx],df[columns[1]].iloc[idx],'o',alpha=0.7,markersize=5)
+            df_small=df.head(10000)
+            plt.plot(df_small[columns[0]],df_small[columns[1]],'o',alpha=0.7,markersize=3)
         plt.xlabel(variables_axis_titles[columns[0]])
         plt.ylabel(variables_axis_titles[columns[1]])
         namefig = f'scatter{columns[0]}{columns[1]}'
@@ -358,6 +358,45 @@ def statisticalPlot(df,columns:str|list,outDir='./images',save=False):
         plt.tight_layout()
         plt.savefig(f'{outDir}/{namefig}.pdf')
     plt.close()
+
+def plotEventsPulseFinder(df: pd.DataFrame, n_events = 50, save = False, outDir = "./images"):
+    if save == True:
+        p = Path(outDir)
+        p.mkdir(parents=True, exist_ok=True)
+    counter =0
+    for _,row in df.iterrows():
+        fig, ax = plt.subplots()
+
+        ax.plot(row['samples']-row['Baseline'],'b')
+        ax.vlines(row['StartPulse'],-1000,1e4,label=f'Start: {row["StartPulse"]}',colors = ['green'],linestyle='dashed')
+        ax.vlines(row['EndPulse'],-1e3,1e4,label=f'End: {row["EndPulse"]}',colors = ['red'],linestyle='dashed')
+        ax.plot(row['MaxIndex'],row['samples'][row['MaxIndex']],'bo',label = f'Height: {int(row["PulseHeight"])}')
+        props = dict(boxstyle="round", facecolor="wheat")
+        ax.text(
+        0.7,
+        0.7,
+        f"Area:    {int(row['Charge'])} ADCC \n"
+        + f"Width:   {int(row['PulseWidth'])} ns \n"
+        + f"Height:  {int(row['PulseHeight'])} ADCC",
+        transform=ax.transAxes,
+        fontsize=10,
+        verticalalignment="top",
+        horizontalalignment="left",
+        bbox=props,
+    )
+        ax.set_ylim(min(row['samples'])*1.1,max(row['samples'])*1.1)
+        ax.set_xlabel('Sample ID')
+        ax.set_ylabel('ADC counts')
+        ax.set_title(f'Event {row["Event_ID"]} - Snippet {row["Snippet_number"]}')
+        ax.legend()
+        if save == True:
+            fig.savefig(f'{outDir}/Event{row["Event_ID"]}_snippet{int(row["Snippet_number"])}.pdf')
+        plt.show()
+        plt.close()
+        counter = counter + 1
+        if counter > n_events:
+            break
+
 
 def plotFullDiagnostics(df,outDir='./images',save=False,n_events=50):
     if ('Charge' in df.columns) & ('PulseHeight' in df.columns) & ('deltaT_us' in df.columns) & ('preprocessingFlags' in df.columns):
