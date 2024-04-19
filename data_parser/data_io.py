@@ -126,8 +126,8 @@ def make_total_dataFrame_processed(files: list|str) -> pd.DataFrame:
         ignore_index=True
     )
     input_json=[f'{f.split(".")[0]}_results.{f.split(".")[1]}.json' for f in files]
-
-    info = json.load(input_json[0])
+    with open(input_json[0],'r') as file:
+        info = json.load(file)
     time = info['PostTriggerTime']
     PostTriggerTime = time if isinstance(time,int) else time[0]
     df_updated=update_dataframe_with_pulses(df,PostTriggerTime)
