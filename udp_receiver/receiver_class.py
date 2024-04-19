@@ -240,7 +240,8 @@ class Receiver():
         #
         # Todo: clear how this affects current or future readouts...
         #
-        registers = ['PostTriggerTime','TimeWindow','FilterSet.T_Time','FilterSet.BP_Time','FilterSet.BS_Time','ThresholdSum']
+        registers = ['PostTriggerTime','TimeWindow','FilterSet.T_Time','FilterSet.BP_Time','FilterSet.BS_Time','ThresholdSum', 'DO_status.fill_pointer',
+        'DO_status.full', 'DO_status.empty', 'DO_status.packed_ID', 'EventCounter']
         thresholds = [f'Threshold[{i}]' for i in range(36)]
         registers = [*registers, *thresholds]
         for r in registers:
