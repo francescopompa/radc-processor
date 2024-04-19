@@ -2,13 +2,10 @@ import data_parser
 data_parser.init("v2")
 
 from . import Parameters
-from time import process_time
-from data_parser import data_io, struct_conversion
+from time import time
 from pathlib import Path
-import uproot
 import scipy as sp
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
 
 #
@@ -71,7 +68,7 @@ def calc_puls_params(samples, peak, min_threshold_height, window_size, n_below_m
     # finds the pulse start by finding in reverse the first index where signal is less than height
     pulse_start = peak_max_index - \
         find_first_n_less(min_threshold_height,
-                          averaged_sig_window, n_below_min) - 2
+                          averaged_sig_window, n_below_min)
     # same for the pulse_end
     # 3 wide box car average centered on each value (-1 current_index +1)
     sig_windows_end = samples[peak_max_index - 1:]
@@ -81,7 +78,7 @@ def calc_puls_params(samples, peak, min_threshold_height, window_size, n_below_m
 
     pulse_end = peak_max_index + \
         find_first_n_less(min_threshold_height,
-                          averaged_sig_window, n_below_min) + 2
+                          averaged_sig_window, n_below_min) 
 
     if pulse_start >= len(samples):
         pulse_start = len(samples) - 1
@@ -99,7 +96,7 @@ def calc_puls_params(samples, peak, min_threshold_height, window_size, n_below_m
             pulse_max_index = pulse_start + \
                 np.argmax(samples[pulse_start: pulse_end + 1])
         except ValueError:
-            return False, 0, 0, 0, 0, 0, 0
+            pulse_max_index = peak
         if pulse_max_index <= pulse_start or pulse_end <= pulse_max_index:
             # max height could not be found so just using peak from smoothed signal
             pulse_max_index = peak
@@ -119,21 +116,6 @@ def pulse_operations(samples: list | pd.Series):
     6. The parameters of the pulse are computed again and returned
     Support for multiple pulses per snippet
     """
-    samples = np.array(samples)
-    if samples.any() == np.nan:
-        samples = np.zeros(64)
-    try:
-        sig_boxcar = sp.ndimage.uniform_filter1d(
-            samples * Parameters.sp_width, size=Parameters.sp_width
-        )
-    except np.AxisError:
-        return False, 0, 0, 0, 0, 0, 0
-
-    peaks, peak_properties = sp.signal.find_peaks(
-        sig_boxcar,
-        height=Parameters.sp_height * Parameters.sp_width,
-        distance=Parameters.sp_distance,
-    )
     successes = []
     max_indices = []
     pulse_heights = []
@@ -143,6 +125,23 @@ def pulse_operations(samples: list | pd.Series):
     ends = []
     baselines = []
 
+    samples = np.array(samples)
+    if samples.any() == np.nan:
+        samples = np.zeros(64)
+    try:
+        sig_boxcar = sp.ndimage.uniform_filter1d(
+            samples * Parameters.sp_width, size=Parameters.sp_width
+        )
+    except np.AxisError:
+        return [False], [0], [0], [0], [0], [0], [0], [0]
+
+
+    peaks, peak_properties = sp.signal.find_peaks(
+        sig_boxcar,
+        height=Parameters.sp_height * Parameters.sp_width,
+        distance=Parameters.sp_distance,
+    )
+    
     num_pulses = min(len(peaks), Parameters.max_number_of_pulses)
     if num_pulses == 0:
         successes.append(False)
@@ -199,94 +198,6 @@ def pulse_operations(samples: list | pd.Series):
     return successes, max_indices, pulse_heights, pulse_widths, areas, starts, ends, baselines
 
 
-def update_dataframe_with_pulses(df: pd.DataFrame) -> pd.DataFrame:
-    '''
-    It adds the columns with the pulses parameters to the dataframe
-    '''
-
-    if 'snippets' in df.columns:
-        df = data_io.explode_dataframe(df)
-    tmp = df['samples'].apply(pulse_operations)
-
-    columns = ['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
-               'StartPulse', 'EndPulse', 'Baseline']
-    for i, col in enumerate(columns):
-        df[col] = [row[i] for row in tmp]
-    df = df.explode(['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
-                     'StartPulse', 'EndPulse', 'Baseline']).reset_index(drop=True)
-    length_original = len(df.index)
-
-    if data_parser.VERSION == 2:
-        # df['trigger_IDs']=[p[0] if len(p)==1 else 0 for p in df['trigger_IDs']]
-        # pdf.loc[:, 'Info_flags'] = pdf.Info_flags.astype('str')
-        df = df.drop(columns='Info_flags')
-    if data_parser.VERSION == 1:
-        df.loc[:, 'Type'] = df.Type.astype('str')
-        df.loc[:, 'Rest'] = df.Rest.astype('str')
-
-    # checking data corruption
-    # this part will be removed later to find the pulse detection efficiency
-    df = df[df.IsPulse == True]
-    df = df.drop(columns='IsPulse')
-    df = df[(df.Channel_number < 36) & (df.Channel_number >= 0)]
-
-    df['Charge_keV'] = df.apply(lambda x: energyConversion(
-        x['Charge'], x['Channel_number'], Parameters.gain), axis=1)
-    df['samples_mV'] = df.apply(lambda x: ADC_to_mV_conversion(
-        x['samples'], x['Channel_number']), axis=1)
-    df['deltaT_us'] = df.apply(lambda x: getRelativeTimeSnippets(
-        x['Subsecs'], x['Timedelta_samples'], Parameters.PostTriggerTime), axis=1)
-
-    df.loc[:, 'Datetime'] = df['Datetime'].dt.strftime('%Y%m%d')
-    df.loc[:, 'Datetime'] = df.Datetime.astype('int64')
-    # set explicit types to columns if possible
-    df['BoxcarSum'] = df['samples'].apply(getBoxcarSum)
-
-    # this part is necessary to reindex the snippets in case of bad data
-    tmp = df.groupby('Event_ID')
-    for (event_ID), event_DF in tmp:
-        if len(event_DF.index) < event_DF['snippet_space'].iloc[0]:
-            df.loc[df['Event_ID'] == event_ID,
-                   'snippet_space'] = len(event_DF.index)
-            df.loc[df['Event_ID'] == event_ID, 'Snippet_number'] = range(
-                1, len(event_DF.index)+1)
-
-    df = df.sort_values(['Event_ID', 'Snippet_number'])
-    df.index = pd.RangeIndex(len(df.index))
-    df.index = range(len(df.index))
-    if len(df.index) < length_original:
-        print(
-            f'The total number of events is {len(df.index)/length_original:.1%} of the original due to corrupted data.')
-    print(f'Number of events: {len(df.index)}')
-    return df
-
-
-def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str) -> uproot.writing.writable.WritableDirectory:
-    '''
-    It creates the root file using the dataframe. Attention: it creates automatically the folder
-    '''
-    out = Path(out_dir)
-    out.mkdir(parents=True, exist_ok=True)
-    file = uproot.recreate(out / (namefile + ".root"))
-    file['eventsTree'] = df
-    return file
-
-
-def single_dataset_to_root(data_dir: str, input_filename: str, out_dir: str, output_filename: str, **kwargs):
-    '''
-    Function to convert the datafile directly to a rootdir
-    '''
-    tracelength = kwargs.pop('tracelength', 64)
-    df = struct_conversion.DataFile(
-        Path(data_dir) / input_filename,
-        tracelength=tracelength
-    )
-    pdf = data_io.make_total_dataFrame([df])
-    pdf = update_dataframe_with_pulses(pdf)
-    file = df_to_root_file(pdf, out_dir, output_filename)
-    return file
-
-
 def energyConversion(charge, channel, gain='matched'):
     '''
     Function to convert ADCC to energy. 
@@ -321,8 +232,8 @@ def ADC_to_mV_conversion(samples, channel):
     elif channel in range(32, 36):
         return list((samples - 18)/30.66)
     else:
-        print(f'The channel {channel} does not exist!')
-        return list(samples / 32.7)
+        # print(f'The channel {channel} does not exist!')
+        return list(np.zeros(64))
 
 
 def getRelativeTimeSnippets(subseconds, timedelta_samples, PostTriggerTime):
@@ -337,31 +248,18 @@ def getRelativeTimeSnippets(subseconds, timedelta_samples, PostTriggerTime):
 
 def getBoxcarSum(samples):
     samples_averaged = np.convolve(samples, np.ones(4)/4, mode='valid')
-    rolling_sum = np.convolve(samples_averaged, np.ones(
-        Parameters.T_time), mode='valid')
-    return max(rolling_sum)
+    return max(samples_averaged)*4
 
+def getFlagsCorruptedData(channel, is_pulse, samples, timestamp):
+    preprocessingFlags=''
+    
+    if (channel < 0) or (channel > 35) or (channel != channel):
+        preprocessingFlags += 'C'
+    if is_pulse == False:
+        preprocessingFlags += 'P'
+    if isinstance(samples,np.float64) or (isinstance(samples,list) and (len(samples) != 64)):
+        preprocessingFlags += 'S'
+    if timestamp > time() or timestamp < 1699000000:
+        preprocessingFlags += 'T'
+    return preprocessingFlags
 
-if __name__ == '__main__':
-    data_parser.init('v1')
-    df = struct_conversion.DataFile(
-        "BC230705b_04-2_65ns_60mv_stretched_readout.bin",
-        tracelength=100
-        # "BG231005b_05-1_Switch-Delock_0dB_30-8_65ns_60mV_10_readout.01.bin"
-    )
-
-    pdf = data_io.make_total_dataFrame([df])
-    start = process_time()
-    pdf = update_dataframe_with_pulses(pdf)
-    print(
-        f'Time needed to process the dataset: {process_time() - start: .2f} s.')
-    selectedPulses = pdf.Charge[(pdf.Charge < 980) & (pdf.Charge > 860)]
-    print(
-        f'Area = ({np.mean(selectedPulses):.1f} +/- {np.std(selectedPulses):.1f}) ADC counts')
-    print(f'Total number of pulses: {len(pdf.Charge[pdf.IsPulse==True])}.')
-    plt.hist(pdf.Charge, bins=300)
-    plt.xlabel('ADC counts')
-    plt.ylabel('counts')
-    plt.xlim([860, 980])
-    plt.savefig('areas.pdf')
-    df_to_root_file(pdf, '.', 'test')
