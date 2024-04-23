@@ -29,7 +29,11 @@ def find_first_n_less(min_value, vector, n):
 
         if less_than_count >= n:
             return indx - round(n / 2 + 0.5)
-    return 0
+    if less_than_count == 0:
+        idx = (np.abs(vector - min_value)).argmin()
+        return idx
+    else:
+        return 0
 
 
 def calc_puls_params(samples, peak, min_threshold_height, window_size, n_below_min):
@@ -61,9 +65,7 @@ def calc_puls_params(samples, peak, min_threshold_height, window_size, n_below_m
     sig_windows_start = np.flip(samples[: (peak_max_index + 2)])
     # taking the averages starting at peak_max + 1 so the average is centered around the current index
     #                       one before peak         peak                    one after
-    averaged_sig_window = sig_windows_start[:-2] + \
-        sig_windows_start[1:-1] + sig_windows_start[2:]
-    averaged_sig_window = np.multiply(averaged_sig_window, 1./3.)
+    averaged_sig_window = np.convolve(sig_windows_start,np.ones(Parameters.n_samples_baseline)/Parameters.n_samples_baseline,mode = 'valid')
 
     # finds the pulse start by finding in reverse the first index where signal is less than height
     pulse_start = peak_max_index - \
@@ -72,14 +74,17 @@ def calc_puls_params(samples, peak, min_threshold_height, window_size, n_below_m
     # same for the pulse_end
     # 3 wide box car average centered on each value (-1 current_index +1)
     sig_windows_end = samples[peak_max_index - 1:]
-    averaged_sig_window = sig_windows_end[:-2] + \
-        sig_windows_end[1:-1] + sig_windows_end[2:]
-    averaged_sig_window = np.multiply(averaged_sig_window, 1./3.)
+    averaged_sig_window = np.convolve(sig_windows_end, np.ones(Parameters.n_samples_running_average)/Parameters.n_samples_baseline,mode = 'valid')
 
-    pulse_end = peak_max_index + \
-        find_first_n_less(min_threshold_height,
+    n_samples = find_first_n_less(min_threshold_height,
                           averaged_sig_window, n_below_min) 
-
+    pulse_end = peak_max_index + n_samples
+    pulse_width = pulse_end-pulse_start
+    if n_samples == 0:
+        pulse_end = 63
+    elif pulse_width < 30:
+        pulse_end = min(pulse_start + 40, 63)
+        
     if pulse_start >= len(samples):
         pulse_start = len(samples) - 1
     if pulse_end >= len(samples):
@@ -87,8 +92,8 @@ def calc_puls_params(samples, peak, min_threshold_height, window_size, n_below_m
 
     # check if pulse index width is larger than 0
     if pulse_end - pulse_start > 0 and pulse_end != -1 and pulse_start != -1:
-        pulse_width = (pulse_end-pulse_start) * Parameters.sample_width
-
+        
+        pulse_width = pulse_end - pulse_start
         # Area via trapezoid integration from pulse start to end
         # ,dx=sample_width) #16 ns sample width
         pulse_area = np.trapz(samples[pulse_start: pulse_end + 1])
@@ -166,16 +171,8 @@ def pulse_operations(samples: list | pd.Series):
             Parameters.number_of_sample_below_thres_for_range
         )
 
-        if len(samples[:start_pulse]) >= Parameters.n_samples_baseline:
-            baseline_sample = samples[start_pulse -
-                                      Parameters.n_samples_baseline:start_pulse+1]
-            baseline = np.mean(baseline_sample)
-        elif len(samples[end_pulse:]) >= Parameters.n_samples_baseline:
-            baseline_sample = samples[end_pulse:
-                                      Parameters.n_samples_baseline + end_pulse + 1]
-            baseline = np.mean(baseline_sample)
-        else:
-            baseline = np.mean(samples[-5:])
+        
+        baseline = np.mean(samples[:Parameters.n_samples_baseline+1])
 
         # subtract them to create baselined signal
         samples = samples - baseline
