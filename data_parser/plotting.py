@@ -376,19 +376,20 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events = 50, save = False, outDir 
         0.7,
         0.7,
         f"Area:    {int(row['Charge'])} ADCC \n"
-        + f"Width:   {int(row['PulseWidth'])} ns \n"
-        + f"Height:  {int(row['PulseHeight'])} ADCC",
+        + f"Width:   {int(row['PulseWidth'])} samples \n"
+        + f"Height:  {int(row['PulseHeight'])} ADCC\n",
         transform=ax.transAxes,
         fontsize=10,
         verticalalignment="top",
         horizontalalignment="left",
         bbox=props,
     )
-        ax.set_ylim(min(row['samples'])*1.1,max(row['samples'])*1.1)
+        ax.grid()
+        ax.set_ylim(-5,max(row['samples'])*1.1)
         ax.set_xlabel('Sample ID')
         ax.set_ylabel('ADC counts')
-        ax.set_title(f'Event {row["Event_ID"]} - Snippet {row["Snippet_number"]}')
-        ax.legend()
+        ax.set_title(f'Event {row["Event_ID"]} - Snippet {row["Snippet_number"]:.0f}')
+        ax.legend(framealpha = 1)
         if save == True:
             fig.savefig(f'{outDir}/Event{row["Event_ID"]}_snippet{int(row["Snippet_number"])}.pdf')
         plt.show()
