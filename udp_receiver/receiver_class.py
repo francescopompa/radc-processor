@@ -232,7 +232,7 @@ class Receiver():
             print(thr.enumerate())
         else:
             print("Receiver: threads, queues and sockets all closed succesfullly.")
-        os.system(f'radc_nd_reg {self.host} 6000 FeControl.EnTr 0s')
+        os.system(f'radc_nd_reg {self.host} 6000 FeControl.EnTr 0')
 
 
         return self.results
