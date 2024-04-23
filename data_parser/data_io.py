@@ -52,11 +52,10 @@ def make_total_dataFrame(files: list|str) -> pd.DataFrame:
         ignore_index=True
         )
 
-def update_dataframe_with_pulses(df: pd.DataFrame, PostTriggerTime = Parameters.PostTriggerTime) -> pd.DataFrame:
+def update_dataframe_with_pulses(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, PostTriggerTime = Parameters.PostTriggerTime) -> pd.DataFrame:
     '''
     It adds the columns with the pulses parameters to the dataframe
     '''
-
     if 'snippets' in df.columns:
         df = explode_dataframe(df)
     tmp = df['samples'].apply(pf.pulse_operations)
@@ -80,7 +79,7 @@ def update_dataframe_with_pulses(df: pd.DataFrame, PostTriggerTime = Parameters.
     df['Charge_keV'] = df.apply(lambda x: pf.energyConversion(
         x['Charge'], x['Channel_number'], Parameters.gain), axis=1)
     df['deltaT_us'] = df.apply(lambda x: pf.getRelativeTimeSnippets(
-        x['Subsecs'], x['Timedelta_samples'], PostTriggerTime), axis=1)
+        x['Subsecs'], x['Timedelta_samples'], TimeWindow, PostTriggerTime), axis=1)
     df['BoxcarSum'] = df.apply(lambda x: pf.getBoxcarSum(x.samples),axis=1)
 
     df['preprocessingFlags']= df.apply(lambda x: pf.getFlagsCorruptedData(x.Channel_number,x.IsPulse,x.samples,x.Timestamp_s),axis=1)
@@ -126,11 +125,20 @@ def make_total_dataFrame_processed(files: list|str) -> pd.DataFrame:
         ignore_index=True
     )
     input_json=[f'{f.split(".")[0]}_results.{f.split(".")[1]}.json' for f in files]
-    with open(input_json[0],'r') as file:
-        info = json.load(file)
-    time = info['PostTriggerTime']
-    PostTriggerTime = time if isinstance(time,int) else time[0]
-    df_updated=update_dataframe_with_pulses(df,PostTriggerTime)
+    try:
+        with open(input_json[0],'r') as file:
+            info = json.load(file)
+            ptt = info['PostTriggerTime']
+            tw = info['TimeWindow']
+    except:
+        print('Warning: using PostTriggerTime and TimeWindow from default parameters')
+        ptt = Parameters.PostTriggerTime
+        tw = Parameters.TimeWindow
+
+    
+    PostTriggerTime = ptt if isinstance(ptt,int) else ptt[0]
+    TimeWindow = tw if isinstance(tw,int) else tw[0]
+    df_updated=update_dataframe_with_pulses(df,TimeWindow,PostTriggerTime)
 
     return df, df_updated
     
@@ -141,20 +149,28 @@ def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str):
     parameters = {'total_time':0, 'rate': 0, 'ThresholdSum' : [], 'PostTriggerTime': [], 'TimeWindow': [], 'FilterSet.T_Time': [], 'FilterSet.BP_Time': [], 'FilterSet.BS_Time': []}
     for i in range(36):
         parameters[f'Threshold[{i}]'] = []
-    
-    for j in input_json:
-        with open(j,"r") as file:
-            info = json.load(file)
-            parameters['total_time'] += info['reception_time']
-            for p in parameters:
-                if p in info:
-                    parameters[p].append(info[p])
+    try:
+        for j in input_json:
+            with open(j,"r") as file:
+                info = json.load(file)
+                parameters['total_time'] += info['reception_time']
+                for p in parameters:
+                    if p in info:
+                        parameters[p].append(info[p])
+        ptt = info['PostTriggerTime']
+        tw = info['TimeWindow']
+    except:
+        print('Warning: using PostTriggerTime and TimeWindow from default parameters')
+        ptt = Parameters.PostTriggerTime
+        tw = Parameters.TimeWindow
+        
 
     df=make_total_dataFrame(files)
     df = explode_dataframe(df)
-    time = info['PostTriggerTime']
-    PostTriggerTime = time if isinstance(time,int) else time[0]
-    df_updated=update_dataframe_with_pulses(df,PostTriggerTime)
+    
+    PostTriggerTime = ptt if isinstance(ptt,int) else ptt[0]
+    TimeWindow = tw if isinstance(tw, int) else tw[0]
+    df_updated=update_dataframe_with_pulses(df, TimeWindow, PostTriggerTime)
     parameters['rate'] = len(df_updated.index) / parameters['total_time']
     parameters['pulse_detection_efficiency'] = len(df_updated.index) / len(df.index)
     root_file = df_to_root_file(df_updated,out_dir,namefile_output)
