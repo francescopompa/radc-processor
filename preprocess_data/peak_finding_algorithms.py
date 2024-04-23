@@ -233,15 +233,16 @@ def ADC_to_mV_conversion(samples, channel):
         return list(np.zeros(64))
 
 
-def getRelativeTimeSnippets(subseconds, timedelta_samples, PostTriggerTime):
+def getRelativeTimeSnippets(subseconds, timedelta_samples, TimeWindow, PostTriggerTime):
     sampling_period = 16e-3
     dT = (subseconds % 2**16) - timedelta_samples
 
     if dT < 0:
         return ((2**16 + dT) - PostTriggerTime) * sampling_period
+    elif subseconds < TimeWindow:
+        return (62.5e6 + dT - PostTriggerTime) * sampling_period
     else:
         return (dT - PostTriggerTime)*sampling_period
-
 
 def getBoxcarSum(samples):
     samples_averaged = np.convolve(samples, np.ones(4)/4, mode='valid')
