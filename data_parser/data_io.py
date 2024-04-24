@@ -92,7 +92,7 @@ def update_dataframe_with_pulses(df: pd.DataFrame, TimeWindow = Parameters.TimeW
     return df
 
 def cleanupDataframe(df):
-    df = df[(df['preprocessingFlags' == '']) & (df['IsPulse' == True])]
+    df = df[(df['preprocessingFlags'] == '') & (df['IsPulse'] == True)]
     tmp = df.groupby('Event_ID')
     for (event_ID), event_DF in tmp:
         if len(event_DF.index) < event_DF['snippet_space'].iloc[0]:
