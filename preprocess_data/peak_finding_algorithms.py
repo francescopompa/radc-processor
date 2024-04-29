@@ -71,6 +71,8 @@ def calc_puls_params(samples, peak, min_threshold_height, window_size, n_below_m
     pulse_start = peak_max_index - \
         find_first_n_less(min_threshold_height,
                           averaged_sig_window, n_below_min)
+    if samples[pulse_start] > (Parameters.height +5):
+        pulse_start = max(0,pulse_start -10)
     # same for the pulse_end
     # 3 wide box car average centered on each value (-1 current_index +1)
     sig_windows_end = samples[peak_max_index - 1:]
@@ -193,6 +195,20 @@ def pulse_operations(samples: list | pd.Series):
         baselines.append(baseline)
 
     return successes, max_indices, pulse_heights, pulse_widths, areas, starts, ends, baselines
+
+def naive_pulse_operations(samples):
+    samples = np.array(samples)
+    baselines = [np.mean(samples[:5])]
+    samples = samples-baselines[0]
+    max_indices = [np.argmax(samples)]
+    successes = [True]
+    pulse_heights = [samples[max_indices[0]]]
+    starts = [11]
+    ends = [63]
+    pulse_widths = [63 - 11]
+    areas = [np.trapz(samples[11:])]
+    return successes, max_indices, pulse_heights, pulse_widths, areas, starts, ends
+    
 
 
 def energyConversion(charge, channel, gain='matched'):
