@@ -225,7 +225,7 @@ def energyConversion(charge, channel, gain='matched'):
             (df.CE[df.PMT == 292].item() / df.CE[pmt.index].item()))
     except ValueError:
         return -1
-    E_keV = (charge + 624)/16.36 * rescalingFactor
+    E_keV = (charge + 169.3)/16.20 * rescalingFactor
     if gain == 'matched':
         return E_keV
     else:
