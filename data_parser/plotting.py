@@ -304,10 +304,13 @@ def plot_events_coincidence(df: pd.DataFrame, n_events = 50, save = False, outDi
             break
 
 def statisticalPlot(df,columns:str|list,outDir='./images',save=False):
-    variables_axis_titles={'PulseHeight':'Pulse height (ADCC)','Charge': 'Pulse area (ADCC)','Charge_keV': 'Energy (keV)','PulseWidth': 'Pulse width (keV)','Channel_number': 'Channel','deltaT_us': r'$\Delta t$ ($\mu s$)','Timedelta_samples': r'$\Delta t$ (samples)','Trigger_IDs': 'Trigger ID','StartPulse': 'Pulse start (sample)','EndPulse': 'Pulse end (sample)','Baseline':'Baseline'}
+    variables_axis_titles={'PulseHeight':'Pulse height (ADCC)','Charge': 'Pulse area (ADCC)','Charge_keV': 'Energy (keV)','PulseWidth': 'Pulse width (keV)','Channel_number': 'Channel','deltaT_us': r'$\Delta t$ ($\mu s$)','Timedelta_samples': r'$\Delta t$ (samples)','Trigger_IDs': 'Trigger ID','StartPulse': 'Pulse start (sample)','EndPulse': 'Pulse end (sample)','Baseline':'Baseline (ADCC)','preprocessingFlags': 'Preprocessing flags'}
     
     if isinstance(columns,str):
         columns=[columns]
+    for c in columns:
+        if c not in variables_axis_titles:
+            raise NotImplementedError('The column has not yet been implemented')
     if (len(columns) == 1) and ('preprocessingFlags' not in columns):
         plt.hist(df[columns],bins=100)
         plt.xlabel(variables_axis_titles[columns[0]])
@@ -352,7 +355,7 @@ def statisticalPlot(df,columns:str|list,outDir='./images',save=False):
     else:
         raise NotImplementedError('For now only up to two variables have been implemented')
     
-    if(save == True):
+    if save == True:
         p = Path(outDir)
         p.mkdir(parents=True, exist_ok=True)
         plt.tight_layout()
@@ -366,8 +369,11 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events = 50, save = False, outDir 
     counter =0
     for _,row in df.iterrows():
         fig, ax = plt.subplots()
-
-        ax.plot(row['samples']-row['Baseline'],'b')
+        if 'Baseline' in row:
+            baseline = row['Baseline']
+        else:
+            baseline = np.mean(row['samples'][:5])
+        ax.plot(row['samples']-baseline,'b')
         ax.vlines(row['StartPulse'],-1000,1e4,label=f'Start: {row["StartPulse"]}',colors = ['green'],linestyle='dashed')
         ax.vlines(row['EndPulse'],-1e3,1e4,label=f'End: {row["EndPulse"]}',colors = ['red'],linestyle='dashed')
         ax.plot(row['MaxIndex'],row['samples'][row['MaxIndex']],'bo',label = f'Height: {int(row["PulseHeight"])}')
@@ -375,8 +381,8 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events = 50, save = False, outDir 
         ax.text(
         0.7,
         0.7,
-        f"Area:    {int(row['Charge'])} ADCC \n"
-        + f"Width:   {int(row['PulseWidth'])} samples \n"
+        f"Area:    {int(row['Charge'])} ADCC\n"
+        + f"Width:   {int(row['PulseWidth'])} samples\n"
         + f"Height:  {int(row['PulseHeight'])} ADCC\n",
         transform=ax.transAxes,
         fontsize=10,
