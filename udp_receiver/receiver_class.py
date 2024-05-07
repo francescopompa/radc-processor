@@ -233,6 +233,7 @@ class Receiver():
         else:
             print("Receiver: threads, queues and sockets all closed succesfullly.")
         os.system(f'radc_nd_reg {self.host} 6000 FeControl.EnTr 0')
+        self.dump_results()
 
 
         return self.results
@@ -428,7 +429,7 @@ class Receiver():
             except queue.Empty:
                 pass
         # else:
-        if self.__update_queue.empty() is True:
+        if self.__update_queue.empty() is True and self.__do_readout is False:
             print("Summary:")
             print(f"Received: {count} packages in {convert_seconds(int(run_time))} s for {convert_bytes(total_data)} Bytes in total. ({convert_bytes(total_rate):.2} B/s) Chunks: {self.current_chunk}, Splits:{self.current_split}")
             self.results = {
@@ -450,7 +451,7 @@ class Receiver():
                 "files_written": [str(i) for i in self.target_files.list_files()],
                 # "class_params": self.__dict__(),
             }
-            self.dump_results()
+            # self.dump_results()
         else:
             self._update_received_data(count=count, total_data=total_data, start_time=start_time)
 
