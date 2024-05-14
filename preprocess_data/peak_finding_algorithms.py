@@ -1,6 +1,3 @@
-import data_parser
-data_parser.init("v2")
-
 from . import Parameters
 from time import time
 from pathlib import Path
@@ -218,7 +215,7 @@ def energyConversion(charge, channel, gain='matched'):
     otherwise for now it's necessary to convert in postprocessing or to use always the same channel
     with the same module
     '''
-    df = pd.read_csv(Path(__file__).parent / 'channel_map_energy.csv')
+    df = Parameters.df_energy_conversion
     try:
         pmt = df.PMT[df['DAQ'] == channel]
         rescalingFactor = float(

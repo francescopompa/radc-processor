@@ -1,3 +1,6 @@
+from pandas import read_csv
+from pathlib import Path
+
 # these first 3 are only for the scipy function to find the peaks
 sp_height = 10
 sp_width = int(12)
@@ -17,3 +20,5 @@ gain = 'matched'
 T_time = 10
 PostTriggerTime = 800
 TimeWindow=1600
+
+df_energy_conversion = read_csv(Path(__file__).parent / 'channel_map_energy.csv')
