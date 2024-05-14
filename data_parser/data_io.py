@@ -124,25 +124,51 @@ def make_total_dataFrame_processed(files: list|str) -> pd.DataFrame:
         load_files_to_df(files),
         ignore_index=True
     )
-    input_json=[f'{f.split(".")[0]}_results.{f.split(".")[1]}.json' for f in files]
-    try:
-        with open(input_json[0],'r') as file:
-            info = json.load(file)
-            ptt = info['PostTriggerTime']
-            tw = info['TimeWindow']
-    except:
-        print('Warning: using PostTriggerTime and TimeWindow from default parameters')
-        ptt = Parameters.PostTriggerTime
-        tw = Parameters.TimeWindow
-
+    parameters = getParametersFromJson(files)
+    parameters['rate'] = len(df_updated.index) / parameters['total_time']
+    parameters['pulse_detection_efficiency'] = len(df_updated.index) / len(df.index)
     
-    PostTriggerTime = ptt if isinstance(ptt,int) else ptt[0]
-    TimeWindow = tw if isinstance(tw,int) else tw[0]
-    df_updated=update_dataframe_with_pulses(df,TimeWindow,PostTriggerTime)
+    df_updated=update_dataframe_with_pulses(df,TimeWindow=parameters['TimeWindow'],PostTriggerTime=parameters['PostTriggerTime'])
+    df_updated.attrs = parameters
+    df.attrs = parameters
 
     return df, df_updated
     
 def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str):
+    
+    if isinstance(files,str):
+        files = [files]
+    
+    df = make_total_dataFrame(files)
+    df = explode_dataframe(df)
+    parameters = getParametersFromJson(files)
+    with open(f'{out_dir}/{namefile_output}.json','w+') as f:
+        json.dump(parameters,f,indent=4)
+    df_updated = update_dataframe_with_pulses(df,TimeWindow = parameters['TimeWindow'], PostTriggerTime= parameters['PostTriggerTime'])
+
+    parameters['rate'] = len(df_updated.index) / parameters['total_time']
+    parameters['pulse_detection_efficiency'] = len(df_updated.index) / len(df.index)
+
+    df.attrs = parameters
+    df_updated.attrs = parameters
+
+    root_file = df_to_root_file(df_updated,out_dir,namefile_output)
+    for p in parameters:
+        parameters[p] = [parameters[p]]
+    root_file['infoTree'] = parameters
+   
+    return df, df_updated, root_file
+
+def explode_dataframe(df):
+    dfc=df.explode('snippets').reset_index(drop=True)
+    df=dfc.join(pd.json_normalize(dfc['snippets'])).drop(columns='snippets')
+    return df
+
+def getParametersFromJson(files: list|str):
+    '''
+    It derives the parameters from the json created after the generation of the bin file 
+    and it replaces the unknown registers with default parameters
+    '''
     if isinstance(files,str):
         files = [files]
     input_json=[f'{f.split(".")[0]}_results.{f.split(".")[1]}.json' for f in files]
@@ -157,32 +183,13 @@ def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str):
                 for p in parameters:
                     if p in info:
                         parameters[p].append(info[p])
-        ptt = info['PostTriggerTime']
-        tw = info['TimeWindow']
     except:
         print('Warning: using PostTriggerTime and TimeWindow from default parameters')
-        ptt = Parameters.PostTriggerTime
-        tw = Parameters.TimeWindow
-        
-
-    df=make_total_dataFrame(files)
-    df = explode_dataframe(df)
-    
-    PostTriggerTime = ptt if isinstance(ptt,int) else ptt[0]
-    TimeWindow = tw if isinstance(tw, int) else tw[0]
-    df_updated=update_dataframe_with_pulses(df, TimeWindow, PostTriggerTime)
-    parameters['rate'] = len(df_updated.index) / parameters['total_time']
-    parameters['pulse_detection_efficiency'] = len(df_updated.index) / len(df.index)
-    root_file = df_to_root_file(df_updated,out_dir,namefile_output)
+        parameters['PostTriggerTime'] = Parameters.PostTriggerTime
+        parameters['TimeWindow'] = Parameters.TimeWindow
+        parameters['total_time'] = 1
     for p in parameters:
-        parameters[p] = [parameters[p]]
-    root_file['infoTree'] = parameters
-    with open(f'{out_dir}/{namefile_output}.json','w+') as f:
-        json.dump(parameters,f,indent=4)
-    return df, df_updated, root_file
-
-def explode_dataframe(df):
-    dfc=df.explode('snippets').reset_index(drop=True)
-    df=dfc.join(pd.json_normalize(dfc['snippets'])).drop(columns='snippets')
-    return df
-
+        if isinstance(parameters[p],list) and len(set(parameters[p]))==1:
+            parameters[p]=parameters[p][0]
+    return parameters
+    
