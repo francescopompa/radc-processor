@@ -10,6 +10,7 @@ from .configuration import CONFIG
 from pathlib import Path
 import numpy as np
 from preprocess_data import Parameters
+from data_parser.data_io import cleanupDataframe
 
 # CONFIG = configuration.CONFIG
 CONVERSIONS = {
@@ -259,6 +260,15 @@ def plot_events(df: pd.DataFrame, **kwargs):
 
 def plot_events_coincidence(df: pd.DataFrame, n_events = 50, save = False, outDir = "./images"):
     # plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.tab20c.colors)
+    if df.attrs != {}:
+            PostTriggerTime = df.attrs['PostTriggerTime']
+    else:
+        PostTriggerTime = Parameters.PostTriggerTime
+        print(f'Info: using PostTriggerTime {PostTriggerTime}. Check that it is correct or change the parameters')
+
+    if not isinstance(PostTriggerTime,int):
+        PostTriggerTime = Parameters.PostTriggerTime
+        print(f'Info: using PostTriggerTime {PostTriggerTime}. Check that it is correct or change the parameters')
     if save == True:
         p = Path(outDir)
         p.mkdir(parents=True, exist_ok=True)
@@ -270,6 +280,8 @@ def plot_events_coincidence(df: pd.DataFrame, n_events = 50, save = False, outDi
         channels = event_DF['Channel_number']
         if 'BoxcarSum' in event_DF.columns:
             energies2=event_DF['BoxcarSum']
+        else:
+            energies2=[]
         # to do 
         # find a way to convert to more informative energy units
         
@@ -288,7 +300,7 @@ def plot_events_coincidence(df: pd.DataFrame, n_events = 50, save = False, outDi
         ax[0].set_xlabel('Sample ID')
         ax[0].set_ylabel('ADC counts')
         ax[0].legend()
-        ax[1].set_xlim(-Parameters.PostTriggerTime*2*16e-3,Parameters.PostTriggerTime*2*16e-3)
+        ax[1].set_xlim(-PostTriggerTime*2*16e-3,PostTriggerTime*2*16e-3)
         energies = np.array([*energies, *energies2,0])
         ax[1].set_ylim(0,np.max(energies[np.isfinite(energies)])*1.2+10)
         ax[1].set_xlabel(r'Time ($\mu s$)')
@@ -412,7 +424,21 @@ def plotFullDiagnostics(df,outDir='./images',save=False,n_events=50):
         statisticalPlot(df,['PulseHeight','Charge'],outDir=outDir,save=save)
         statisticalPlot(df,'deltaT_us',outDir=outDir,save=save)
         statisticalPlot(df,'preprocessingFlags',outDir=outDir,save=save)
+        plot_events_coincidence(df,n_events=n_events,save = save, outDir=outDir)
     else:
         print('Warning: preprocess the data to get the full diagnostics!')
     statisticalPlot(df,'Channel_number',outDir=outDir,save=save)
+
+def plotGoodEventsID(df,outDir='./images',save=False):
+    df = cleanupDataframe(df)
+    fig,ax = plt.subplots()
+    ax.plot(df.Event_ID,'.')
+    ax.set_xlabel('Index')
+    ax.set_ylabel('Event ID')
+    ax.set_ylim(0,df.index[-1]*2)
+    ax.tight_layout()
+    fig.show()
+    if save == True:
+        fig.savefig(f'{outDir}/plotEventsID.png',dpi=200)
+    plt.close()
     
