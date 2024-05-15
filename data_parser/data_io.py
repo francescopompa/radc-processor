@@ -129,10 +129,12 @@ def make_total_dataFrame_processed(files: list|str) -> pd.DataFrame:
     df_updated=update_dataframe_with_pulses(df,TimeWindow=parameters['TimeWindow'],PostTriggerTime=parameters['PostTriggerTime'])
     parameters['rate'] = len(df_updated.index) / parameters['total_time']
     parameters['pulse_detection_efficiency'] = len(df_updated.index) / len(df.index)
-
+    
+    df=explode_dataframe(df)
 
     df_updated.attrs = parameters
     df.attrs = parameters
+
 
     return df, df_updated
     
