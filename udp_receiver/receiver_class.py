@@ -147,7 +147,6 @@ class Receiver():
         If you pass a duration, the receiver will .stop() itself after
         `duration` seconds have passed.
         """
-        os.system(f'radc_nd_reg {self.host} 6000 FeControl.EnTr 1')
         if self.__do_readout is True:
             print("Receiver is already running.")
             return
@@ -161,6 +160,8 @@ class Receiver():
 
         self.__do_readout = True
         self.__start_socket()
+        os.system(f'radc_nd_reg {self.host} 6000 FeControl.EnTr 1')
+
 
         self.__data_queue = queue.Queue() # maxsize is 2147483647
         self.__update_queue = queue.Queue() # maxsize is 2147483647
@@ -528,11 +529,10 @@ class Receiver():
     #     print(f"Replaced {old_target} with {new_target} to avoid overwrite. ({self.__suffixes})")
     #     return new_target
 
-#these need to be tested
 def convert_bytes(size):
     for x in ['B', 'KB', 'MB', 'GB', 'TB']:
         if size < 1024.0:
-            return "%3.0f %s" % (size, x)
+            return "%3.1f %s" % (size, x)
         size /= 1024.0
 
     return size
