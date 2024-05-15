@@ -82,7 +82,7 @@ def update_dataframe_with_pulses(df: pd.DataFrame, TimeWindow = Parameters.TimeW
         x['Subsecs'], x['Timedelta_samples'], TimeWindow, PostTriggerTime), axis=1)
     df['BoxcarSum'] = df.apply(lambda x: pf.getBoxcarSum(x.samples),axis=1)
 
-    df['preprocessingFlags']= df.apply(lambda x: pf.getFlagsCorruptedData(x.Channel_number,x.IsPulse,x.samples,x.Timestamp_s),axis=1)
+    df['preprocessingFlags']= df.apply(lambda x: pf.getFlagsCorruptedData(x.Channel_number,x.samples,x.Timestamp_s),axis=1)
 
     df['samples'] = [s if (isinstance(s,list) and (len(s) == 64)) else list(np.zeros(64)) for s in df.samples]
 

@@ -261,13 +261,11 @@ def getBoxcarSum(samples):
     samples_averaged = np.convolve(samples, np.ones(4)/4, mode='valid')
     return max(samples_averaged)*4
 
-def getFlagsCorruptedData(channel, is_pulse, samples, timestamp):
+def getFlagsCorruptedData(channel, samples, timestamp):
     preprocessingFlags=''
     
     if (channel < 0) or (channel > 35) or (channel != channel):
         preprocessingFlags += 'C'
-    if is_pulse == False:
-        preprocessingFlags += 'P'
     if isinstance(samples,np.float64) or (isinstance(samples,list) and (len(samples) != 64)):
         preprocessingFlags += 'S'
     if timestamp > time() or timestamp < 1699000000:
