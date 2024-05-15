@@ -146,8 +146,7 @@ def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str):
     df = make_total_dataFrame(files)
     df = explode_dataframe(df)
     parameters = getParametersFromJson(files)
-    with open(f'{out_dir}/{namefile_output}.json','w+') as f:
-        json.dump(parameters,f,indent=4)
+    
     df_updated = update_dataframe_with_pulses(df,TimeWindow = parameters['TimeWindow'], PostTriggerTime= parameters['PostTriggerTime'])
 
     parameters['rate'] = len(df_updated.index) / parameters['total_time']
@@ -157,6 +156,8 @@ def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str):
     df_updated.attrs = parameters
 
     root_file = df_to_root_file(df_updated,out_dir,namefile_output)
+    with open(f'{out_dir}{namefile_output}.json','w+') as f:
+        json.dump(parameters,f,indent=4)
     for p in parameters:
         parameters[p] = [parameters[p]]
     root_file['infoTree'] = parameters
