@@ -125,10 +125,12 @@ def make_total_dataFrame_processed(files: list|str) -> pd.DataFrame:
         ignore_index=True
     )
     parameters = getParametersFromJson(files)
-    parameters['rate'] = len(df_updated.index) / parameters['total_time']
-    parameters['pulse_detection_efficiency'] = len(df_updated.index) / len(df.index)
     
     df_updated=update_dataframe_with_pulses(df,TimeWindow=parameters['TimeWindow'],PostTriggerTime=parameters['PostTriggerTime'])
+    parameters['rate'] = len(df_updated.index) / parameters['total_time']
+    parameters['pulse_detection_efficiency'] = len(df_updated.index) / len(df.index)
+
+
     df_updated.attrs = parameters
     df.attrs = parameters
 
