@@ -112,8 +112,6 @@ class DataFile(BaseDataFile):
                     
                     offset += snippet_struct.size
                     snippet = Snippet(_tup)
-                    if event.header['Event_ID'] == 42:
-                        print(filecontents[offset:offset+snippet_struct.size*10])
                     event.snippets.append(snippet)
                 except ValueError:
                     print(f"Incorrect event header: event {event.header['Event_ID']}\n" 
