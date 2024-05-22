@@ -67,11 +67,6 @@ def update_dataframe_with_pulses(df: pd.DataFrame, TimeWindow = Parameters.TimeW
     df = df.explode(['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
                      'StartPulse', 'EndPulse', 'Baseline']).reset_index(drop=True)
 
-    if data_parser.VERSION == 2:
-        # df['trigger_IDs']=[[p[0]] if len(p)==1 else [0] for p in df['trigger_IDs']]
-        df = df.drop(columns='trigger_IDs')
-        # pdf.loc[:, 'Info_flags'] = pdf.Info_flags.astype('str')
-        df = df.drop(columns='Info_flags')
     if data_parser.VERSION == 1:
         df.loc[:, 'Type'] = df.Type.astype('str')
         df.loc[:, 'Rest'] = df.Rest.astype('str')
@@ -80,7 +75,7 @@ def update_dataframe_with_pulses(df: pd.DataFrame, TimeWindow = Parameters.TimeW
         x['Charge'], x['Channel_number'], Parameters.gain), axis=1)
     df['deltaT_us'] = df.apply(lambda x: pf.getRelativeTimeSnippets(
         x['Subsecs'], x['Timedelta_samples'], TimeWindow, PostTriggerTime), axis=1)
-    df['BoxcarSum'] = df.apply(lambda x: pf.getBoxcarSum(x.samples),axis=1)
+    df['BoxcarSum'] = df.apply(lambda x: pf.getBoxcarSum(x.samples,x.Baseline),axis=1)
 
     df['preprocessingFlags']= df.apply(lambda x: pf.getFlagsCorruptedData(x.Channel_number,x.samples,x.Timestamp_s),axis=1)
 
@@ -110,6 +105,10 @@ def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str) -> uproot.wri
     '''
     It creates the root file using the dataframe. Attention: it creates automatically the folder
     '''
+    if 'trigger_IDs' in df.columns:
+        df = df.drop(columns='trigger_IDs')
+    if 'Info_flags' in df.columns:
+        df = df.drop(columns='Info_flags')
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     file = uproot.recreate(out / (namefile + ".root"))
