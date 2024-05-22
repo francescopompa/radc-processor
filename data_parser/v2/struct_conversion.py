@@ -188,7 +188,8 @@ class DataFile(BaseDataFile):
         if self.skipped_bytes_total > 0:
             print(
             f"Unpacking from {self.path.name} skipped {self.skipped_bytes_total}",
-            f"out of {self.path.stat().st_size} bytes in total.\n",
+            
+            f"out of {self.path.stat().st_size} bytes in total. ({self.skipped_bytes_total/self.path.stat().st_size:.1%})\n"
             # self.skipped_bytes
             )
         return self.skipped_bytes
