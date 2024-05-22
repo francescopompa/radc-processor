@@ -83,7 +83,7 @@ class Receiver():
         #
         # Todo: check where used and replace with count of packages:
         #
-        self.__split_size = 1480 # 2*self.tracelength + RADC_HEADER_SIZE + RADC_PKG_HEADER_SIZE
+        self.__split_size = 4096 # 2*self.tracelength + RADC_HEADER_SIZE + RADC_PKG_HEADER_SIZE
 
         self.__do_readout = False
         self.__sock = None
