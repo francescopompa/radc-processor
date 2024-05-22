@@ -109,13 +109,25 @@ class DataFile(BaseDataFile):
                         filecontents,
                         offset=offset
                     )
+                    
                     offset += snippet_struct.size
-                    event.snippets.append(Snippet(_tup))
+                    snippet = Snippet(_tup)
+                    if event.header['Event_ID'] == 42:
+                        print(filecontents[offset:offset+snippet_struct.size*10])
+                    event.snippets.append(snippet)
+                except ValueError:
+                    print(f"Incorrect event header: event {event.header['Event_ID']}\n" 
+                           f"offset {offset}.")
+                    continue
                 except struct.error as e:
                     print(f"Error unpacking snippet from {self.path.name}:")
                     print(" ", e)
-                    print(f"Event aborted at offset {offset}.")
-                    break
+                    print(f"Event {event.header['Event_ID']} aborted at offset {offset}.")
+                    continue
+                except:
+                    continue
+                        
+                    
 
 
             # for i in range(event.stats["snippet_space"]):
@@ -131,7 +143,6 @@ class DataFile(BaseDataFile):
 
             # offset += event.stats["length"]
             yield event
-
 
     def find_event_start(self, bytesdata, event_struct, start=0):
         """
@@ -215,16 +226,22 @@ class Event(BaseSnippet):
         setattr(self, self._contents, [])
 
     def _check_integrity(self):
-        return True
+        return (self.header["Trigger_type"] == 'E'
+                and self.header['Snippet_count'] in range(1,100)
+                and self.header["Timestamp_s"] < time.time()
+                and self.header["Timestamp_s"] > 1699000000
+
+                )
+        # return True
+
+
+
 
     def _convert_types(self, key, entry):
         match key:
             case "Type"|"Trigger_type":
-                # print(key, entry)
-                return int.from_bytes(
-                    entry[::-1], "big"
-                    # bytes([entry[2], entry[1], entry[0]])
-                )
+                return entry.decode("ascii")
+
             case "Event_ID":
                 # Reverse the Byte order
                 return int.from_bytes(

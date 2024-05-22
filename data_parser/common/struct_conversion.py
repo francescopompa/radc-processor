@@ -48,7 +48,7 @@ class BaseDataFile():
                  path,
                  tracelength=CONFIG["udp_package_structure"]["default_trace_length"],
                  endianness="little-endian",
-                 include_UDP_header=True
+                 include_UDP_header=False,
                  ) -> None:
         self.path = Path(path)
         self.tracelength = tracelength
@@ -156,7 +156,7 @@ class BaseSnippet():
             )
 
         if not self._check_integrity():
-            raise ValueError(f"Wrong values for event in header {self.header}")
+            raise ValueError(f"Wrong values for snippet in header {self.header}")
 
         return i+1
 
@@ -165,17 +165,25 @@ class BaseSnippet():
 
 
     def _check_integrity(self):
+        # return (self.header['Channel_number'] in range(36) 
+        #         and self.header['Snippet_number'] in range(1,30)
+        #         and (int(self.header['Info_flags']) == 0 or int(self.header['Info_flags']) == 1)
+        #         and 0 < self.header['Energy'] < 50000 
+        #         )
         return True
+                
 
     def _convert_types(self, key, entry):
         match key:
-            case "Type":
+            case "Type"|'Trigger_type':
                 return entry.decode("ascii")
             case "Energy":
                 # Reverse the Byte order
                 return int.from_bytes(
                     bytes([entry[2], entry[1], entry[0]]), "big"
                 )
+            case 'Info_flags':
+                return int.from_bytes(entry,'big')
             case _:
                 return entry
 
