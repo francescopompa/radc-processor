@@ -258,10 +258,12 @@ def plot_events(df: pd.DataFrame, **kwargs):
             kwargs["xlim"] = kwargs.get("xlim") or (min(left_bases), max(right_bases))
         plot_rows(event_DF, **kwargs)
 
-def plot_events_coincidence(df: pd.DataFrame, n_events = 50, save = False, outDir = "./images"):
+def plot_events_coincidence(df: pd.DataFrame, n_events = 50, save = False, outDir = "./images", PostTriggerTime_us = None):
     # plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.tab20c.colors)
-    if df.attrs != {}:
+    if df.attrs != {} and PostTriggerTime_us is None:
             PostTriggerTime = df.attrs['PostTriggerTime']
+    elif PostTriggerTime_us is not None:
+        PostTriggerTime = int(PostTriggerTime_us / 16e-3)
     else:
         PostTriggerTime = Parameters.PostTriggerTime
         print(f'Info: using PostTriggerTime {PostTriggerTime}. Check that it is correct or change the parameters')
@@ -287,27 +289,27 @@ def plot_events_coincidence(df: pd.DataFrame, n_events = 50, save = False, outDi
         
         relativeTime=event_DF['deltaT_us']
        
-        fig,ax=plt.subplots(ncols=1,nrows=2,layout='constrained')
+        fig,ax=plt.subplots(ncols=1,nrows=2)
         for i in range(len(event_DF.index)):
-            ax[0].plot(event_DF['samples'].iloc[i],label=f'{i+1}: channel {channels.iloc[i]}')
+            ax[0].plot(event_DF['samples'].iloc[i],label=f'{event_DF["Snippet_number"].iloc[i]}: channel {channels.iloc[i]}')
             plot=ax[1].plot(relativeTime.iloc[i],energies.iloc[i],'o')
             color=plot[0].get_color()
             ax[1].vlines(relativeTime.iloc[i],0,energies.iloc[i],color=color)
 
-            if 'BoxcarSum' in event_DF.columns:
-                ax[1].plot(relativeTime.iloc[i],energies2.iloc[i],'o',color=color,alpha=0.5)
+            # if 'BoxcarSum' in event_DF.columns:
+            #     ax[1].plot(relativeTime.iloc[i],energies2.iloc[i],'o',color=color,alpha=0.5)
 
         ax[0].set_xlabel('Sample ID')
         ax[0].set_ylabel('ADC counts')
-        ax[0].legend()
+        fig.legend(loc='center right',bbox_to_anchor = (1,0.5))
         ax[1].set_xlim(-PostTriggerTime*2*16e-3,PostTriggerTime*2*16e-3)
         energies = np.array([*energies, *energies2,0])
         ax[1].set_ylim(0,np.max(energies[np.isfinite(energies)])*1.2+10)
         ax[1].set_xlabel(r'Time ($\mu s$)')
-        ax[0].set_title(f'Event {event_ID[0]}')
+        ax[0].set_title(f'Event {event_ID[0]}: {event_DF["Snippet_count"].iloc[0]} snippets')
         ax[1].set_ylabel('Boxcar energy (ADCC)')
-        ax[1].set_box_aspect(1/5)
-        # fig.tight_layout()
+        # ax[1].set_box_aspect(1/4)
+        fig.tight_layout(rect=[0, 0, 0.75, 1])        
         plt.show()
         plt.close()
         if save == True:
