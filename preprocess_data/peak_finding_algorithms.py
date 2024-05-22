@@ -257,7 +257,8 @@ def getRelativeTimeSnippets(subseconds, timedelta_samples, TimeWindow, PostTrigg
     else:
         return (dT - PostTriggerTime)*sampling_period
 
-def getBoxcarSum(samples):
+def getBoxcarSum(samples,baseline):
+    samples = np.array(samples) - baseline
     samples_averaged = np.convolve(samples, np.ones(4)/4, mode='valid')
     return max(samples_averaged)*4
 

@@ -18,7 +18,7 @@ n_samples_running_average = 5
 
 gain = 'matched'
 T_time = 10
-PostTriggerTime = 800
-TimeWindow=1600
+PostTriggerTime = 6250
+TimeWindow = 12500
 
 df_energy_conversion = read_csv(Path(__file__).parent / 'channel_map_energy.csv')
