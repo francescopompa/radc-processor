@@ -9,6 +9,7 @@ from preprocess_data import peak_finding_algorithms as pf
 import json
 import uproot
 from pathlib import Path
+from itertools import islice
 
 
 
@@ -196,4 +197,24 @@ def getParametersFromJson(files: list|str):
         if isinstance(parameters[p],list) and len(set(parameters[p]))==1:
             parameters[p]=parameters[p][0]
     return parameters
+
+def removeDuplicateEvents(df: pd.DataFrame):
+    duplicate_events = []
+    energies = df.Energy
+    snippet_count = df.Snippet_count
+    for i,e in enumerate(energies):
+            if i>snippet_count.iloc[i]:
+                if e == energies.iloc[i-snippet_count.iloc[i]]:
+                    if snippet_count.iloc[i] <= snippet_count.iloc[i-snippet_count.iloc[i]]: 
+                        duplicate_events.append(df.Event_ID.iloc[i])
+                    else:
+                        duplicate_events.append(df.Event_ID.iloc[i-snippet_count[i]])
     
+    duplicate_events = set(duplicate_events)
+    df['condition'] = [d not in duplicate_events for d in df.Event_ID]
+    df.drop(df[df['condition'] == False].index, inplace=True)
+    df.drop(columns='condition', inplace=True)
+    df = df.reset_index(drop = True)
+    # find a way to reindex the event IDs?
+    return df
+                
