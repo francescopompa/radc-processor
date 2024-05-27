@@ -53,7 +53,7 @@ def make_total_dataFrame(files: list|str) -> pd.DataFrame:
         ignore_index=True
         )
 
-def update_dataframe_with_pulses(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, PostTriggerTime = Parameters.PostTriggerTime) -> pd.DataFrame:
+def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, PostTriggerTime = Parameters.PostTriggerTime) -> pd.DataFrame:
     '''
     It adds the columns with the pulses parameters to the dataframe
     '''
@@ -84,6 +84,16 @@ def update_dataframe_with_pulses(df: pd.DataFrame, TimeWindow = Parameters.TimeW
 
     df.loc[:, 'Datetime'] = df['Datetime'].dt.strftime('%Y%m%d')
     df.loc[:, 'Datetime'] = df.Datetime.astype('int64')
+
+    events = set(df.Event_ID)
+    counter = 0
+    for e in range(max(events)):
+        if e not in events:
+            counter += 1
+    df.loc[:,'missing_events_fraction']=counter/len(df.Event_ID)
+    df = removeDuplicateEvents(df)
+    n_events_unique = len(set(df.Event_ID))
+    df.loc[:,'duplicated_events_fraction'] = 1 - n_events_unique / len(events)
 
     return df
 
@@ -126,12 +136,10 @@ def make_total_dataFrame_processed(files: list|str) -> pd.DataFrame:
     )
     parameters = getParametersFromJson(files)
     
-    df_updated=update_dataframe_with_pulses(df,TimeWindow=parameters['TimeWindow'],PostTriggerTime=parameters['PostTriggerTime'])
-    parameters['rate'] = len(df_updated.index) / parameters['total_time']
-    parameters['pulse_detection_efficiency'] = len(df_updated.index) / len(df.index)
-    
-    df=explode_dataframe(df)
+    df_updated=preprocessDataframe(df,TimeWindow=parameters['TimeWindow'],PostTriggerTime=parameters['PostTriggerTime'])
 
+    getAdditionalParameters(df_updated,parameters)
+    
     df_updated.attrs = parameters
     df.attrs = parameters
 
@@ -146,11 +154,10 @@ def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str):
     df = make_total_dataFrame(files)
     df = explode_dataframe(df)
     parameters = getParametersFromJson(files)
-    
-    df_updated = update_dataframe_with_pulses(df,TimeWindow = parameters['TimeWindow'], PostTriggerTime= parameters['PostTriggerTime'])
 
-    parameters['rate'] = len(df_updated.index) / parameters['total_time']
-    parameters['pulse_detection_efficiency'] = len(df_updated.index) / len(df.index)
+    df_updated = preprocessDataframe(df,TimeWindow = parameters['TimeWindow'], PostTriggerTime= parameters['PostTriggerTime'])
+
+    getAdditionalParameters(df_updated,parameters)
 
     df.attrs = parameters
     df_updated.attrs = parameters
@@ -161,7 +168,7 @@ def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str):
     for p in parameters:
         parameters[p] = [parameters[p]]
     root_file['infoTree'] = parameters
-   
+    
     return df, df_updated, root_file
 
 def explode_dataframe(df):
@@ -176,8 +183,9 @@ def getParametersFromJson(files: list|str):
     '''
     if isinstance(files,str):
         files = [files]
+    # replace this with a function to cover the case of chunks
     input_json=[f'{f.split(".")[0]}_results.{f.split(".")[1]}.json' for f in files]
-    parameters = {'total_time':0, 'rate': 0, 'ThresholdSum' : [], 'PostTriggerTime': [], 'TimeWindow': [], 'FilterSet.T_Time': [], 'FilterSet.BP_Time': [], 'FilterSet.BS_Time': []}
+    parameters = {'total_time':0, 'ThresholdSum' : [], 'PostTriggerTime': [], 'TimeWindow': [], 'FilterSet.T_Time': [], 'FilterSet.BP_Time': [], 'FilterSet.BS_Time': []}
     for i in range(36):
         parameters[f'Threshold[{i}]'] = []
     try:
@@ -217,4 +225,16 @@ def removeDuplicateEvents(df: pd.DataFrame):
     df = df.reset_index(drop = True)
     # find a way to reindex the event IDs?
     return df
+
+def getAdditionalParameters(df,parameters):
+    parameters['snippet_rate'] = len(df.index) / parameters['total_time']
+    parameters['event_rate'] = len(set(df['Event_ID'])) / parameters['total_time']
+
+    parameters['pulse_detection_efficiency'] = len(df.index) / len(df.index)
+    parameters['corrupted_snippets'] = len(df[df.preprocessingFlags != ""])/len(df.index)
+    parameters['missing_events_fraction'] = df['missing_events_fraction'].iloc[0]
+    parameters['duplicated_events_fraction'] = df['duplicated_events_fraction'].iloc[0]
+    df.drop(columns = ['missing_events_fraction','duplicated_events_fraction'],inplace = True)
+    
+    
                 
