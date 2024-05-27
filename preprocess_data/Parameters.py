@@ -3,8 +3,9 @@ from pathlib import Path
 
 # these first 3 are only for the scipy function to find the peaks
 sp_height = 10
-sp_width = int(12)
-sp_distance = int(20)  # samples
+sp_width = int(4)
+sp_distance = int(10) # samples
+
 
 height = 10
 width = int(12)
@@ -14,6 +15,9 @@ max_number_of_pulses = int(1)
 sample_width = int(16)  # ns
 n_samples_baseline = int(3)
 n_samples_running_average = 5
+
+min_ratio_charge_height = 9
+max_ratio_charge_height = 13
 
 
 gain = 'matched'

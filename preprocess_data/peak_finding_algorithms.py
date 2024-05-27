@@ -134,7 +134,7 @@ def pulse_operations(samples: list | pd.Series):
         samples = np.zeros(64)
     try:
         sig_boxcar = sp.ndimage.uniform_filter1d(
-            samples * Parameters.sp_width, size=Parameters.sp_width
+            samples, size=Parameters.sp_width
         )
     except np.AxisError:
         return [False], [0], [0], [0], [0], [0], [0], [0]
@@ -142,20 +142,27 @@ def pulse_operations(samples: list | pd.Series):
 
     peaks, peak_properties = sp.signal.find_peaks(
         sig_boxcar,
-        height=Parameters.sp_height * Parameters.sp_width,
+        height=Parameters.sp_height,
         distance=Parameters.sp_distance,
     )
     
     num_pulses = min(len(peaks), Parameters.max_number_of_pulses)
     if num_pulses == 0:
-        successes.append(False)
-        max_indices.append(0)
-        pulse_heights.append(0)
-        pulse_widths.append(0)
-        areas.append(0)
-        starts.append(0)
-        ends.append(0)
-        baselines.append(0)
+        baseline = np.mean(samples[:Parameters.n_samples_baseline])
+        area = np.trapz(samples[10:56]-baseline)
+        height = np.max(samples)-baseline
+        ratio = area / (height + 0.01)
+        if (ratio < Parameters.min_ratio_charge_height) | (ratio > Parameters.max_ratio_charge_height):
+            successes.append(False)
+        else:
+            successes.append(True)
+        max_indices.append(np.argmax(samples))
+        pulse_heights.append(height)
+        pulse_widths.append(45)
+        areas.append(area)
+        starts.append(10)
+        ends.append(55)
+        baselines.append(baseline)
 
     index_of_peak_sorted = np.argsort(peak_properties["peak_heights"])
     peaks_sorted = np.flip(peaks[index_of_peak_sorted])
@@ -204,7 +211,7 @@ def naive_pulse_operations(samples):
     ends = [63]
     pulse_widths = [63 - 11]
     areas = [np.trapz(samples[11:])]
-    return successes, max_indices, pulse_heights, pulse_widths, areas, starts, ends
+    return successes, max_indices, pulse_heights, pulse_widths, areas, starts, ends, baselines
     
 
 
