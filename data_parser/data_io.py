@@ -9,7 +9,6 @@ from preprocess_data import peak_finding_algorithms as pf
 import json
 import uproot
 from pathlib import Path
-from itertools import islice
 
 
 
@@ -90,8 +89,9 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     for e in range(max(events)):
         if e not in events:
             counter += 1
-    df.loc[:,'missing_events_fraction']=counter/len(df.Event_ID)
+    df.loc[:,'missing_events_fraction']=counter/len(events)
     df = removeDuplicateEvents(df)
+    df['Event_ID'] = df['Event_ID'].rank(method='dense').astype(int) 
     n_events_unique = len(set(df.Event_ID))
     df.loc[:,'duplicated_events_fraction'] = 1 - n_events_unique / len(events)
 
@@ -185,7 +185,7 @@ def getParametersFromJson(files: list|str):
         files = [files]
     # replace this with a function to cover the case of chunks
     input_json=[f'{f.split(".")[0]}_results.{f.split(".")[1]}.json' for f in files]
-    parameters = {'total_time':0, 'ThresholdSum' : [], 'PostTriggerTime': [], 'TimeWindow': [], 'FilterSet.T_Time': [], 'FilterSet.BP_Time': [], 'FilterSet.BS_Time': []}
+    parameters = {'total_time':0, 'EventCounter': [], 'ThresholdSum' : [], 'PostTriggerTime': [], 'TimeWindow': [], 'FilterSet.T_Time': [], 'FilterSet.BP_Time': [], 'FilterSet.BS_Time': []}
     for i in range(36):
         parameters[f'Threshold[{i}]'] = []
     try:
@@ -223,15 +223,14 @@ def removeDuplicateEvents(df: pd.DataFrame):
     df.drop(df[df['condition'] == False].index, inplace=True)
     df.drop(columns='condition', inplace=True)
     df = df.reset_index(drop = True)
-    # find a way to reindex the event IDs?
     return df
 
 def getAdditionalParameters(df,parameters):
     parameters['snippet_rate'] = len(df.index) / parameters['total_time']
     parameters['event_rate'] = len(set(df['Event_ID'])) / parameters['total_time']
 
-    parameters['pulse_detection_efficiency'] = len(df.index) / len(df.index)
-    parameters['corrupted_snippets'] = len(df[df.preprocessingFlags != ""])/len(df.index)
+    parameters['pulse_detection_efficiency'] = len(df[df.IsPulse == True].index) / len(df.index)
+    parameters['corrupted_snippets_fraction'] = len(df[df.preprocessingFlags != ""])/len(df.index)
     parameters['missing_events_fraction'] = df['missing_events_fraction'].iloc[0]
     parameters['duplicated_events_fraction'] = df['duplicated_events_fraction'].iloc[0]
     df.drop(columns = ['missing_events_fraction','duplicated_events_fraction'],inplace = True)
