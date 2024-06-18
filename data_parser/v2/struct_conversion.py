@@ -8,6 +8,7 @@ from ..common.struct_conversion import (
     BaseDataFile,
     BaseSnippet
 )
+from udp_receiver.receiver_class import convert_bytes
 
 CONFIG = validate_config(version="v2")
 
@@ -187,9 +188,9 @@ class DataFile(BaseDataFile):
         self.events = list(self._unpack_events())
         if self.skipped_bytes_total > 0:
             print(
-            f"Unpacking from {self.path.name} skipped {self.skipped_bytes_total}",
+            f"Unpacking from {self.path.name} skipped {convert_bytes(self.skipped_bytes_total)}",
             
-            f"out of {self.path.stat().st_size} bytes in total. ({self.skipped_bytes_total/self.path.stat().st_size:.2%})\n"
+            f"out of {convert_bytes(self.path.stat().st_size)} in total. ({self.skipped_bytes_total/self.path.stat().st_size:.2%})\n"
             # self.skipped_bytes
             )
         return self.skipped_bytes
