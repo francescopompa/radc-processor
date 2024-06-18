@@ -235,20 +235,23 @@ def energyConversion(charge, channel, gain='matched'):
     else:
         return E_keV / gain * 2e6
 
+
 def ADC_to_mV_conversion(samples, channel):
+    samples = np.array(samples)
     if channel in range(8):
-        return (samples - 13)/31.06
+        return list((samples - 13)/31.06)
     elif channel in range(8, 16):
-        return ((samples - 19)/30.68)
+        return list((samples - 19)/30.68)
     elif channel in range(16, 24):
-        return ((samples - 19)/31.07)
+        return list((samples - 19)/31.07)
     elif channel in range(24, 32):
-        return ((samples - 14.06)/30.07)
+        return list((samples - 14.06)/30.07)
     elif channel in range(32, 36):
-        return ((samples - 18)/30.66)
+        return list((samples - 18)/30.66)
     else:
         # print(f'The channel {channel} does not exist!')
-        return (np.zeros(64))
+        return list(np.zeros(64))
+
 
 def getRelativeTimeSnippets(subseconds, timedelta_samples, TimeWindow, PostTriggerTime):
     sampling_period = 16e-3
@@ -262,9 +265,9 @@ def getRelativeTimeSnippets(subseconds, timedelta_samples, TimeWindow, PostTrigg
         return (dT - PostTriggerTime)*sampling_period
 
 def getBoxcarSum(samples,baseline):
-    samples = samples - baseline
-    samples_averaged = np.convolve(samples, np.ones(4), mode='valid')
-    return max(samples_averaged)
+    samples = np.array(samples) - baseline
+    samples_averaged = np.convolve(samples, np.ones(4)/4, mode='valid')
+    return max(samples_averaged)*4
 
 def getFlagsCorruptedData(channel, samples, timestamp):
     preprocessingFlags=''
