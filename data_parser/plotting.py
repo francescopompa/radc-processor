@@ -10,7 +10,6 @@ from .configuration import CONFIG
 from pathlib import Path
 import numpy as np
 from preprocess_data import Parameters
-from data_parser.data_io import cleanupDataframe
 
 # CONFIG = configuration.CONFIG
 CONVERSIONS = {
@@ -258,59 +257,97 @@ def plot_events(df: pd.DataFrame, **kwargs):
             kwargs["xlim"] = kwargs.get("xlim") or (min(left_bases), max(right_bases))
         plot_rows(event_DF, **kwargs)
 
-def plot_events_coincidence(df: pd.DataFrame, n_events = 50, save = False, outDir = "./images", PostTriggerTime_us = None):
+def plotChannelMap(ax):
+    if ax is None:
+        ax = plt.gca()
+    for i in range(6):
+            for j in range(6):
+                text = ax.text(i, j, Parameters.inv_map_channels[(i, j)],
+                                  ha="center", va="center", color="black")
+    major_ticks = np.arange(-0.5, 5.5, 1)
+
+    ax.set_xticks(major_ticks)
+    ax.set_yticks(major_ticks)
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+    ax.tick_params(which='both', length=0)
+    ax.grid()
+    ax.set_xlim(-0.5, 5.5)
+    ax.set_ylim(-0.5, 5.5)
+
+
+def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir="./images", PostTriggerTime_us=None, mode='energy'):
     # plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.tab20c.colors)
     if df.attrs != {} and PostTriggerTime_us is None:
-            PostTriggerTime = df.attrs['PostTriggerTime']
+        PostTriggerTime = df.attrs['PostTriggerTime']
     elif PostTriggerTime_us is not None:
         PostTriggerTime = int(PostTriggerTime_us / 16e-3)
     else:
         PostTriggerTime = Parameters.PostTriggerTime
-        print(f'Info: using PostTriggerTime {PostTriggerTime}. Check that it is correct or change the parameters')
+        print(
+            f'Info: using PostTriggerTime {PostTriggerTime}. Check that it is correct or change the parameters')
 
-    if not isinstance(PostTriggerTime,int):
+    if not isinstance(PostTriggerTime, int):
         PostTriggerTime = Parameters.PostTriggerTime
-        print(f'Info: using PostTriggerTime {PostTriggerTime}. Check that it is correct or change the parameters')
+        print(
+            f'Info: using PostTriggerTime {PostTriggerTime}. Check that it is correct or change the parameters')
     if save == True:
         p = Path(outDir)
         p.mkdir(parents=True, exist_ok=True)
+    
     events = df.groupby(['Event_ID'])
-    counter =0
+    counter = 0
     for (event_ID), event_DF in events:
         counter += 1
-        energies = event_DF['Energy']
-        channels = event_DF['Channel_number']
-        if 'BoxcarSum' in event_DF.columns:
-            energies2=event_DF['BoxcarSum']
-        else:
-            energies2=[]
-        # to do 
-        # find a way to convert to more informative energy units
-        
-        relativeTime=event_DF['deltaT_us']
-       
-        fig,ax=plt.subplots(ncols=1,nrows=2)
-        for i in range(len(event_DF.index)):
-            ax[0].plot(event_DF['samples'].iloc[i],label=f'{event_DF["Snippet_number"].iloc[i]}: channel {channels.iloc[i]}')
-            plot=ax[1].plot(relativeTime.iloc[i],energies.iloc[i],'o')
-            color=plot[0].get_color()
-            ax[1].vlines(relativeTime.iloc[i],0,energies.iloc[i],color=color)
+        event_DF = event_DF.sort_values(['deltaT_us'])
 
-            # if 'BoxcarSum' in event_DF.columns:
-            #     ax[1].plot(relativeTime.iloc[i],energies2.iloc[i],'o',color=color,alpha=0.5)
+        channels = event_DF['Channel_number']
+        if mode == 'boxcar':
+            energies = event_DF['Energy']
+        elif mode == 'energy':
+            energies = event_DF['Charge_keV']
+        else:
+            print('Mode not recognized: using default option (boxcar)')
+            energies = event_DF['Energy']
+
+        relativeTime = event_DF['deltaT_us']
+        cmap = 'plasma'
+        fig, ax = plt.subplots(figsize=(12, 4), ncols=3, nrows=1)
+        fig.suptitle(
+            f'Event {event_ID[0]}: {event_DF["Snippet_count"].iloc[0]} snippets')
+        norm = matplotlib.colors.Normalize(
+            vmin=-PostTriggerTime*16e-3, vmax=PostTriggerTime*16e-3)
+        mappable = matplotlib.cm.ScalarMappable(
+            norm=norm,
+            cmap=cmap
+        )
+
+        for i in range(len(event_DF.index)):
+            ax[0].plot(np.array(event_DF['samples'].iloc[i])-event_DF['Baseline'].iloc[i],
+                       label=f'Channel {channels.iloc[i]}', color=plt.cm.plasma(norm(relativeTime.iloc[i])))
+        ax[1].scatter(relativeTime, energies,
+                      c=relativeTime, norm=norm, cmap=cmap)
+        if max(energies) > 6000:
+            ax[1].axhline(6000, color='red', linestyle='dashed')
 
         ax[0].set_xlabel('Sample ID')
         ax[0].set_ylabel('ADC counts')
-        fig.legend(loc='center right',bbox_to_anchor = (1,0.5))
-        ax[1].set_xlim(-PostTriggerTime*2*16e-3,PostTriggerTime*2*16e-3)
-        energies = np.array([*energies, *energies2,0])
-        ax[1].set_ylim(0,np.max(energies[np.isfinite(energies)])*1.2+10)
+        ax[1].set_xlim(-PostTriggerTime*1.1*16e-3, PostTriggerTime*1.1*16e-3)
+        ax[1].set_ylim(0, np.max(energies)*1.1+10)
         ax[1].set_xlabel(r'Time ($\mu s$)')
-        ax[0].set_title(f'Event {event_ID[0]}: {event_DF["Snippet_count"].iloc[0]} snippets')
-        ax[1].set_ylabel('Boxcar energy (ADCC)')
-        # ax[1].set_box_aspect(1/4)
-        fig.tight_layout(rect=[0, 0, 0.75, 1])        
-        plt.show()
+        
+        plotChannelMap(ax[2])
+        x = [Parameters.map_channels[c][0] for c in channels] + np.random.normal(0, 0.1, len(channels))
+        y = [Parameters.map_channels[c][1] for c in channels] + np.random.normal(0, 0.1, len(channels))
+        ax[2].scatter(x, y, c=event_DF.deltaT_us, norm=norm, cmap=cmap)
+        c = fig.colorbar(mappable, ax=ax[2], fraction=0.046)
+        c.set_label(r'Time ($\mu s$)')
+        
+        if mode == 'energy':
+            ax[1].set_ylabel('Energy (keV)')
+        else:
+            ax[1].set_ylabel('Boxcar energy (ADCC)')
+        fig.tight_layout()
         plt.close()
         if save == True:
             fig.savefig(f'{outDir}/Event{event_ID[0]}.pdf')
@@ -387,17 +424,19 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events = 50, save = False, outDir 
             baseline = row['Baseline']
         else:
             baseline = np.mean(row['samples'][:5])
-        ax.plot(row['samples']-baseline,'b')
-        ax.vlines(row['StartPulse'],-1000,1e4,label=f'Start: {row["StartPulse"]}',colors = ['green'],linestyle='dashed')
-        ax.vlines(row['EndPulse'],-1e3,1e4,label=f'End: {row["EndPulse"]}',colors = ['red'],linestyle='dashed')
-        ax.plot(row['MaxIndex'],row['samples'][row['MaxIndex']],'bo',label = f'Height: {int(row["PulseHeight"])}')
+        ax.plot(np.array(row['samples'])-baseline,'b')
+        ax.axvline(x=row['StartPulse'],label=f'Start: {row["StartPulse"]}',color = 'green',linestyle='dashed')
+        ax.axvline(x=row['EndPulse'],label=f'End: {row["EndPulse"]}',color = 'red',linestyle='dashed')
+        ax.plot(row['MaxIndex'],row['samples'][row['MaxIndex']]-baseline,'bo',label = f'Height: {int(row["PulseHeight"])}')
         props = dict(boxstyle="round", facecolor="wheat")
         ax.text(
-        0.7,
+        0.68,
         0.7,
         f"Area:    {int(row['Charge'])} ADCC\n"
         + f"Width:   {int(row['PulseWidth'])} samples\n"
-        + f"Height:  {int(row['PulseHeight'])} ADCC\n",
+        + f"Height:  {int(row['PulseHeight'])} ADCC\n"
+        + f"Charge/height: {row['Charge']/(row['PulseHeight']+0.01):.2f}\n"
+        + f"Baseline: {int(row['Baseline'])} ADCC",
         transform=ax.transAxes,
         fontsize=10,
         verticalalignment="top",
@@ -405,11 +444,10 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events = 50, save = False, outDir 
         bbox=props,
     )
         ax.grid()
-        ax.set_ylim(-5,max(row['samples'])*1.1)
         ax.set_xlabel('Sample ID')
         ax.set_ylabel('ADC counts')
         ax.set_title(f'Event {row["Event_ID"]} - Snippet {row["Snippet_number"]:.0f}')
-        ax.legend(framealpha = 1)
+        ax.legend(framealpha = 1,loc = 'upper right')
         if save == True:
             fig.savefig(f'{outDir}/Event{row["Event_ID"]}_snippet{int(row["Snippet_number"])}.pdf')
         plt.show()
@@ -431,16 +469,4 @@ def plotFullDiagnostics(df,outDir='./images',save=False,n_events=50):
         print('Warning: preprocess the data to get the full diagnostics!')
     statisticalPlot(df,'Channel_number',outDir=outDir,save=save)
 
-def plotGoodEventsID(df,outDir='./images',save=False):
-    df = cleanupDataframe(df)
-    fig,ax = plt.subplots()
-    ax.plot(df.Event_ID,'.')
-    ax.set_xlabel('Index')
-    ax.set_ylabel('Event ID')
-    ax.set_ylim(0,df.index[-1]*2)
-    ax.tight_layout()
-    fig.show()
-    if save == True:
-        fig.savefig(f'{outDir}/plotEventsID.png',dpi=200)
-    plt.close()
     
