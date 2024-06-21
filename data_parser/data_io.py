@@ -75,25 +75,27 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
         x['Charge'], x['Channel_number'], Parameters.gain), axis=1)
     df['deltaT_us'] = df.apply(lambda x: pf.getRelativeTimeSnippets(
         x['Subsecs'], x['Timedelta_samples'], TimeWindow, PostTriggerTime), axis=1)
-    df['BoxcarSum'] = df.apply(lambda x: pf.getBoxcarSum(x.samples,x.Baseline),axis=1)
+    # df['BoxcarSum'] = df.apply(lambda x: pf.getBoxcarSum(x.samples,x.Baseline),axis=1)
 
     df['preprocessingFlags']= df.apply(lambda x: pf.getFlagsCorruptedData(x.Channel_number,x.samples,x.Timestamp_s),axis=1)
 
-    df['samples'] = [s if (isinstance(s,list) and (len(s) == 64)) else list(np.zeros(64)) for s in df.samples]
+    # df['samples'] = [s if (isinstance(s,list) and (len(s) == 64)) else list(np.zeros(64)) for s in df.samples]
 
     df.loc[:, 'Datetime'] = df['Datetime'].dt.strftime('%Y%m%d')
     df.loc[:, 'Datetime'] = df.Datetime.astype('int64')
 
     events = set(df.Event_ID)
     counter = 0
+    df_tmp = removeDuplicateEvents(df)
+    df['Event_ID'] = df['Event_ID'].rank(method='dense').astype(int) 
+    n_events_unique = len(set(df_tmp.Event_ID))
     for e in range(max(events)):
         if e not in events:
             counter += 1
-    df.loc[:,'missing_events_fraction']=counter/len(events)
-    df = removeDuplicateEvents(df)
-    df['Event_ID'] = df['Event_ID'].rank(method='dense').astype(int) 
-    n_events_unique = len(set(df.Event_ID))
-    df.loc[:,'duplicated_events_fraction'] = 1 - n_events_unique / len(events)
+    df.attrs['missing_events_fraction']=counter/len(events)
+    df.attrs['duplicated_events_fraction'] = 1 - n_events_unique / len(events)
+    df = df.convert_dtypes()
+
 
     return df
 
@@ -185,6 +187,7 @@ def getParametersFromJson(files: list|str):
         files = [files]
     # replace this with a function to cover the case of chunks
     input_json=[f'{f.split(".")[0]}_results.{f.split(".")[1]}.json' for f in files]
+    input_json = list(set(input_json))
     parameters = {'total_time':0, 'EventCounter': [], 'ThresholdSum' : [], 'PostTriggerTime': [], 'TimeWindow': [], 'FilterSet.T_Time': [], 'FilterSet.BP_Time': [], 'FilterSet.BS_Time': []}
     for i in range(36):
         parameters[f'Threshold[{i}]'] = []
@@ -219,8 +222,8 @@ def removeDuplicateEvents(df: pd.DataFrame):
                         duplicate_events.append(df.Event_ID.iloc[i-snippet_count[i]])
     
     duplicate_events = set(duplicate_events)
-    df['condition'] = [d not in duplicate_events for d in df.Event_ID]
-    df.drop(df[df['condition'] == False].index, inplace=True)
+    df['condition'] = [e in duplicate_events for e in df.Event_ID]
+    df.drop(df[df['condition'] == True].index, inplace=True)
     df.drop(columns='condition', inplace=True)
     df = df.reset_index(drop = True)
     return df
@@ -231,9 +234,9 @@ def getAdditionalParameters(df,parameters):
 
     parameters['pulse_detection_efficiency'] = len(df[df.IsPulse == True].index) / len(df.index)
     parameters['corrupted_snippets_fraction'] = len(df[df.preprocessingFlags != ""])/len(df.index)
-    parameters['missing_events_fraction'] = df['missing_events_fraction'].iloc[0]
-    parameters['duplicated_events_fraction'] = df['duplicated_events_fraction'].iloc[0]
-    df.drop(columns = ['missing_events_fraction','duplicated_events_fraction'],inplace = True)
+    parameters['missing_events_fraction'] = df.attrs['missing_events_fraction']
+    parameters['duplicated_events_fraction'] = df.attrs['duplicated_events_fraction']
+    parameters['snippets_wrong_timestamp_fraction'] = len(df[(df.deltaT_us< -parameters["PostTriggerTime"]*16e-3) | (df.deltaT_us> parameters["PostTriggerTime"]*16e-3)]) / len(df)
     
     
                 
