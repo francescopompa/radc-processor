@@ -9,6 +9,7 @@ from preprocess_data import peak_finding_algorithms as pf
 import json
 import uproot
 from pathlib import Path
+from typing import Literal
 
 
 
@@ -64,8 +65,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
                'StartPulse', 'EndPulse', 'Baseline']
     for i, col in enumerate(columns):
         df[col] = [row[i] for row in tmp]
-    df = df.explode(['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
-                     'StartPulse', 'EndPulse', 'Baseline']).reset_index(drop=True)
+    df = df.explode(columns).reset_index(drop=True)
 
     if data_parser.VERSION == 1:
         df.loc[:, 'Type'] = df.Type.astype('str')
@@ -87,14 +87,16 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     events = set(df.Event_ID)
     counter = 0
     df_tmp = removeDuplicateEvents(df)
-    df['Event_ID'] = df['Event_ID'].rank(method='dense').astype(int) 
+    df_tmp = df_tmp.reset_index(drop=True)
     n_events_unique = len(set(df_tmp.Event_ID))
-    for e in range(max(events)):
+    for e in range(min(events),max(events) + 1):
         if e not in events:
             counter += 1
+    df['Event_ID'] = df['Event_ID'].rank(method='dense').astype(int) - df.Event_ID.iloc[0] +1
+
     df.attrs['missing_events_fraction']=counter/len(events)
     df.attrs['duplicated_events_fraction'] = 1 - n_events_unique / len(events)
-    df = df.convert_dtypes()
+    df = df.sort_values('Event_ID')
 
 
     return df
@@ -114,18 +116,25 @@ def cleanupDataframe(df):
     return df
 
 
-def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str) -> uproot.writing.writable.WritableDirectory:
+def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal['snippet','compact'] = 'snippet') -> uproot.writing.writable.WritableDirectory:
     '''
-    It creates the root file using the dataframe. Attention: it creates automatically the folder
+    It creates the root file using the dataframe. It creates automatically the folder.
+    If the mode is snippet, the function expects an exploded dataframe (i.e. each row is a pulse), 
+    otherwise it expect each row is an event. In the last case it drops the column of the samples and of the preprocessing flags
     '''
+    df_output = df
+    if mode == 'compact':
+        df_output = compactDataframe(df)
     if 'trigger_IDs' in df.columns:
-        df = df.drop(columns='trigger_IDs')
+        df_output = df_output.drop(columns='trigger_IDs')
     if 'Info_flags' in df.columns:
-        df = df.drop(columns='Info_flags')
+        df_output = df_output.drop(columns='Info_flags')
+    if ('compact' in df_output.attrs and df_output.attrs['compact'] == True and 'samples' in df_output.columns and 'preprocessingFlags' in df_output.columns) :
+        df_output = df_output.drop(columns=['samples','preprocessingFlags'])
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     file = uproot.recreate(out / (namefile + ".root"))
-    file['eventsTree'] = df
+    file['eventsTree'] = df_output
     return file
 
 def make_total_dataFrame_processed(files: list|str) -> pd.DataFrame:
@@ -148,7 +157,7 @@ def make_total_dataFrame_processed(files: list|str) -> pd.DataFrame:
 
     return df, df_updated
     
-def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str):
+def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str, mode : Literal['snippet','compact'] = 'snippet'):
     
     if isinstance(files,str):
         files = [files]
@@ -164,7 +173,7 @@ def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str):
     df.attrs = parameters
     df_updated.attrs = parameters
 
-    root_file = df_to_root_file(df_updated,out_dir,namefile_output)
+    root_file = df_to_root_file(df_updated,out_dir,namefile_output,mode=mode)
     with open(f'{out_dir}{namefile_output}.json','w+') as f:
         json.dump(parameters,f,indent=4)
     for p in parameters:
@@ -176,6 +185,17 @@ def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str):
 def explode_dataframe(df):
     dfc=df.explode('snippets').reset_index(drop=True)
     df=dfc.join(pd.json_normalize(dfc['snippets'])).drop(columns='snippets')
+    return df
+
+def compactDataframe(df):
+    columns = ['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
+               'StartPulse', 'EndPulse', 'Baseline', 'Channel_number', 'Energy', 'Timedelta_samples',
+               'Snippet_number', 'min', 'max', 'samples', 'Charge_keV', 'deltaT_us',
+               'preprocessingFlags', 'trigger_IDs']
+    tmp=df.groupby('Event_ID')[columns].agg(list).reset_index(drop=True)
+    df = df.groupby('Event_ID')[[c for c in df.columns if c not in columns]].agg('first').reset_index(drop=True)
+    df = pd.concat([df,tmp],axis=1)
+    df.attrs['compact']=True
     return df
 
 def getParametersFromJson(files: list|str):
@@ -223,10 +243,11 @@ def removeDuplicateEvents(df: pd.DataFrame):
     
     duplicate_events = set(duplicate_events)
     df['condition'] = [e in duplicate_events for e in df.Event_ID]
-    df.drop(df[df['condition'] == True].index, inplace=True)
-    df.drop(columns='condition', inplace=True)
-    df = df.reset_index(drop = True)
-    return df
+    tmp = df.drop(df[df['condition'] == True].index)
+    df.drop(columns='condition',inplace=True)
+    tmp.drop(columns='condition',inplace=True)
+    tmp = tmp.reset_index(drop = True)
+    return tmp
 
 def getAdditionalParameters(df,parameters):
     parameters['snippet_rate'] = len(df.index) / parameters['total_time']
