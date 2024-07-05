@@ -193,9 +193,10 @@ def compactDataframe(df):
                'Snippet_number', 'min', 'max', 'samples', 'Charge_keV', 'deltaT_us',
                'preprocessingFlags', 'trigger_IDs']
     tmp=df.groupby('Event_ID')[columns].agg(list).reset_index(drop=True)
-    df = df.groupby('Event_ID')[[c for c in df.columns if c not in columns]].agg('first').reset_index(drop=True)
-    df = pd.concat([df,tmp],axis=1)
-    df.attrs['compact']=True
+    tmp2 = df.groupby('Event_ID')[[c for c in df.columns if c not in columns]].agg('first').reset_index(drop=True)
+    out = pd.concat([tmp2,tmp],axis=1)
+    out.attrs = df.attrs
+    out.attrs['compact']=True
     return df
 
 def getParametersFromJson(files: list|str):
