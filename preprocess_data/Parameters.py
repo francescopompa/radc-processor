@@ -23,8 +23,8 @@ max_ratio_charge_height = 12.5
 
 gain = 'matched'
 T_time = 10
-PostTriggerTime = 200
-TimeWindow = 400
+PostTriggerTime = 6250
+TimeWindow = 12500
 
 df_energy_conversion = read_csv(Path(__file__).parent / 'channel_map_energy.csv')
 

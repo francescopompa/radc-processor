@@ -152,7 +152,7 @@ def pulse_operations(samples: list | pd.Series):
         area = np.trapz(samples[10:56]-baseline)
         height = np.max(samples)-baseline
         ratio = area / (height + 0.01)
-        if (ratio < Parameters.min_ratio_charge_height) | (ratio > Parameters.max_ratio_charge_height):
+        if (ratio < Parameters.min_ratio_charge_height) | (ratio > Parameters.max_ratio_charge_height) | (area < 0):
             successes.append(False)
         else:
             successes.append(True)
@@ -229,6 +229,8 @@ def energyConversion(charge, channel, gain='matched'):
             (df.CE[df.PMT == 292].item() / df.CE[pmt.index].item()))
     except ValueError:
         return -1
+    if charge < 0:
+        return -1
     E_keV = (charge + 169.3)/16.20 * rescalingFactor
     if gain == 'matched':
         return E_keV
@@ -256,13 +258,14 @@ def ADC_to_mV_conversion(samples, channel):
 def getRelativeTimeSnippets(subseconds, timedelta_samples, TimeWindow, PostTriggerTime):
     sampling_period = 16e-3
     dT = (subseconds % 2**16) - timedelta_samples
-
+    offset = 0.176
     if dT < 0:
-        return ((2**16 + dT) - PostTriggerTime) * sampling_period
+        time = ((2**16 + dT) - PostTriggerTime) * sampling_period + offset
     elif subseconds < TimeWindow:
-        return (62.5e6 + dT - PostTriggerTime) * sampling_period
+        time = (62.5e6 + dT - PostTriggerTime) * sampling_period + offset
     else:
-        return (dT - PostTriggerTime)*sampling_period
+        time = (dT - PostTriggerTime)*sampling_period + offset
+    return round(time,3)
 
 def getBoxcarSum(samples,baseline):
     samples = np.array(samples) - baseline
