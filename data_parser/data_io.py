@@ -197,7 +197,7 @@ def compactDataframe(df):
     out = pd.concat([tmp2,tmp],axis=1)
     out.attrs = df.attrs
     out.attrs['compact']=True
-    return df
+    return out
 
 def getParametersFromJson(files: list|str):
     '''
