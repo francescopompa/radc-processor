@@ -53,6 +53,18 @@ def make_total_dataFrame(files: list|str) -> pd.DataFrame:
         ignore_index=True
         )
 
+def reorderEventIDs(series):
+    # Initialize the output list with the same size
+    consecutive_list = pd.Series(index=range(len(series)))
+    counter = 0
+    consecutive_list[0]=0
+    for i in range(1,len(series)):
+        if series[i] != series[i-1]:  
+            counter += 1
+        consecutive_list[i] = counter
+    
+    return consecutive_list.astype(int) + 1
+
 def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, PostTriggerTime = Parameters.PostTriggerTime) -> pd.DataFrame:
     '''
     It adds the columns with the pulses parameters to the dataframe
@@ -66,6 +78,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     for i, col in enumerate(columns):
         df[col] = [row[i] for row in tmp]
     df = df.explode(columns).reset_index(drop=True)
+    df['samples'] = df['samples'] - df['Baseline']
 
     if data_parser.VERSION == 1:
         df.loc[:, 'Type'] = df.Type.astype('str')
@@ -79,8 +92,6 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
 
     df['preprocessingFlags']= df.apply(lambda x: pf.getFlagsCorruptedData(x.Channel_number,x.samples,x.Timestamp_s),axis=1)
 
-    # df['samples'] = [s if (isinstance(s,list) and (len(s) == 64)) else list(np.zeros(64)) for s in df.samples]
-
     df.loc[:, 'Datetime'] = df['Datetime'].dt.strftime('%Y%m%d')
     df.loc[:, 'Datetime'] = df.Datetime.astype('int64')
 
@@ -92,11 +103,10 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     for e in range(min(events),max(events) + 1):
         if e not in events:
             counter += 1
-    df['Event_ID'] = df['Event_ID'].rank(method='dense').astype(int) - df.Event_ID.iloc[0] +1
-
+    df['Event_ID'] = reorderEventIDs(df['Event_ID']) 
     df.attrs['missing_events_fraction']=counter/len(events)
     df.attrs['duplicated_events_fraction'] = 1 - n_events_unique / len(events)
-    df = df.sort_values('Event_ID')
+    df = df.sort_values(['Event_ID','deltaT_us']).reset_index(drop=True)
 
 
     return df
@@ -111,31 +121,56 @@ def cleanupDataframe(df):
             df.loc[df['Event_ID'] == event_ID, 'Snippet_number'] = range(
                 1, len(event_DF.index)+1)
 
-    df = df.sort_values(['Event_ID', 'Snippet_number'])
+    df = df.sort_values(['Event_ID', 'Snippet_number']).reset_index(drop=True)
     
     return df
 
+def flattenSamples(samples):
+    return [x for xs in samples for x in xs]
 
-def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal['snippet','compact'] = 'snippet') -> uproot.writing.writable.WritableDirectory:
+def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal['snippet','compact'] = 'compact', reduced = False) -> list[uproot.writing.writable.WritableDirectory]:
     '''
     It creates the root file using the dataframe. It creates automatically the folder.
     If the mode is snippet, the function expects an exploded dataframe (i.e. each row is a pulse), 
-    otherwise it expect each row is an event. In the last case it drops the column of the samples and of the preprocessing flags
+    otherwise it expect each row is an event. In the last case it drops the column of the samples and of the preprocessing flags. To handle large datasets, it's recommended to use TChain and wildcards to read the root files.
     '''
+    df = df.sort_values(['Event_ID','deltaT_us']).reset_index(drop=True)
     df_output = df
-    if mode == 'compact':
+
+    if (mode == 'compact') and ('compact' not in df.attrs):
         df_output = compactDataframe(df)
-    if 'trigger_IDs' in df.columns:
-        df_output = df_output.drop(columns='trigger_IDs')
-    if 'Info_flags' in df.columns:
-        df_output = df_output.drop(columns='Info_flags')
-    if ('compact' in df_output.attrs and df_output.attrs['compact'] == True and 'samples' in df_output.columns and 'preprocessingFlags' in df_output.columns) :
-        df_output = df_output.drop(columns=['samples','preprocessingFlags'])
+    if reduced == True:
+        df_output = reduceDataframe(df_output)
+    
+    df_output = df_output.drop(columns=['trigger_IDs','Info_flags'], errors='ignore')
+
+    if 'compact' in df_output.attrs and df_output.attrs['compact'] == True:
+        if 'samples' in df_output:
+            df_output['samples'] = df_output.apply(lambda x: flattenSamples(x['samples']),axis=1)
+        df_output = df_output.drop(columns=['preprocessingFlags'], errors='ignore')
+
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    file = uproot.recreate(out / (namefile + ".root"))
-    file['eventsTree'] = df_output
-    return file
+    max_events = int(3e5)
+    list_of_files = []
+    
+    pars = df.attrs
+    for p in pars:
+        pars[p] = [pars[p]]
+    for i in range(36):
+        if f'Threshold[{i}]' in pars:
+            pars[f'Threshold_{i}'] = pars.pop(f'Threshold[{i}]')
+    chunks = len(set(df.Event_ID)) // max_events +1
+    for i in range(chunks):
+        file = uproot.recreate(out / f'{namefile}_{i}.root')
+        df_tmp = df_output[(df_output.Event_ID >= int(i*max_events)) & (df_output.Event_ID < int((i+1)*max_events))].reset_index(drop=True)
+        file['eventsTree'] = df_tmp
+        if pars != {}:
+            file['infoTree'] = pars
+        list_of_files.append(file)
+        file.close()
+
+    return list_of_files
 
 def make_total_dataFrame_processed(files: list|str) -> pd.DataFrame:
 
@@ -154,33 +189,18 @@ def make_total_dataFrame_processed(files: list|str) -> pd.DataFrame:
     df_updated.attrs = parameters
     df.attrs = parameters
 
-
     return df, df_updated
     
-def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str, mode : Literal['snippet','compact'] = 'snippet'):
+def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str, mode : Literal['snippet','compact'] = 'compact', reduced = False):
     
-    if isinstance(files,str):
-        files = [files]
+    df, df_updated = make_total_dataFrame_processed(files)
+
+    root_files = df_to_root_file(df_updated,out_dir,namefile_output,mode=mode, reduced=reduced)
     
-    df = make_total_dataFrame(files)
-    df = explode_dataframe(df)
-    parameters = getParametersFromJson(files)
-
-    df_updated = preprocessDataframe(df,TimeWindow = parameters['TimeWindow'], PostTriggerTime= parameters['PostTriggerTime'])
-
-    getAdditionalParameters(df_updated,parameters)
-
-    df.attrs = parameters
-    df_updated.attrs = parameters
-
-    root_file = df_to_root_file(df_updated,out_dir,namefile_output,mode=mode)
     with open(f'{out_dir}{namefile_output}.json','w+') as f:
-        json.dump(parameters,f,indent=4)
-    for p in parameters:
-        parameters[p] = [parameters[p]]
-    root_file['infoTree'] = parameters
+        json.dump(df_updated.attrs,f,indent=4)
     
-    return df, df_updated, root_file
+    return df, df_updated, root_files
 
 def explode_dataframe(df):
     dfc=df.explode('snippets').reset_index(drop=True)
@@ -198,6 +218,11 @@ def compactDataframe(df):
     out.attrs = df.attrs
     out.attrs['compact']=True
     return out
+
+def reduceDataframe(df):
+    columns = ['Timedelta_samples', 'Energy', 'min', 'max', 'samples', 'preprocessingFlags', 'trigger_IDs', 'Trigger_type', 'Frame_number', 'Subsecs', 'Seconds',  'length', 'snippet_space', 'Datetime', 'Info_flags', 'trigger_count']
+    df2 = df.drop(columns=columns, errors = 'ignore')
+    return df2
 
 def getParametersFromJson(files: list|str):
     '''
