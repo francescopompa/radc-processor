@@ -190,6 +190,7 @@ class Receiver():
             time.sleep(duration)
             print("Reached end of timer")
             self.stop()
+            exit()
 
 
     def stop(self):
@@ -421,7 +422,7 @@ class Receiver():
 
                 total_rate = total_data / run_time
 
-                print(f"Received: {count} packages in {convert_seconds(int(run_time))} for {convert_bytes(total_data)} in total. ({convert_bytes(total_rate)}/s) Chunks: {self.current_chunk}, Splits:{self.current_split}",
+                print(f"Received: {count:,} packages in {convert_seconds(int(run_time))} for {convert_bytes(total_data)} in total. ({convert_bytes(total_rate)}/s) Chunks: {self.current_chunk}, Splits:{self.current_split}",
                     end="\r",
                     # file=sys.stdout, # Necessary?
                     flush = True
@@ -432,7 +433,7 @@ class Receiver():
         # else:
         if self.__update_queue.empty() is True and self.__do_readout is False:
             print("Summary:")
-            print(f"Received: {count} packages in {convert_seconds(int(run_time))} for {convert_bytes(total_data)} in total. ({convert_bytes(total_rate)}/s) Chunks: {self.current_chunk}, Splits:{self.current_split}")            
+            print(f"Received: {count:,} packages in {convert_seconds(int(run_time))} for {convert_bytes(total_data)} in total. ({convert_bytes(total_rate)}/s) Chunks: {self.current_chunk}, Splits:{self.current_split}")            
             self.results = {
                 "received_packages": count,
                 "received_bytes": total_data,
