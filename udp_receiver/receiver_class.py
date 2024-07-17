@@ -544,7 +544,7 @@ def convert_seconds(seconds):
     elif seconds < (3600*24):
         return strftime('%H:%M:%S',gmtime(seconds))
     else:
-        return strftime('%D d %H:%M:%S',gmtime(seconds))
+        return strftime('%-j d %H:%M:%S',gmtime(seconds))
 
 
 
