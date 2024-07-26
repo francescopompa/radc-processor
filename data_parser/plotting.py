@@ -276,15 +276,19 @@ def plotChannelMap(ax=None,text_color='black'):
     ax.set_ylim(-0.5, 5.5)
 
 def plotCountsPerChannel(df,ax=None,text_color='white'):
+    if ax is None:
+        ax = plt.gca()
     plotChannelMap(ax,text_color=text_color)
     h, _ = np.histogram(df.Channel_number,bins=np.arange(-0.5,36.5,1))
     array2d = np.zeros((6,6))
     for i,_ in np.ndenumerate(array2d):
         channel = Parameters.inv_map_channels[i]
         array2d[i] = h[channel]
-    h=ax.imshow(array2d.T,cmap='plasma')
+    h=ax.imshow(array2d.T,cmap='turbo')
     ax.set_title('Counts per channel')
     plt.colorbar(h)
+    plt.show()
+    plt.close()
 
 
 def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir="./images", PostTriggerTime_us=None, mode: Literal['boxcar', 'energy'] = 'energy', time_scale: Literal['log','linear'] = 'linear'):
@@ -304,24 +308,18 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
     if save == True:
         p = Path(outDir)
         p.mkdir(parents=True, exist_ok=True)
-
+        
+    cmap = 'turbo' 
+    cmap_function = plt.get_cmap(cmap)
     if time_scale == 'log':
-        cmap = 'turbo' 
-        cmap_function = plt.get_cmap(cmap)
         norm = matplotlib.colors.SymLogNorm(0.2,
             vmin=-PostTriggerTime*16e-3, vmax=PostTriggerTime*16e-3)
-        mappable = matplotlib.cm.ScalarMappable(
-            norm=norm,
-            cmap=cmap
-        )
     elif time_scale == 'linear':
-        cmap = 'turbo' 
-        cmap_function = plt.get_cmap(cmap)
         norm = matplotlib.colors.Normalize(vmin=-PostTriggerTime*16e-3, vmax=PostTriggerTime*16e-3)
-        mappable = matplotlib.cm.ScalarMappable(
-            norm=norm,
-            cmap=cmap
-        )
+    mappable = matplotlib.cm.ScalarMappable(
+        norm=norm,
+        cmap=cmap
+    )
 
     
     events = df.groupby(['Event_ID'])
@@ -333,11 +331,9 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
         channels = event_DF['Channel_number']
         if mode == 'boxcar':
             energies = event_DF['Energy']
-        elif mode == 'energy':
-            energies = event_DF['Charge_keV']
         else:
-            print('Mode not recognized: using default option (boxcar)')
-            energies = event_DF['Energy']
+            energies = event_DF['Charge_keV']
+        
 
         relativeTime = event_DF['deltaT_us']
         
@@ -346,7 +342,7 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
             f'Event {event_ID[0]}: {event_DF["Snippet_count"].iloc[0]} snippets')
         
         for i in range(len(event_DF.index)):
-            ax[0].plot(np.array(event_DF['samples'].iloc[i])-event_DF['Baseline'].iloc[i],
+            ax[0].plot(event_DF['samples'].iloc[i],
                        label=f'Channel {channels.iloc[i]}', color=cmap_function(norm(relativeTime.iloc[i])))
         ax[1].scatter(relativeTime, energies,
                       c=relativeTime, norm=norm, cmap=cmap)
@@ -383,64 +379,49 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
         if counter >= n_events:
             break
 
-def statisticalPlot(df,columns:str|list,outDir='./images',save=False):
-    variables_axis_titles={'PulseHeight':'Pulse height (ADCC)','Charge': 'Pulse area (ADCC)','Charge_keV': 'Energy (keV)','PulseWidth': 'Pulse width (keV)','Channel_number': 'Channel','deltaT_us': r'$\Delta t$ ($\mu s$)','Timedelta_samples': r'$\Delta t$ (samples)','Trigger_IDs': 'Trigger ID','StartPulse': 'Pulse start (sample)','EndPulse': 'Pulse end (sample)','Baseline':'Baseline (ADCC)','preprocessingFlags': 'Preprocessing flags'}
-    
-    if isinstance(columns,str):
-        columns=[columns]
-    for c in columns:
-        if c not in variables_axis_titles:
-            raise NotImplementedError('The column has not yet been implemented')
-    if (len(columns) == 1) and ('preprocessingFlags' not in columns):
-        plt.hist(df[columns],bins=100)
-        plt.xlabel(variables_axis_titles[columns[0]])
-        plt.ylabel('Counts')
-        namefig=f'hist{columns[0]}'
-        plt.show()
-    elif (len(columns) == 1) and ('preprocessingFlags' in columns):
-        keys, counts = np.unique(df[columns[0]][df[columns[0]] != ''], return_counts=True)
-        legend = {'C': 'Wrong channel', 'P': 'Failed pulse finding', 'S': 'Malformed samples', 'T': 'Wrong timestamp'}
-        props = dict(boxstyle="round", alpha=0.5,color = 'grey')
-        texts= [f'{l:1} {legend[l]:<20}\n' for l  in legend]
-        text = f'Fraction: {np.sum(counts)/len(df.index):.1%}\n'
-        for t in texts:
-             text += t 
-        fig, ax = plt.subplots()
-        ax.bar(keys, counts)
-        ax.set_xlabel('Labels')
-        ax.set_ylabel('Counts')
-        ax.text(
-        0.65,
-        0.9,
-        text,
-        transform=ax.transAxes,
-        fontsize=10,
-        verticalalignment="top",
-        horizontalalignment="left",
-        bbox=props,
-    )
-        plt.show()
-        namefig=f'hist{columns[0]}'
-
-    elif len(columns) == 2:
-        if len(df.index) < 10000:
-            plt.plot(df[columns[0]],df[columns[1]],'o',alpha=0.7,markersize=5)
-        else:
-            df_small=df.head(10000)
-            plt.plot(df_small[columns[0]],df_small[columns[1]],'o',alpha=0.7,markersize=3)
-        plt.xlabel(variables_axis_titles[columns[0]])
-        plt.ylabel(variables_axis_titles[columns[1]])
-        namefig = f'scatter{columns[0]}{columns[1]}'
-        plt.show()
+def plotPulsesSameAxis(df: pd.DataFrame, n_events=50, save=False, outDir="./images", PostTriggerTime_us = None, xlim = None):
+    if ('PostTriggerTime' in df.attrs) and (PostTriggerTime_us is None):
+        PostTriggerTime = df.attrs['PostTriggerTime']
+    elif PostTriggerTime_us is not None:
+        PostTriggerTime = int(PostTriggerTime_us / 16e-3)
     else:
-        raise NotImplementedError('For now only up to two variables have been implemented')
-    
+        PostTriggerTime = Parameters.PostTriggerTime
+        print(
+            f'Info: using PostTriggerTime {PostTriggerTime}. Check that it is correct or change the parameters')
+
+    if not isinstance(PostTriggerTime, int):
+        PostTriggerTime = Parameters.PostTriggerTime
+        print(
+            f'Info: using PostTriggerTime {PostTriggerTime}. Check that it is correct or change the parameters')
     if save == True:
         p = Path(outDir)
         p.mkdir(parents=True, exist_ok=True)
-        plt.tight_layout()
-        plt.savefig(f'{outDir}/{namefig}.pdf')
-    plt.close()
+    events = df.groupby(['Event_ID'])
+    counter = 0
+    for (event_ID), event_DF in events:
+        counter += 1
+        fig,ax = plt.subplots(figsize=(12, 4))
+        for i in range(len(event_DF.index)):
+            max_index = event_DF['MaxIndex'].iloc[i]
+            t = np.arange(0,64*16e-3,16e-3)
+            t = event_DF['deltaT_us'].iloc[i] - max_index*16e-3 + t
+            ax.plot(t,event_DF['samples'].iloc[i],
+                       label=f'Channel {event_DF.Channel_number.iloc[i]}')
+        ax.set_xlabel(r'Time ($\mu s$)')
+        ax.set_ylabel('ADCC')
+        ax.set_title(f'Event {event_ID[0]}: {event_DF["Snippet_count"].iloc[0]} snippets')
+        ax.set_xlim(-PostTriggerTime*16e-3,PostTriggerTime*16e-3)
+        if xlim is not None:
+            ax.set_xlim(xlim)
+        plt.show()
+        if save== True:
+            fig.savefig(f'{outDir}/Event{event_ID[0]}.pdf')
+        plt.close()
+        if counter >= n_events:
+            break
+
+
+
 
 def plotEventsPulseFinder(df: pd.DataFrame, n_events = 50, save = False, outDir = "./images"):
     if save == True:
@@ -449,14 +430,10 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events = 50, save = False, outDir 
     counter =0
     for _,row in df.iterrows():
         fig, ax = plt.subplots()
-        if 'Baseline' in row:
-            baseline = row['Baseline']
-        else:
-            baseline = np.mean(row['samples'][:5])
-        ax.plot(np.array(row['samples'])-baseline,'b')
+        ax.plot(row['samples'],'b')
         ax.axvline(x=row['StartPulse'],label=f'Start: {row["StartPulse"]}',color = 'green',linestyle='dashed')
         ax.axvline(x=row['EndPulse'],label=f'End: {row["EndPulse"]}',color = 'red',linestyle='dashed')
-        ax.plot(row['MaxIndex'],row['samples'][row['MaxIndex']]-baseline,'bo',label = f'Height: {int(row["PulseHeight"])}')
+        ax.plot(row['MaxIndex'],row['samples'][row['MaxIndex']],'bo',label = f'Height: {int(row["PulseHeight"])}')
         props = dict(boxstyle="round", facecolor="wheat")
         ax.text(
         0.68,
@@ -480,23 +457,11 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events = 50, save = False, outDir 
         ax.legend(framealpha = 1,loc = 'upper right')
         if save == True:
             fig.savefig(f'{outDir}/Event{row["Event_ID"]}_snippet{int(row["Snippet_number"])}.pdf')
+        plt.show()
         plt.close()
         counter = counter + 1
         if counter > n_events:
             break
 
-
-
-def plotFullDiagnostics(df,outDir='./images',save=False,n_events=50):
-    if ('Charge' in df.columns) & ('PulseHeight' in df.columns) & ('deltaT_us' in df.columns) & ('preprocessingFlags' in df.columns):
-        statisticalPlot(df,'Charge_keV',outDir=outDir,save=save)
-        statisticalPlot(df,'PulseHeight',outDir=outDir,save=save)
-        statisticalPlot(df,['PulseHeight','Charge'],outDir=outDir,save=save)
-        statisticalPlot(df,'deltaT_us',outDir=outDir,save=save)
-        statisticalPlot(df,'preprocessingFlags',outDir=outDir,save=save)
-        plot_events_coincidence(df,n_events=n_events,save = save, outDir=outDir)
-    else:
-        print('Warning: preprocess the data to get the full diagnostics!')
-    statisticalPlot(df,'Channel_number',outDir=outDir,save=save)
 
     

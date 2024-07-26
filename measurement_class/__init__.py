@@ -437,7 +437,4 @@ class Measurement():
         df,processed_df= make_total_dataFrame_processed(file)
         return df, processed_df
 
-    def plotFullDiagnostics(self,measurement_number):
-        _, df = self.getDataframes(measurement_number)
-        pl.plotFullDiagnostics(df)
 
