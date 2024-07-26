@@ -3,14 +3,15 @@ data_parser.init('v2')
 import numpy as np
 import pandas as pd
 # from . import struct_conversion
-from .struct_conversion import DataFile
+from data_parser.struct_conversion import DataFile
 from preprocess_data import Parameters
 from preprocess_data import peak_finding_algorithms as pf
 import json
 import uproot
 from pathlib import Path
 from typing import Literal
-
+from joblib import Parallel, delayed
+from time import time
 
 
 
@@ -67,11 +68,15 @@ def reorderEventIDs(series):
 
 def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, PostTriggerTime = Parameters.PostTriggerTime) -> pd.DataFrame:
     '''
-    It adds the columns with the pulses parameters to the dataframe
+    It adds the columns with the pulses parameters to the dataframe and calculates other useful quantities, such as the energy in keV and the time of each pulse relative to the main trigger
     '''
     if 'snippets' in df.columns:
         df = explode_dataframe(df)
+    
+
     tmp = df['samples'].apply(pf.pulse_operations)
+
+
 
     columns = ['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
                'StartPulse', 'EndPulse', 'Baseline']
@@ -79,18 +84,33 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
         df[col] = [row[i] for row in tmp]
     df = df.explode(columns).reset_index(drop=True)
     df['samples'] = df['samples'] - df['Baseline']
+    
+    floats = ['Charge', 'Baseline']
+    bools = ['IsPulse']
+    integers = [c for c in columns if c not in [*floats,*bools]]
+    df= df.astype({f:float for f in floats})
+    df= df.astype({b:bool for b in bools})
+    df= df.astype({i:int for i in integers})
 
     if data_parser.VERSION == 1:
         df.loc[:, 'Type'] = df.Type.astype('str')
         df.loc[:, 'Rest'] = df.Rest.astype('str')
 
+    start = time()
+
     df['Charge_keV'] = df.apply(lambda x: pf.energyConversion(
         x['Charge'], x['Channel_number'], Parameters.gain), axis=1)
+    print(f'Time for energy conversion: {time()-start:.2f} s')
+
     df['deltaT_us'] = df.apply(lambda x: pf.getRelativeTimeSnippets(
         x['Subsecs'], x['Timedelta_samples'], TimeWindow, PostTriggerTime), axis=1)
+    print(f'Time for dt calculation: {time()-start:.2f}')
     # df['BoxcarSum'] = df.apply(lambda x: pf.getBoxcarSum(x.samples,x.Baseline),axis=1)
 
-    df['preprocessingFlags']= df.apply(lambda x: pf.getFlagsCorruptedData(x.Channel_number,x.samples,x.Timestamp_s),axis=1)
+    df['preprocessingFlags'] = df.apply(lambda x: pf.getFlagsCorruptedData(x.Channel_number,x.samples,x.Timestamp_s),axis=1)
+    print(f'Time for flags: {time()-start:.2f}')
+
+
 
     df.loc[:, 'Datetime'] = df['Datetime'].dt.strftime('%Y%m%d')
     df.loc[:, 'Datetime'] = df.Datetime.astype('int64')
@@ -107,6 +127,9 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     df.attrs['missing_events_fraction']=counter/len(events)
     df.attrs['duplicated_events_fraction'] = 1 - n_events_unique / len(events)
     df = df.sort_values(['Event_ID','deltaT_us']).reset_index(drop=True)
+
+    print(f'Time for other quantities: {time()-start:.2f} s')
+
 
 
     return df
@@ -128,11 +151,11 @@ def cleanupDataframe(df):
 def flattenSamples(samples):
     return [x for xs in samples for x in xs]
 
-def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal['snippet','compact'] = 'compact', reduced = False) -> list[uproot.writing.writable.WritableDirectory]:
+def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal['snippet','compact'] = 'compact', reduced = False) -> "list[uproot.writing.writable.WritableDirectory]":
     '''
     It creates the root file using the dataframe. It creates automatically the folder.
     If the mode is snippet, the function expects an exploded dataframe (i.e. each row is a pulse), 
-    otherwise it expect each row is an event. In the last case it drops the column of the samples and of the preprocessing flags. To handle large datasets, it's recommended to use TChain and wildcards to read the root files.
+    otherwise it expect each row is an event. In the last case it drops the column of the samples and of the preprocessing flags. To handle large datasets, it's recommended to use TChain and wildcards.
     '''
     df = df.sort_values(['Event_ID','deltaT_us']).reset_index(drop=True)
     df_output = df
@@ -180,28 +203,88 @@ def make_total_dataFrame_processed(files: list|str) -> pd.DataFrame:
         load_files_to_df(files),
         ignore_index=True
     )
-    parameters = getParametersFromJson(files)
+    metadata = getParametersFromJson(files)
     
-    df_updated=preprocessDataframe(df,TimeWindow=parameters['TimeWindow'],PostTriggerTime=parameters['PostTriggerTime'])
+    preprocessed_df=preprocessDataframe(df,TimeWindow=metadata['TimeWindow'],PostTriggerTime=metadata['PostTriggerTime'])
 
-    getAdditionalParameters(df_updated,parameters)
+    getAdditionalParameters(preprocessed_df,metadata)
     
-    df_updated.attrs = parameters
-    df.attrs = parameters
+    preprocessed_df.attrs = metadata
+    df.attrs = metadata
 
-    return df, df_updated
+    return df, preprocessed_df
     
-def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str, mode : Literal['snippet','compact'] = 'compact', reduced = False):
+def convertDataframeToJson(df):
+    '''
+    This function is used exclusively in make_total_rootfile to get a json from a dataframe that stores
+    metadata about each dataset
+    '''
+    metadata_dict = {}
+    columns_to_average_snippets=['pulse_detection_efficiency', 'corrupted_snippets_fraction', 'snippets_wrong_timestamp_fraction']
+    columns_to_average_events=['pulse_detection_efficiency', 'missing_events_fraction', 'duplicated_events_fraction']
+    columns_to_sum = ['n_snippets','n_events','event_rate','snippet_rate']
+    columns_only_first = [c for c in df.columns if c not in [*columns_to_average_snippets,*columns_to_average_events,*columns_to_sum]]
     
-    df, df_updated = make_total_dataFrame_processed(files)
+    for c in columns_only_first:
+        metadata_dict[c] = int(df[c].agg(lambda x: x.value_counts().index[0]))
+    for c in columns_to_average_events:
+        metadata_dict[c] = float(np.average(df[c],weights=df['n_events']))
+    for c in columns_to_average_snippets:
+        metadata_dict[c] = float(np.average(df[c],weights=df['n_snippets']))
+    for c in columns_to_sum:
+        if c in ['n_snippets','n_events']:
+            metadata_dict[c] = int(df[c].agg(sum))
+        else:
+            metadata_dict[c] = float(df[c].agg(sum))
 
-    root_files = df_to_root_file(df_updated,out_dir,namefile_output,mode=mode, reduced=reduced)
-    
-    with open(f'{out_dir}{namefile_output}.json','w+') as f:
-        json.dump(df_updated.attrs,f,indent=4)
-    
-    return df, df_updated, root_files
 
+    return metadata_dict
+
+def wrapper_make_total_rootfile(files:list|str,out_dir: str,namefile_output: str, mode : Literal['snippet','compact'] = 'compact', reduced = False):
+    '''
+    This is a wrapper of make_total_rootfile to be used to parallelize preprocessing
+    '''
+    _, preprocessed_df = make_total_dataFrame_processed(files)
+
+    _ = df_to_root_file(preprocessed_df,out_dir,namefile_output,mode=mode, reduced=reduced)
+
+    preprocessed_df.to_pickle(f'{out_dir}/{namefile_output}.pickle')
+
+    return preprocessed_df.attrs
+
+def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str, mode : Literal['snippet','compact'] = 'compact', reduced = False, parallel = False, n_jobs = 10):
+    '''
+    Function to generate ROOT and pickle files from datasets. For large datasets, it is recommended to use
+    the parallel function that doesn't return the dataframes. The compact mode is used to output a root file where each entry is an event, in the snippet mode each entry is a pulse. Use the reduced mode to remove 
+    unnecessary columns. Note: in the parallel mode not all the metadata in df.attrs aren't reliable because in some cases they must be averaged over the number of snippets or events.
+    '''
+
+    if not isinstance(files,list):
+        files = [files] 
+
+    if parallel == True:  
+
+        dicts_metadata = Parallel(n_jobs= n_jobs,verbose=10)(delayed(wrapper_make_total_rootfile)(files[i],out_dir, f'{namefile_output}_{i}',mode=mode,reduced=reduced) for i in range(len(files)))
+        df_metadata = pd.DataFrame(dicts_metadata)
+        metadata = convertDataframeToJson(df_metadata) 
+
+        with open(f'{out_dir}/{namefile_output}.json','w+') as f:
+            json.dump(metadata,f,indent=4)
+        
+        return metadata
+
+    else:
+        df, preprocessed_df = make_total_dataFrame_processed(files)
+
+        root_files = df_to_root_file(preprocessed_df,out_dir,namefile_output,mode=mode, reduced=reduced)
+
+        preprocessed_df.to_pickle(f'{out_dir}/{namefile_output}.pickle')
+
+        with open(f'{out_dir}/{namefile_output}.json','w+') as f:
+            json.dump(preprocessed_df.attrs,f,indent=4)
+    
+        return df, preprocessed_df, root_files   
+    
 def explode_dataframe(df):
     dfc=df.explode('snippets').reset_index(drop=True)
     df=dfc.join(pd.json_normalize(dfc['snippets'])).drop(columns='snippets')
@@ -220,40 +303,40 @@ def compactDataframe(df):
     return out
 
 def reduceDataframe(df):
-    columns = ['Timedelta_samples', 'Energy', 'min', 'max', 'samples', 'preprocessingFlags', 'trigger_IDs', 'Trigger_type', 'Frame_number', 'Subsecs', 'Seconds',  'length', 'snippet_space', 'Datetime', 'Info_flags', 'trigger_count']
+    columns = ['Timedelta_samples', 'Energy', 'min', 'max', 'preprocessingFlags', 'trigger_IDs', 'Trigger_type', 'Frame_number', 'Subsecs', 'Seconds',  'length', 'snippet_space', 'Datetime', 'Info_flags', 'trigger_count']
     df2 = df.drop(columns=columns, errors = 'ignore')
     return df2
 
 def getParametersFromJson(files: list|str):
     '''
-    It derives the parameters from the json created after the generation of the bin file 
-    and it replaces the unknown registers with default parameters
+    It derives the metadata from the json created after the generation of the bin file 
+    and it replaces the unknown registers with default metadata
     '''
     if isinstance(files,str):
         files = [files]
     # replace this with a function to cover the case of chunks
     input_json=[f'{f.split(".")[0]}_results.{f.split(".")[1]}.json' for f in files]
     input_json = list(set(input_json))
-    parameters = {'total_time':0, 'EventCounter': [], 'ThresholdSum' : [], 'PostTriggerTime': [], 'TimeWindow': [], 'FilterSet.T_Time': [], 'FilterSet.BP_Time': [], 'FilterSet.BS_Time': []}
+    metadata = {'total_time':0, 'EventCounter': [], 'ThresholdSum' : [], 'PostTriggerTime': [], 'TimeWindow': [], 'FilterSet.T_Time': [], 'FilterSet.BP_Time': [], 'FilterSet.BS_Time': []}
     for i in range(36):
-        parameters[f'Threshold[{i}]'] = []
+        metadata[f'Threshold[{i}]'] = []
     try:
         for j in input_json:
             with open(j,"r") as file:
                 info = json.load(file)
-                parameters['total_time'] += info['reception_time']
-                for p in parameters:
+                metadata['total_time'] += info['reception_time']
+                for p in metadata:
                     if p in info:
-                        parameters[p].append(info[p])
+                        metadata[p].append(info[p])
     except:
         print('Warning: using PostTriggerTime and TimeWindow from default parameters')
-        parameters['PostTriggerTime'] = Parameters.PostTriggerTime
-        parameters['TimeWindow'] = Parameters.TimeWindow
-        parameters['total_time'] = 1
-    for p in parameters:
-        if isinstance(parameters[p],list) and len(set(parameters[p]))==1:
-            parameters[p]=parameters[p][0]
-    return parameters
+        metadata['PostTriggerTime'] = Parameters.PostTriggerTime
+        metadata['TimeWindow'] = Parameters.TimeWindow
+        metadata['total_time'] = 1
+    for p in metadata:
+        if isinstance(metadata[p],list) and len(set(metadata[p]))==1:
+            metadata[p]=metadata[p][0]
+    return metadata
 
 def removeDuplicateEvents(df: pd.DataFrame):
     duplicate_events = []
@@ -275,15 +358,22 @@ def removeDuplicateEvents(df: pd.DataFrame):
     tmp = tmp.reset_index(drop = True)
     return tmp
 
-def getAdditionalParameters(df,parameters):
-    parameters['snippet_rate'] = len(df.index) / parameters['total_time']
-    parameters['event_rate'] = len(set(df['Event_ID'])) / parameters['total_time']
+def getAdditionalParameters(df,metadata):
+    metadata['snippet_rate'] = len(df.index) / metadata['total_time']
+    metadata['event_rate'] = len(set(df['Event_ID'])) / metadata['total_time']
 
-    parameters['pulse_detection_efficiency'] = len(df[df.IsPulse == True].index) / len(df.index)
-    parameters['corrupted_snippets_fraction'] = len(df[df.preprocessingFlags != ""])/len(df.index)
-    parameters['missing_events_fraction'] = df.attrs['missing_events_fraction']
-    parameters['duplicated_events_fraction'] = df.attrs['duplicated_events_fraction']
-    parameters['snippets_wrong_timestamp_fraction'] = len(df[(df.deltaT_us< -parameters["PostTriggerTime"]*16e-3) | (df.deltaT_us> parameters["PostTriggerTime"]*16e-3)]) / len(df)
+    metadata['pulse_detection_efficiency'] = len(df[df.IsPulse == True].index) / len(df.index)
+    metadata['corrupted_snippets_fraction'] = len(df[df.preprocessingFlags != ""])/len(df.index)
+    metadata['missing_events_fraction'] = df.attrs['missing_events_fraction']
+    metadata['duplicated_events_fraction'] = df.attrs['duplicated_events_fraction']
+    
+    posttriggertime = metadata["PostTriggerTime"]
+    if isinstance(posttriggertime,list):
+        posttriggertime = Parameters.PostTriggerTime
+    
+    metadata['snippets_wrong_timestamp_fraction'] = len(df[(df.deltaT_us< -posttriggertime*16e-3) | (df.deltaT_us> posttriggertime*16e-3)]) / len(df)
+    metadata['n_snippets'] = len(df.index)
+    metadata['n_events'] = len(set(df.Event_ID))
     
     
                 
