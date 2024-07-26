@@ -1,14 +1,8 @@
 from . import Parameters
 from time import time
-from pathlib import Path
 import scipy as sp
 import pandas as pd
 import numpy as np
-
-#
-# Todo: Split uproot and root export in separate file to keep dependencies minimal
-# Todo: add uproot to requirements.txt (generate as described in README)
-#
 
 
 def find_first_n_less(min_value, vector, n):
@@ -152,7 +146,7 @@ def pulse_operations(samples: list | pd.Series):
         area = np.trapz(samples[10:56]-baseline)
         height = np.max(samples)-baseline
         ratio = area / (height + 0.01)
-        if (ratio < Parameters.min_ratio_charge_height) | (ratio > Parameters.max_ratio_charge_height) | (area < 0):
+        if ((ratio < Parameters.min_ratio_charge_height) | (ratio > Parameters.max_ratio_charge_height) | (area < 0)) & (height < 8000):
             successes.append(False)
         else:
             successes.append(True)
@@ -169,18 +163,8 @@ def pulse_operations(samples: list | pd.Series):
 
     for _, peak in enumerate(peaks_sorted[:num_pulses]):
 
-        _, _, _, _, _, start_pulse, end_pulse = calc_puls_params(
-            samples,
-            peak,
-            Parameters.height,
-            Parameters.width,
-            Parameters.number_of_sample_below_thres_for_range
-        )
-
-        
         baseline = np.mean(samples[:Parameters.n_samples_baseline+1])
 
-        # subtract them to create baselined signal
         samples = samples - baseline
         success, max_index, pulse_height, pulse_width, area, start, end = calc_puls_params(
             samples,
@@ -189,7 +173,11 @@ def pulse_operations(samples: list | pd.Series):
             Parameters.width,
             Parameters.number_of_sample_below_thres_for_range
         )
-        successes.append(success)
+        ratio = area / (pulse_height + 0.01)
+        if ((ratio < Parameters.min_ratio_charge_height) | (ratio > Parameters.max_ratio_charge_height) | (area < 0) | (start < 2)) & (pulse_height < 8000):
+            successes.append(False)
+        else:
+            successes.append(success)
         max_indices.append(max_index)
         pulse_heights.append(pulse_height)
         pulse_widths.append(pulse_width)
@@ -200,18 +188,6 @@ def pulse_operations(samples: list | pd.Series):
 
     return successes, max_indices, pulse_heights, pulse_widths, areas, starts, ends, baselines
 
-def naive_pulse_operations(samples):
-    samples = np.array(samples)
-    baselines = [np.mean(samples[:5])]
-    samples = samples-baselines[0]
-    max_indices = [np.argmax(samples)]
-    successes = [True]
-    pulse_heights = [samples[max_indices[0]]]
-    starts = [11]
-    ends = [63]
-    pulse_widths = [63 - 11]
-    areas = [np.trapz(samples[11:])]
-    return successes, max_indices, pulse_heights, pulse_widths, areas, starts, ends, baselines
     
 
 
@@ -222,12 +198,9 @@ def energyConversion(charge, channel, gain='matched'):
     otherwise for now it's necessary to convert in postprocessing or to use always the same channel
     with the same module
     '''
-    df = Parameters.df_energy_conversion
     try:
-        pmt = df.PMT[df['DAQ'] == channel]
-        rescalingFactor = float(
-            (df.CE[df.PMT == 292].item() / df.CE[pmt.index].item()))
-    except ValueError:
+        rescalingFactor = Parameters.rescalingFactors[channel] 
+    except:
         return -1
     if charge < 0:
         return -1
@@ -257,6 +230,12 @@ def ADC_to_mV_conversion(samples, channel):
 
 def getRelativeTimeSnippets(subseconds, timedelta_samples, TimeWindow, PostTriggerTime):
     sampling_period = 16e-3
+    
+    if isinstance(TimeWindow,list):
+        TimeWindow = Parameters.TimeWindow
+    if isinstance(PostTriggerTime,list):
+        PostTriggerTime = Parameters.PostTriggerTime
+    
     dT = (subseconds % 2**16) - timedelta_samples
     offset = 0.176
     if dT < 0:

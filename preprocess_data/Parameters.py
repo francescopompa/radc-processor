@@ -17,16 +17,17 @@ sample_width = int(16)  # ns
 n_samples_baseline = int(5)
 n_samples_running_average = 5
 
-min_ratio_charge_height = 10
-max_ratio_charge_height = 12.5
+min_ratio_charge_height = 7
+max_ratio_charge_height = 15
 
 
 gain = 'matched'
-T_time = 10
 PostTriggerTime = 6250
 TimeWindow = 12500
 
 df_energy_conversion = read_csv(Path(__file__).parent / 'channel_map_energy.csv')
+df_energy_conversion = df_energy_conversion.sort_values('DAQ').reset_index(drop=True)
+rescalingFactors = [df_energy_conversion.CE[10] / df_energy_conversion.CE[i] for i in range(len(df_energy_conversion))]
 
 tiles_channels = [[32, 35, 31, 34, 30, 33],
                   [29, 26, 28, 25, 27, 24],
@@ -41,7 +42,3 @@ tiles_channels = np.reshape(tiles_channels,36)
 
 map_channels = {tiles_channels[i]:coordinates[i] for i,_ in enumerate(tiles_channels)}
 inv_map_channels = {v: k for k, v in map_channels.items()}
-
-if __name__ == '__main__':
-    print(map_channels)
-    print(inv_map_channels)
