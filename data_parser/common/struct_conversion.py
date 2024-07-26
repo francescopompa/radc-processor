@@ -130,7 +130,7 @@ class BaseSnippet():
 
         index = self._init_header_with_tuple(tup)
         self._init_contents_with_tuple(tup, index)
-        self._calculate_stats()
+        # self._calculate_stats() 
 
     def _init_header_with_tuple(self, tup):
         #

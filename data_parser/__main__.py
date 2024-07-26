@@ -9,9 +9,9 @@ Usage: Tbd.
 """
 
 # from .configuration import CONFIG
-import .struct_conversion as struct_conversion
-import .data_io
-import .plotting
+import data_parser.struct_conversion as struct_conversion
+import data_parser.data_io as data_io
+import data_parser.plotting as plotting
 
 #
 # Todo:
