@@ -96,21 +96,14 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
         df.loc[:, 'Type'] = df.Type.astype('str')
         df.loc[:, 'Rest'] = df.Rest.astype('str')
 
-    start = time()
-
     df['Charge_keV'] = df.apply(lambda x: pf.energyConversion(
         x['Charge'], x['Channel_number'], Parameters.gain), axis=1)
-    print(f'Time for energy conversion: {time()-start:.2f} s')
 
     df['deltaT_us'] = df.apply(lambda x: pf.getRelativeTimeSnippets(
         x['Subsecs'], x['Timedelta_samples'], TimeWindow, PostTriggerTime), axis=1)
-    print(f'Time for dt calculation: {time()-start:.2f}')
     # df['BoxcarSum'] = df.apply(lambda x: pf.getBoxcarSum(x.samples,x.Baseline),axis=1)
 
     df['preprocessingFlags'] = df.apply(lambda x: pf.getFlagsCorruptedData(x.Channel_number,x.samples,x.Timestamp_s),axis=1)
-    print(f'Time for flags: {time()-start:.2f}')
-
-
 
     df.loc[:, 'Datetime'] = df['Datetime'].dt.strftime('%Y%m%d')
     df.loc[:, 'Datetime'] = df.Datetime.astype('int64')
@@ -127,10 +120,6 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     df.attrs['missing_events_fraction']=counter/len(events)
     df.attrs['duplicated_events_fraction'] = 1 - n_events_unique / len(events)
     df = df.sort_values(['Event_ID','deltaT_us']).reset_index(drop=True)
-
-    print(f'Time for other quantities: {time()-start:.2f} s')
-
-
 
     return df
 
