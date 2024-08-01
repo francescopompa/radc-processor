@@ -239,12 +239,12 @@ def getRelativeTimeSnippets(subseconds, timedelta_samples, TimeWindow, PostTrigg
     dT = (subseconds % 2**16) - timedelta_samples
     offset = 0.176
     if dT < 0:
-        time = ((2**16 + dT) - PostTriggerTime) * sampling_period + offset
+        time = ((2**16 + dT) - PostTriggerTime) * sampling_period 
     elif subseconds < TimeWindow:
-        time = (62.5e6 + dT - PostTriggerTime) * sampling_period + offset
+        time = ((62.5e6 + dT) - PostTriggerTime) * sampling_period
     else:
-        time = (dT - PostTriggerTime)*sampling_period + offset
-    return round(time,3)
+        time = (dT - PostTriggerTime)*sampling_period 
+    return -round(time,3) - offset
 
 def getBoxcarSum(samples,baseline):
     samples = np.array(samples) - baseline
@@ -262,3 +262,13 @@ def getFlagsCorruptedData(channel, samples, timestamp):
         preprocessingFlags += 'T'
     return preprocessingFlags
 
+def computeTimeWithCFD(df):
+    fraction_cfd = 0.5
+    x1 = df['MaxIndex'] - find_first_n_less(df['PulseHeight']* fraction_cfd, df['samples'],1)
+    if x1>62:x1=62
+    x2 = x1 + 1
+    y2 = df['samples'][x2]
+    y1 = df['samples'][x1]
+    time_cfd = x1 + (df['PulseHeight'] * fraction_cfd - y1) * \
+        (x2 - x1) / (y2 - y1 + 0.0001)
+    return round(df['deltaT_us'] - (df['MaxIndex']- time_cfd) * 16e-3,3)
