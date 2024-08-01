@@ -57,14 +57,15 @@ def make_total_dataFrame(files: list|str) -> pd.DataFrame:
 def reorderEventIDs(series):
     # Initialize the output list with the same size
     consecutive_list = pd.Series(index=range(len(series)))
-    counter = 0
-    consecutive_list[0]=0
+    counter = series[0]
+    consecutive_list[0]=counter
     for i in range(1,len(series)):
         if series[i] != series[i-1]:  
             counter += 1
         consecutive_list[i] = counter
     
     return consecutive_list.astype(int) + 1
+
 
 def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, PostTriggerTime = Parameters.PostTriggerTime) -> pd.DataFrame:
     '''
@@ -85,7 +86,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     df = df.explode(columns).reset_index(drop=True)
     df['samples'] = df['samples'] - df['Baseline']
     
-    floats = ['Charge', 'Baseline']
+    floats = ['Charge', 'Baseline', 'PulseHeight']
     bools = ['IsPulse']
     integers = [c for c in columns if c not in [*floats,*bools]]
     df= df.astype({f:float for f in floats})
@@ -101,6 +102,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
 
     df['deltaT_us'] = df.apply(lambda x: pf.getRelativeTimeSnippets(
         x['Subsecs'], x['Timedelta_samples'], TimeWindow, PostTriggerTime), axis=1)
+    # df['deltaT_us_CFD'] = df.apply(pf.computeTimeWithCFD,axis=1)
     # df['BoxcarSum'] = df.apply(lambda x: pf.getBoxcarSum(x.samples,x.Baseline),axis=1)
 
     df['preprocessingFlags'] = df.apply(lambda x: pf.getFlagsCorruptedData(x.Channel_number,x.samples,x.Timestamp_s),axis=1)
@@ -113,11 +115,9 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     df_tmp = removeDuplicateEvents(df)
     df_tmp = df_tmp.reset_index(drop=True)
     n_events_unique = len(set(df_tmp.Event_ID))
-    for e in range(min(events),max(events) + 1):
-        if e not in events:
-            counter += 1
+    diffEvents = max(events) - min(events)
     df['Event_ID'] = reorderEventIDs(df['Event_ID']) 
-    df.attrs['missing_events_fraction']=counter/len(events)
+    df.attrs['missing_events_fraction']=diffEvents/len(events)
     df.attrs['duplicated_events_fraction'] = 1 - n_events_unique / len(events)
     df = df.sort_values(['Event_ID','deltaT_us']).reset_index(drop=True)
 
@@ -179,6 +179,7 @@ def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal
         file['eventsTree'] = df_tmp
         if pars != {}:
             file['infoTree'] = pars
+        # file['eventsTree'].show()
         list_of_files.append(file)
         file.close()
 
