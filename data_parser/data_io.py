@@ -112,11 +112,10 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
 
     events = set(df.Event_ID)
     df_tmp = removeDuplicateEvents(df)
-    df_tmp = df_tmp.reset_index(drop=True)
     n_events_unique = len(set(df_tmp.Event_ID))
     diffEvents = max(events) - min(events)
     df['Event_ID'] = reorderEventIDs(df['Event_ID']) 
-    df.attrs['missing_events_fraction']=1 - len(events) / diffEvents
+    df.attrs['missing_events_fraction']= 1 - len(events) / diffEvents
     df.attrs['duplicated_events_fraction'] = 1 - n_events_unique / len(events)
     df = df.sort_values(['Event_ID','deltaT_us']).reset_index(drop=True)
 
@@ -174,7 +173,7 @@ def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal
     chunks = len(set(df.Event_ID)) // max_events +1
     for i in range(chunks):
         file = uproot.recreate(out / f'{namefile}_{i}.root')
-        df_tmp = df_output[(df_output.Event_ID >= int(i*max_events)) & (df_output.Event_ID < int((i+1)*max_events))].reset_index(drop=True)
+        df_tmp = df_output[(df_output.Event_ID >= int(min(df_output.Event_ID)+i*max_events)) & (df_output.Event_ID < int(min(df_output.Event_ID)+(i+1)*max_events))].reset_index(drop=True)
         file['eventsTree'] = df_tmp
         if pars != {}:
             file['infoTree'] = pars
@@ -210,7 +209,7 @@ def convertDataframeToJson(df):
     '''
     metadata_dict = {}
     columns_to_average_snippets=['pulse_detection_efficiency', 'corrupted_snippets_fraction', 'snippets_wrong_timestamp_fraction']
-    columns_to_average_events=['pulse_detection_efficiency', 'missing_events_fraction', 'duplicated_events_fraction']
+    columns_to_average_events=['missing_events_fraction', 'duplicated_events_fraction']
     columns_to_sum = ['n_snippets','n_events','event_rate','snippet_rate']
     columns_only_first = [c for c in df.columns if c not in [*columns_to_average_snippets,*columns_to_average_events,*columns_to_sum]]
     
@@ -229,7 +228,7 @@ def convertDataframeToJson(df):
 
     return metadata_dict
 
-def wrapper_make_total_rootfile(files:list|str,out_dir: str,namefile_output: str, mode : Literal['snippet','compact'] = 'compact', reduced = False):
+def wrapper_make_total_rootfile(files:list|str,out_dir: str,namefile_output: str, mode : Literal['snippet','compact'] = 'compact', reduced = False) -> dict:
     '''
     This is a wrapper of make_total_rootfile to be used to parallelize preprocessing
     '''
@@ -241,7 +240,7 @@ def wrapper_make_total_rootfile(files:list|str,out_dir: str,namefile_output: str
 
     return preprocessed_df.attrs
 
-def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str, mode : Literal['snippet','compact'] = 'compact', reduced = False, parallel = False, n_jobs = 10):
+def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str, mode : Literal['snippet','compact'] = 'compact', reduced = False, parallel = False, n_jobs = 4) -> list | dict:
     '''
     Function to generate ROOT and pickle files from datasets. For large datasets, it is recommended to use
     the parallel function that doesn't return the dataframes. The compact mode is used to output a root file where each entry is an event, in the snippet mode each entry is a pulse. Use the reduced mode to remove 
