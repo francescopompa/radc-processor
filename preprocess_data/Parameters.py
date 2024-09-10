@@ -21,13 +21,15 @@ min_ratio_charge_height = 7
 max_ratio_charge_height = 15
 
 
-gain = 'matched'
+gain = 'matched_v2'
 PostTriggerTime = 6250
 TimeWindow = 12500
 
 df_energy_conversion = read_csv(Path(__file__).parent / 'channel_map_energy.csv')
 df_energy_conversion = df_energy_conversion.sort_values('DAQ').reset_index(drop=True)
 rescalingFactors = [df_energy_conversion.CE[10] / df_energy_conversion.CE[i] for i in range(len(df_energy_conversion))]
+if gain == 'matched_v2':
+    rescalingFactors = [df_energy_conversion.CE2[10] / df_energy_conversion.CE2[i] for i in range(len(df_energy_conversion))]
 
 tiles_channels = [[32, 35, 31, 34, 30, 33],
                   [29, 26, 28, 25, 27, 24],

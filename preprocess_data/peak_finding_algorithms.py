@@ -191,7 +191,7 @@ def pulse_operations(samples: list | pd.Series):
     
 
 
-def energyConversion(charge, channel, gain='matched'):
+def energyConversion(charge, channel, gain=Parameters.gain):
     '''
     Function to convert ADCC to energy. 
     This function gives reliable results only in the case of full detector,
@@ -205,7 +205,7 @@ def energyConversion(charge, channel, gain='matched'):
     if charge < 0:
         return -1
     E_keV = (charge + 169.3)/16.20 * rescalingFactor
-    if gain == 'matched':
+    if gain == 'matched' or gain == 'matched_v2':
         return E_keV
     else:
         return E_keV / gain * 2e6
