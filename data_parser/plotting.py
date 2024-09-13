@@ -287,8 +287,7 @@ def plotCountsPerChannel(df,ax=None,text_color='white'):
     h=ax.imshow(array2d.T,cmap='turbo')
     ax.set_title('Counts per channel')
     plt.colorbar(h)
-    plt.show()
-    plt.close()
+    
 
 
 def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir="./images", PostTriggerTime_us=None, mode: Literal['boxcar', 'energy'] = 'energy', time_scale: Literal['log','linear'] = 'linear'):
