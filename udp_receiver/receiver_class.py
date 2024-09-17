@@ -24,10 +24,8 @@ RADC_PKG_HEADER_SIZE=4
 class Receiver():
 
     _base_path = (
-        "C:/Users/utrfh/WS22-23 (MA) Masterarbeit/RADC_testData/"
-            if os.getlogin() == "utrfh" else
-        "/data/RADC_testData"
-            )
+        '/data/DAQMeasurements/'
+        )
 
     def __init__(self,
         host="192.168.1.200",
@@ -42,6 +40,7 @@ class Receiver():
         timeout=5,
         tracelength=700,
         keep_alive_time=300, # 5 min
+        start = False
         ) -> None:
 
         # define ftype for TargetFiles:
@@ -100,6 +99,9 @@ class Receiver():
 
         if all([max is None for max in [self.chunk_max_events, self.chunk_max_volume, self.chunk_max_time]]):
             print("Warning: No Chunking set.")
+        
+        if start == True:
+            self.start(duration)
 
         # if self.__do_split is True:
         #     self.target_file = f"{self.target_file}.wfm.{self.current_split:0{self.split_suffix_length}}"
@@ -147,6 +149,7 @@ class Receiver():
         If you pass a duration, the receiver will .stop() itself after
         `duration` seconds have passed.
         """
+        self.dump_results()
         if self.__do_readout is True:
             print("Receiver is already running.")
             return
@@ -245,8 +248,7 @@ class Receiver():
         #
         # Todo: clear how this affects current or future readouts...
         #
-        registers = ['PostTriggerTime','TimeWindow','FilterSet.T_Time','FilterSet.BP_Time','FilterSet.BS_Time','ThresholdSum', 'DO_status.fill_pointer',
-        'DO_status.full', 'DO_status.empty', 'DO_status.packed_ID', 'EventCounter']
+        registers = ['PostTriggerTime','TimeWindow','FilterSet.T_Time','FilterSet.BP_Time','FilterSet.BS_Time','ThresholdSum', 'EventCounter']
         thresholds = [f'Threshold[{i}]' for i in range(36)]
         registers = [*registers, *thresholds]
         for r in registers:
@@ -478,7 +480,7 @@ class Receiver():
             ):
             # End of a chunk
             self.__switch_target_file(mode="chunk")
-
+            self.current_chunk += 1
             self.__chunk_count_offset += chunk_count
             self.__chunk_volume_offset += chunk_volume
             self.__chunk_time_offset += chunk_time
