@@ -40,7 +40,7 @@ class Receiver():
         timeout=5,
         tracelength=700,
         keep_alive_time=300, # 5 min
-        start = False
+        start=False
         ) -> None:
 
         # define ftype for TargetFiles:
@@ -149,7 +149,6 @@ class Receiver():
         If you pass a duration, the receiver will .stop() itself after
         `duration` seconds have passed.
         """
-        self.dump_results()
         if self.__do_readout is True:
             print("Receiver is already running.")
             return

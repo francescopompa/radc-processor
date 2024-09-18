@@ -88,6 +88,8 @@ def main(argsdict=None):
     # print(sys.argv)
     argsdict = argsdict or parse_arguments(sys.argv[1:])    # First argument is the script name
     with Receiver(**argsdict) as rec:
+        if argsdict.pop('start') == 'True':
+            rec.start(argsdict.get('duration',None))
         # print(rec.__dict__)
         while True:
             line = sys.stdin.readline().rstrip('\n').split(' ')
