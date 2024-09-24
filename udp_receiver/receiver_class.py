@@ -100,7 +100,7 @@ class Receiver():
         if all([max is None for max in [self.chunk_max_events, self.chunk_max_volume, self.chunk_max_time]]):
             print("Warning: No Chunking set.")
         
-        if start == True:
+        if start == 'True':
             self.start(duration)
 
         # if self.__do_split is True:
