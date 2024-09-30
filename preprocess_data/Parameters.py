@@ -21,7 +21,7 @@ min_ratio_charge_height = 7
 max_ratio_charge_height = 15
 
 
-gain = 'matched_v2'
+gain = 'matched_v3'
 PostTriggerTime = 6250
 TimeWindow = 12500
 
