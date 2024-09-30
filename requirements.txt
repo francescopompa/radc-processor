@@ -6,13 +6,19 @@
 
 # radc-processor/scripts/dataRateCalculator.py: 4
 bitmath>=1.3.3.1
+# radc-processor/slow_control/__init__.py: 8
+Jinja2>=3.1.4
 # radc-processor/data_parser/data_io.py: 13
 joblib>=1.4.2
 # radc-processor/data_parser/plotting.py: 2,3,4
-# radc-processor/data_parser/plotting_experimental.py: 2,3,4
 # radc-processor/notebooks/trigger_verification_notebook.ipynb: 61
 # radc-processor/pulse_analysis/pulse_statistics.py: 6
-matplotlib>=3.7.2
+# radc-processor/slow_control/__init__.py: 5
+# radc-processor/slow_control/__main__.py: 5
+matplotlib>=3.8.0
+# radc-processor/notebooks/shaper_comparison_notebook.ipynb: 4,13
+# radc-processor/notebooks/trigger_verification_notebook.ipynb: 15
+nd-measurement-interfaces>=0.9.0
 # radc-processor/data_parser/dataFrame_helpers.py: 5
 # radc-processor/data_parser/data_io.py: 3
 # radc-processor/data_parser/plotting.py: 11
@@ -21,7 +27,9 @@ matplotlib>=3.7.2
 # radc-processor/preprocess_data/peak_finding_algorithms.py: 5
 # radc-processor/pulse_analysis/pulse_calculations.py: 4
 # radc-processor/pulse_analysis/pulse_statistics.py: 5
-numpy>=1.24.4
+# radc-processor/slow_control/__init__.py: 6
+# radc-processor/slow_control/__main__.py: 4
+numpy>=1.26.0
 # radc-processor/baseline_analysis/aggregate_data.py: 6
 # radc-processor/baseline_analysis/statistics.py: 1
 # radc-processor/data_parser/dataFrame_helpers.py: 4
@@ -32,14 +40,19 @@ numpy>=1.24.4
 # radc-processor/preprocess_data/peak_finding_algorithms.py: 4
 # radc-processor/pulse_analysis/pulse_calculations.py: 5
 # radc-processor/pulse_analysis/pulse_statistics.py: 7
-pandas>=2.0.3
+# radc-processor/slow_control/__init__.py: 9
+# radc-processor/slow_control/__main__.py: 3
+pandas>=2.1.0
+# radc-processor/slow_control/__init__.py: 7,10,11
+plotly>=5.24.1
 # radc-processor/data_parser/configuration.py: 4
-PyYAML>=6.0
+# Editable install with no version control (PyYAML==5.4.1)
+-e /usr/lib/python3/dist-packages/PyYAML-5.4.1.egg-info
 # radc-processor/notebooks/peak_finding.ipynb: 2,90
 # radc-processor/notebooks/trigger_verification_notebook.ipynb: 63
 # radc-processor/preprocess_data/peak_finding_algorithms.py: 3
 # radc-processor/pulse_analysis/pulse_finding/with_scipy.py: 6
 # radc-processor/pulse_analysis/pulse_statistics.py: 4
-scipy>=1.11.1
+scipy>=1.11.4
 # radc-processor/data_parser/data_io.py: 10
 uproot>=5.0.13

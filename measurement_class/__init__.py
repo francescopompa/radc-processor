@@ -392,7 +392,9 @@ class Measurement():
             ),
             "dump_filter": (
                 f"RADC save_filter_settings {self.get_path('commander', 'filter_dump')}"
-            )
+            ),
+            # check before pushing to remote
+            "slow_control": f"python -m slow_control target_dir={self.subgroup_path}"
         }
         return command_keys[key]
 

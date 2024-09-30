@@ -30,8 +30,10 @@ df_energy_conversion = df_energy_conversion.sort_values('DAQ').reset_index(drop=
 rescalingFactors = [df_energy_conversion.CE[10] / df_energy_conversion.CE[i] for i in range(len(df_energy_conversion))]
 if gain == 'matched_v2':
     rescalingFactors = [df_energy_conversion.CE2[10] / df_energy_conversion.CE2[i] for i in range(len(df_energy_conversion))]
-elif gain == 'matched_v3':
+if gain == 'matched_v3':
     rescalingFactors = [df_energy_conversion.CE3[10] / df_energy_conversion.CE3[i] for i in range(len(df_energy_conversion))]
+    print(rescalingFactors)
+    print(gain)
 
 tiles_channels = [[32, 35, 31, 34, 30, 33],
                   [29, 26, 28, 25, 27, 24],

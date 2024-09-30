@@ -33,6 +33,7 @@ pulse_analysis = "pulse_analysis"
 udp_receiver = "udp_receiver"
 import_helper = "import_helper"
 preprocess_data = "preprocess_data"
+slow_control = "slow_control"
 
 [options.packages_data]
 "*" = ["pyproject.toml"]
