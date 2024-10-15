@@ -11,6 +11,8 @@ from udp_receiver.receiver_class import convert_seconds
 from preprocess_data import Parameters
 import numpy as np
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from isegcontroller.commander import Commander
+from isegcontroller.interpreter import Interpreter
 # based on https://plotly.com/python/interactive-html-export/
 
 
@@ -51,17 +53,37 @@ class Control():
         metadata['Elapsed time'] = convert_seconds(totalTime)
         metadata['Snippet rate'] = convert_units(len(df) / totalTime,'Hz')
         metadata['Event rate'] = convert_units(len(set(df['Event_ID'])) / totalTime,'Hz')
-        metadata['Pulse detection efficiency (%)'] = len(
-            df[df.IsPulse == True]) / len(df) * 100
-        metadata['Corrupted snippets fraction (%)'] = len(
-            df[df.preprocessingFlags != ""])/len(df) * 100
+        metadata['Pulse detection efficiency (%)'] = len(df[df.IsPulse == True]) / len(df) * 100
+        metadata['Snippets with wrong timestamp (%)'] = 100*len(df[(df.deltaT_us< -Parameters.PostTriggerTime*16e-3) | (df.deltaT_us> Parameters.PostTriggerTime*16e-3)]) / len(df)
         small_df = pd.DataFrame(metadata,index=[0])
         df_info = pd.concat([previous_metadata,small_df])
         return df_info
+    
+    def getHVInfo(self):
+        commander = Commander('/home/mnd/Software/iseg-hv-controller/iseg_libs/default_config.toml')
+        interpreter = Interpreter(commander)
+        data=interpreter.get_info()
+        df = pd.DataFrame(data)
+        df['status'] = (df['status_v_limit_exceed'] == False) & (df['status_c_limit_exceed'] == False) & (df['status_current_trip'] == False)  \
+                        & (df['status_emergency'] == False)
+        df['Status'] = ['OK' if s is True else 'Problem' for s in df['status']]
+        df['Address'] = [f'0.{c//16}.{c%16}' for c in df['channel_id']]
+        status_on = df['status_on']
+        df['Power'] = ['On' if c == True else 'Off' for c in status_on]
+        df['V_set'] = df['control_v_set']
+        df['V_meas'] = df['status_v_measure']
+        df['I_set (uA)'] = df['control_c_set'] * 10**6
+        df['I_meas (uA)'] = df['status_c_measure'] * 10**6
+        df = df[['Address','Power','V_set','V_meas','I_set (uA)','I_meas (uA)','Status']]
+
+        return df
 
 
     def generate_plots(self, previous_metadata=pd.DataFrame(),file=None):
         print('Generating plots...')
+        
+        df_HV=self.getHVInfo()
+
         _, df = make_total_dataFrame_processed(file)
         df_info = self.getMetadata(df,file,previous_metadata)
         fig, ax = plt.subplots()
@@ -128,7 +150,8 @@ class Control():
             "table": df_info.tail(10).to_html( index=False, float_format="%.4g", justify='left'),
             "title": f"Analysis of file {file}",
             "fig_trigger":fig_trigger.to_html(full_html=False),
-            "fig_comp":fig_comparison.to_html(full_html=False)
+            "fig_comp": fig_comparison.to_html(full_html=False),
+            "table_HV": df_HV.to_html(index=False,justify='left')
 
         }
         
