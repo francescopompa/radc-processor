@@ -71,13 +71,15 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     '''
     It adds the columns with the pulses parameters to the dataframe and calculates other useful quantities, such as the energy in keV and the time of each pulse relative to the main trigger
     '''
+    print(f'Preprocessing dataframe with:\n'
+          f'\t- Time window: {TimeWindow} samples\n'
+          f'\t- Post trigger time: {PostTriggerTime} samples\n'
+          f'\t- Gain: {Parameters.gain}')
+    
     if 'snippets' in df.columns:
         df = explode_dataframe(df)
     
-
     tmp = df['samples'].apply(pf.pulse_operations)
-
-
 
     columns = ['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
                'StartPulse', 'EndPulse', 'Baseline']
@@ -113,7 +115,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     events = set(df.Event_ID)
     df_tmp = removeDuplicateEvents(df)
     n_events_unique = len(set(df_tmp.Event_ID))
-    diffEvents = max(events) - min(events)
+    diffEvents = max(events) - min(events) + 1
     df['Event_ID'] = reorderEventIDs(df['Event_ID']) 
     df.attrs['missing_events_fraction']= 1 - len(events) / diffEvents
     df.attrs['duplicated_events_fraction'] = 1 - n_events_unique / len(events)
@@ -302,7 +304,6 @@ def getParametersFromJson(files: list|str):
     '''
     if isinstance(files,str):
         files = [files]
-    # replace this with a function to cover the case of chunks
     input_json=[f'{f.split(".")[0]}_results.{f.split(".")[1]}.json' for f in files]
     input_json = list(set(input_json))
     metadata = {'total_time':0, 'EventCounter': [], 'ThresholdSum' : [], 'PostTriggerTime': [], 'TimeWindow': [], 'FilterSet.T_Time': [], 'FilterSet.BP_Time': [], 'FilterSet.BS_Time': []}
