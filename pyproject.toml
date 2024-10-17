@@ -24,6 +24,8 @@ dynamic = ["dependencies"]
 
 [project.scripts]
 radc_receiver = "udp_receiver.__main__:main"
+slowControl = "slow_control.__main__:main"
+preprocessData = "scripts.preprocessData:main"
 
 [tool.setuptools.package-dir]
 baseline_analysis = "baseline_analysis"
@@ -32,8 +34,9 @@ measurement_class = "measurement_class"
 pulse_analysis = "pulse_analysis"
 udp_receiver = "udp_receiver"
 import_helper = "import_helper"
-preprocess_data = "preprocess_data"
 slow_control = "slow_control"
+preprocess_data = "preprocess_data"
+scripts = "scripts"
 
 [options.packages_data]
 "*" = ["pyproject.toml"]
