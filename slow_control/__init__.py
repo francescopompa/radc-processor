@@ -1,7 +1,6 @@
 from data_parser.data_io import make_total_dataFrame_processed
 from glob import glob
 import data_parser.plotting as pl
-import time
 import matplotlib.pyplot as plt
 import plotly.express as px
 from jinja2 import Template
@@ -10,7 +9,7 @@ import plotly.express as px
 from udp_receiver.receiver_class import convert_seconds
 from preprocess_data import Parameters
 import numpy as np
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from time import time, strftime
 from isegcontroller.commander import Commander
 from isegcontroller.interpreter import Interpreter
 # based on https://plotly.com/python/interactive-html-export/
@@ -22,7 +21,7 @@ class Control():
 
     def __init__(self,
                  target_root=_base_path,
-                 target_dir=time.strftime("%Y-%m-%d"),
+                 target_dir=strftime("%Y-%m-%d"),
                  target_file=None,
                  output_html_path=r"/home/mnd/Desktop/online_analysis.html",
                  input_template_path=r"/home/mnd/Software/radc-processor/slow_control/template.html"
@@ -54,7 +53,11 @@ class Control():
         metadata['Snippet rate'] = convert_units(len(df) / totalTime,'Hz')
         metadata['Event rate'] = convert_units(len(set(df['Event_ID'])) / totalTime,'Hz')
         metadata['Pulse detection efficiency (%)'] = len(df[df.IsPulse == True]) / len(df) * 100
-        metadata['Snippets with wrong timestamp (%)'] = 100*len(df[(df.deltaT_us< -Parameters.PostTriggerTime*16e-3) | (df.deltaT_us> Parameters.PostTriggerTime*16e-3)]) / len(df)
+        metadata['Corrupted snippets (%)'] = len(df[df.preprocessingFlags != ""]) / len(df) *100
+        events = set(df.Event_ID)
+        diffEvents = max(events) - min(events) + 1
+        metadata['Missing events fraction (%)']= 1 - len(events) / diffEvents
+        metadata['Snippets with wrong timestamp (%)'] = 100 * len(df[(df.deltaT_us< -Parameters.PostTriggerTime*16e-3) | (df.deltaT_us> Parameters.PostTriggerTime*16e-3)]) / len(df)
         small_df = pd.DataFrame(metadata,index=[0])
         df_info = pd.concat([previous_metadata,small_df])
         return df_info
@@ -67,12 +70,12 @@ class Control():
         df['status'] = (df['status_v_limit_exceed'] == False) & (df['status_c_limit_exceed'] == False) & (df['status_current_trip'] == False)  \
                         & (df['status_emergency'] == False)
         df['Status'] = ['OK' if s is True else 'Problem' for s in df['status']]
-        df['Address'] = [f'0.{c//16}.{c%16}' for c in df['channel_id']]
+        df['Address'] = [f'0.{(c-1)//16}.{(c-1)%16}' for c in df['channel_id']]
         status_on = df['status_on']
-        df['Power'] = ['On' if c == True else 'Off' for c in status_on]
+        df['Power'] = ['ON' if c == True else 'OFF' for c in status_on]
         df['V_set'] = df['control_v_set']
         df['V_meas'] = df['status_v_measure']
-        df['I_set (uA)'] = df['control_c_set'] * 10**6
+        df['I_set (uA)'] = round(df['control_c_set'] * 10**6)
         df['I_meas (uA)'] = df['status_c_measure'] * 10**6
         df = df[['Address','Power','V_set','V_meas','I_set (uA)','I_meas (uA)','Status']]
 
@@ -81,7 +84,7 @@ class Control():
 
     def generate_plots(self, previous_metadata=pd.DataFrame(),file=None):
         print('Generating plots...')
-        
+        start = time()
         df_HV=self.getHVInfo()
 
         _, df = make_total_dataFrame_processed(file)
@@ -161,6 +164,7 @@ class Control():
                 output_file.write(j2_template.render(context))
 
         print(f"You can see the plots at file://{self.output_html_path}\n\n")
+        print(f'Processing time: {convert_seconds(time()-start)}')
         return df_info
 
     def start(self):
