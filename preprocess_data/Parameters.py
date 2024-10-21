@@ -32,6 +32,8 @@ if gain == 'matched_v2':
     rescalingFactors = [df_energy_conversion.CE2[10] / df_energy_conversion.CE2[i] for i in range(len(df_energy_conversion))]
 if gain == 'matched_v3':
     rescalingFactors = [df_energy_conversion.CE3[10] / df_energy_conversion.CE3[i] for i in range(len(df_energy_conversion))]
+constant = np.array(df_energy_conversion['Constant'])
+slope = np.array(df_energy_conversion['Slope'])
 
 tiles_channels = [[32, 35, 31, 34, 30, 33],
                   [29, 26, 28, 25, 27, 24],

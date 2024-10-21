@@ -205,8 +205,10 @@ def energyConversion(charge, channel, gain=Parameters.gain):
     if charge < 0:
         return -1
     E_keV = (charge + 169.3)/16.20 
-    if gain == 'matched' or gain == 'matched_v2' or gain == 'matched_v3':
+    if gain == 'matched' or gain == 'matched_v2':
         return E_keV * rescalingFactor
+    elif gain == 'matched_v3':
+        return charge * Parameters.slope[channel] + Parameters.constant[channel]
     else:
         return E_keV / gain * 2e6
 
