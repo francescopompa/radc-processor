@@ -336,14 +336,15 @@ def removeDuplicateEvents(df: pd.DataFrame):
                 if e == energies.iloc[i-snippet_count.iloc[i]]:
                     if snippet_count.iloc[i] <= snippet_count.iloc[i-snippet_count.iloc[i]]: 
                         duplicate_events.append(df.Event_ID.iloc[i])
+                        duplicate_events.append(df.Event_ID.iloc[i-snippet_count.iloc[i]])
                     else:
                         duplicate_events.append(df.Event_ID.iloc[i-snippet_count[i]])
+                        duplicate_events.append(df.Event_ID.iloc[i])
+
     
     duplicate_events = set(duplicate_events)
-    df['condition'] = [e in duplicate_events for e in df.Event_ID]
+    df['duplicateEvent'] = [e in duplicate_events for e in df.Event_ID]
     tmp = df.drop(df[df['condition'] == True].index)
-    df.drop(columns='condition',inplace=True)
-    tmp.drop(columns='condition',inplace=True)
     tmp = tmp.reset_index(drop = True)
     return tmp
 
