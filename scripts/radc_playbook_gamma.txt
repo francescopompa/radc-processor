@@ -1,0 +1,60 @@
+---
+ip: 192.168.1.200
+port: 6000
+firmware: 2.10
+---
+
+fullinit
+
+FilterSet.T_Time 10
+FilterSet.BP_Time 4
+FilterSet.BS_Time 8
+PostTriggerTime 200
+TimeWindow 400
+
+
+
+Threshold[0] 5000
+Threshold[1] 5000
+Threshold[2] 5000
+Threshold[3] 5000
+Threshold[4] 5000
+Threshold[5] 5000
+Threshold[6] 5000
+Threshold[7] 5000
+Threshold[8] 5000
+Threshold[9] 5000
+
+Threshold[10] 5000
+Threshold[11] 5000
+Threshold[12] 5000
+Threshold[13] 5000
+Threshold[14] 5000
+Threshold[15] 5000
+Threshold[16] 5000
+Threshold[17] 5000
+Threshold[18] 5000
+Threshold[19] 5000
+
+Threshold[20] 5000
+Threshold[21] 5000
+Threshold[22] 5000
+Threshold[23] 5000
+Threshold[24] 5000
+Threshold[25] 5000
+Threshold[26] 5000
+Threshold[27] 5000
+Threshold[28] 5000
+Threshold[29] 5000
+
+Threshold[30] 5000
+Threshold[31] 5000
+Threshold[32] 5000
+Threshold[33] 5000
+Threshold[34] 5000
+Threshold[35] 5000
+
+
+ThresholdSum 5000
+
+
