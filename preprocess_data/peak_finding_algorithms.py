@@ -256,7 +256,7 @@ def getBoxcarSum(samples,baseline):
 def getFlagsCorruptedData(channel, samples, timestamp):
     preprocessingFlags=''
     
-    if (channel < 0) or (channel > 35) or (channel != channel):
+    if (channel < 0) or (channel > 36) or (channel != channel):
         preprocessingFlags += 'C'
     if isinstance(samples,np.float64) or (isinstance(samples,list) and (len(samples) != 64)):
         preprocessingFlags += 'S'

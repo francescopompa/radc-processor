@@ -113,12 +113,11 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     df.loc[:, 'Datetime'] = df.Datetime.astype('int64')
 
     events = set(df.Event_ID)
-    df_tmp = removeDuplicateEvents(df)
-    n_events_unique = len(set(df_tmp.Event_ID))
+    df = findDuplicateEvents(df)
     diffEvents = max(events) - min(events) + 1
     df['Event_ID'] = reorderEventIDs(df['Event_ID']) 
     df.attrs['missing_events_fraction']= 1 - len(events) / diffEvents
-    df.attrs['duplicated_events_fraction'] = 1 - n_events_unique / len(events)
+    df.attrs['duplicated_events_fraction'] = len(df[df.duplicateEvent==True]) / len(df)
     df = df.sort_values(['Event_ID','deltaT_us']).reset_index(drop=True)
 
     return df
@@ -150,17 +149,17 @@ def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal
     df_output = df
 
     if (mode == 'compact') and ('compact' not in df.attrs):
-        df_output = compactDataframe(df)
+        df_output = compactDataframe(df_output)
     if reduced == True:
         df_output = reduceDataframe(df_output)
     
     df_output = df_output.drop(columns=['trigger_IDs','Info_flags'], errors='ignore')
+    df['corruptedEvent'] = [True if d != '' else False for d in df.preprocessingFlags ]
 
     if 'compact' in df_output.attrs and df_output.attrs['compact'] == True:
         if 'samples' in df_output:
             df_output['samples'] = df_output.apply(lambda x: flattenSamples(x['samples']),axis=1)
         df_output = df_output.drop(columns=['preprocessingFlags'], errors='ignore')
-
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     max_events = int(3e5)
@@ -236,6 +235,9 @@ def wrapper_make_total_rootfile(files:list|str,out_dir: str,namefile_output: str
     '''
     _, preprocessed_df = make_total_dataFrame_processed(files)
 
+    if reduced == True:
+        preprocessed_df = reduceDataframe(preprocessed_df)
+
     _ = df_to_root_file(preprocessed_df,out_dir,namefile_output,mode=mode, reduced=reduced)
 
     preprocessed_df.to_pickle(f'{out_dir}/{namefile_output}.pickle')
@@ -267,6 +269,8 @@ def make_total_rootfile(files:list|str,out_dir: str,namefile_output: str, mode :
         df, preprocessed_df = make_total_dataFrame_processed(files)
 
         root_files = df_to_root_file(preprocessed_df,out_dir,namefile_output,mode=mode, reduced=reduced)
+        if reduced == True:
+            preprocessed_df = reduceDataframe(preprocessed_df)
 
         preprocessed_df.to_pickle(f'{out_dir}/{namefile_output}.pickle')
 
@@ -293,9 +297,9 @@ def compactDataframe(df):
     return out
 
 def reduceDataframe(df):
-    columns = ['Timedelta_samples', 'Energy', 'min', 'max', 'preprocessingFlags', 'trigger_IDs', 'Trigger_type', 'Frame_number', 'Subsecs', 'Seconds',  'length', 'snippet_space', 'Datetime', 'Info_flags', 'trigger_count']
-    df2 = df.drop(columns=columns, errors = 'ignore')
-    return df2
+    columns = ['Timedelta_samples', 'Energy', 'min', 'max', 'trigger_IDs', 'Trigger_type','Frame_number', 'Subsecs', 'Seconds',  'length', 'snippet_space', 'Datetime', 'Info_flags', 'trigger_count']
+    df=df.drop(columns=columns, errors = 'ignore')
+    return df
 
 def getParametersFromJson(files: list|str):
     '''
@@ -327,26 +331,18 @@ def getParametersFromJson(files: list|str):
             metadata[p]=metadata[p][0]
     return metadata
 
-def removeDuplicateEvents(df: pd.DataFrame):
+def findDuplicateEvents(df: pd.DataFrame):
     duplicate_events = []
     energies = df.Energy
     snippet_count = df.Snippet_count
     for i,e in enumerate(energies):
-            if i>snippet_count.iloc[i]:
-                if e == energies.iloc[i-snippet_count.iloc[i]]:
-                    if snippet_count.iloc[i] <= snippet_count.iloc[i-snippet_count.iloc[i]]: 
+            if i>snippet_count.iloc[i] and e == energies.iloc[i-snippet_count.iloc[i]] and df.Event_ID.iloc[i] != df.Event_ID.iloc[i-snippet_count.iloc[i]] and e > 1000:
                         duplicate_events.append(df.Event_ID.iloc[i])
                         duplicate_events.append(df.Event_ID.iloc[i-snippet_count.iloc[i]])
-                    else:
-                        duplicate_events.append(df.Event_ID.iloc[i-snippet_count[i]])
-                        duplicate_events.append(df.Event_ID.iloc[i])
-
-    
+        
     duplicate_events = set(duplicate_events)
     df['duplicateEvent'] = [e in duplicate_events for e in df.Event_ID]
-    tmp = df.drop(df[df['condition'] == True].index)
-    tmp = tmp.reset_index(drop = True)
-    return tmp
+    return df
 
 def getAdditionalParameters(df,metadata):
     metadata['snippet_rate'] = len(df.index) / metadata['total_time']
