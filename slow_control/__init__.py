@@ -12,6 +12,7 @@ import numpy as np
 from time import time, strftime
 from isegcontroller.commander import Commander
 from isegcontroller.interpreter import Interpreter
+from os.path import getctime
 # based on https://plotly.com/python/interactive-html-export/
 
 
@@ -21,7 +22,7 @@ class Control():
 
     def __init__(self,
                  target_root=_base_path,
-                 target_dir=strftime("%Y-%m-%d"),
+                 target_dir='.',
                  target_file=None,
                  output_html_path=r"/home/mnd/Desktop/online_analysis.html",
                  input_template_path=r"/home/mnd/Software/radc-processor/slow_control/template.html"
@@ -171,12 +172,10 @@ class Control():
         print('Starting...')
         metadata=pd.DataFrame()
         if self.target_file is None and self.target_dir is not None:
-            files = glob(f'{self.target_root}/{self.target_dir}/data/*.bin')
-            files.sort()
-
             while True:
                 files = glob(
-                    f'{self.target_root}/{self.target_dir}/data/*.bin')
+                    f'{self.target_root}/{self.target_dir}**/*.bin',recursive=True)
+                latest_file = max(files,key=getctime)
                 files.sort()
                 print(f"Analyzing {files[-1]}... ")
                 metadata = self.generate_plots(file=files[-1],previous_metadata=metadata)
