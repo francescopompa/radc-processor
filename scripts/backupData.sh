@@ -1,12 +1,9 @@
 #! /bin/bash
 
-if [[ ! -n $1 ]];
-then
-    echo "No parameter passed."
-    $1 = 'neutronDetectorData'
-else
-    echo "Parameter passed = $1"
+if [ -z "$1" ]; then
+  set -- "${1:-DAQMeasurements}"
 fi
+
 echo "${1}"
 
 rsync -cavu --info=progress2 /data/${1} zm6876@kalinka5.iap.kit.edu:/kalinka/storage/darkmatter/lngs-neutron-detector/ 

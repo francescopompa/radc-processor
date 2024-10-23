@@ -36,6 +36,13 @@ cd radc-processor
 python -m pip install -e .
 ```
 
+To install individual scripts for automatic data taking, preprocessing and backup:
+```bash
+cd radc-processor
+source install_scripts.sh
+```
+The scripts will be installed in `~/.local/bin` to make it compatible with Kalinka.
+
 
 ## `udp_receiver` / `radc_receiver`
 
