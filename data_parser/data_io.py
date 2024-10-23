@@ -117,7 +117,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     diffEvents = max(events) - min(events) + 1
     df['Event_ID'] = reorderEventIDs(df['Event_ID']) 
     df.attrs['missing_events_fraction']= 1 - len(events) / diffEvents
-    df.attrs['duplicated_events_fraction'] = len(df[df.duplicateEvent==True]) / len(df)
+    df.attrs['duplicated_events_fraction'] = len(set(df.Event_ID[df.duplicateEvent==True])) / len(events)
     df = df.sort_values(['Event_ID','deltaT_us']).reset_index(drop=True)
 
     return df
