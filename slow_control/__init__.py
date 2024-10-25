@@ -13,6 +13,7 @@ from time import time, strftime
 from isegcontroller.commander import Commander
 from isegcontroller.interpreter import Interpreter
 from os.path import getctime
+import numpy as np
 # based on https://plotly.com/python/interactive-html-export/
 
 
@@ -48,16 +49,14 @@ class Control():
     def getMetadata(self,df,file,previous_metadata = pd.DataFrame()):
         metadata = {}
         totalTime = df.Timestamp_s.iloc[-1] - df.Timestamp_s.iloc[0]
-        metadata['Measurement number'] = file.split('.')[-3] if 'chunk' in file else file.split('.')[-2]
-        metadata['Chunk number'] = file.split('.')[-2] if 'chunk' in file else 0
+        metadata['Measurement'] = file.split('.')[-3] if 'chunk' in file else file.split('.')[-2]
+        metadata['Chunk'] = file.split('.')[-2] if 'chunk' in file else 0
         metadata['Elapsed time'] = convert_seconds(totalTime)
         metadata['Snippet rate'] = convert_units(len(df) / totalTime,'Hz')
         metadata['Event rate'] = convert_units(len(set(df['Event_ID'])) / totalTime,'Hz')
         metadata['Pulse detection efficiency (%)'] = len(df[df.IsPulse == True]) / len(df) * 100
+        metadata['Duplicate events (%)'] = df.attrs['duplicated_events_fraction'] * 100
         metadata['Corrupted snippets (%)'] = len(df[df.preprocessingFlags != ""]) / len(df) *100
-        events = set(df.Event_ID)
-        diffEvents = max(events) - min(events) + 1
-        metadata['Missing events fraction (%)']= 1 - len(events) / diffEvents
         metadata['Snippets with wrong timestamp (%)'] = 100 * len(df[(df.deltaT_us< -Parameters.PostTriggerTime*16e-3) | (df.deltaT_us> Parameters.PostTriggerTime*16e-3)]) / len(df)
         small_df = pd.DataFrame(metadata,index=[0])
         df_info = pd.concat([previous_metadata,small_df])
@@ -70,7 +69,7 @@ class Control():
         df = pd.DataFrame(data)
         df['status'] = (df['status_v_limit_exceed'] == False) & (df['status_c_limit_exceed'] == False) & (df['status_current_trip'] == False)  \
                         & (df['status_emergency'] == False)
-        df['Status'] = ['OK' if s is True else 'Problem' for s in df['status']]
+        df['Status'] = ['OK' if s is True else 'PROBLEM' for s in df['status']]
         df['Address'] = [f'0.{(c-1)//16}.{(c-1)%16}' for c in df['channel_id']]
         status_on = df['status_on']
         df['Power'] = ['ON' if c == True else 'OFF' for c in status_on]
@@ -78,7 +77,9 @@ class Control():
         df['V_meas'] = df['status_v_measure']
         df['I_set (uA)'] = round(df['control_c_set'] * 10**6)
         df['I_meas (uA)'] = df['status_c_measure'] * 10**6
-        df = df[['Address','Power','V_set','V_meas','I_set (uA)','I_meas (uA)','Status']]
+        df['vs'] = [np.abs(df['V_set'][i]-df['V_meas'][i]) < 2  if df['Power'][i]=='ON' else True for i in range(len(df))] 
+        df['Voltage status'] = ['OK' if c == True else 'PROBLEM' for c in df['vs']]
+        df = df[['Address','Power','V_set','V_meas','I_set (uA)','I_meas (uA)','Status','Voltage status']]
 
         return df
 
@@ -151,7 +152,7 @@ class Control():
 
         context = {
             "fig": fig.to_html(full_html=False),
-            "table": df_info.tail(10).to_html( index=False, float_format="%.4g", justify='left'),
+            "table": df_info[::-1].head(10).to_html(index=False, float_format="%.4g", justify='left'),
             "title": f"Analysis of file {file}",
             "fig_trigger":fig_trigger.to_html(full_html=False),
             "fig_comp": fig_comparison.to_html(full_html=False),
@@ -174,7 +175,7 @@ class Control():
         if self.target_file is None and self.target_dir is not None:
             while True:
                 files = glob(
-                    f'{self.target_root}/{self.target_dir}**/*.bin',recursive=True)
+                    f'{self.target_root}/{self.target_dir}/*.bin',recursive=True)
                 latest_file = max(files,key=getctime)
                 files.sort()
                 print(f"Analyzing {files[-1]}... ")
