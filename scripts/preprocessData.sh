@@ -8,7 +8,7 @@ if [ -z "$1" ]; then
   set -- "${1:-DAQMeasurements}"
 fi
 
-echo "Preprocessing directory ${1}."
+echo "Preprocessing directory /kalinka/storage/darkmatter/lngs-neutron-detector/${1}."
 
 eval "$(conda shell.bash hook)"
 conda activate pmts

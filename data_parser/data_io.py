@@ -11,7 +11,6 @@ import uproot
 from pathlib import Path
 from typing import Literal
 from joblib import Parallel, delayed
-from time import time
 
 
 
@@ -154,7 +153,7 @@ def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal
         df_output = reduceDataframe(df_output)
     
     df_output = df_output.drop(columns=['trigger_IDs','Info_flags'], errors='ignore')
-    df['corruptedEvent'] = [True if d != '' else False for d in df.preprocessingFlags ]
+    df['corruptedEvent'] = [d != '' for d in df.preprocessingFlags ]
 
     if 'compact' in df_output.attrs and df_output.attrs['compact'] == True:
         if 'samples' in df_output:
@@ -289,8 +288,8 @@ def compactDataframe(df):
                'StartPulse', 'EndPulse', 'Baseline', 'Channel_number', 'Energy', 'Timedelta_samples',
                'Snippet_number', 'min', 'max', 'samples', 'Charge_keV', 'deltaT_us',
                'preprocessingFlags', 'trigger_IDs']
-    tmp=df.groupby('Event_ID')[columns].agg(list).reset_index(drop=True)
-    tmp2 = df.groupby('Event_ID')[[c for c in df.columns if c not in columns]].agg('first').reset_index(drop=True)
+    tmp=df.groupby('Event_ID')[[c for c in columns if c in df.columns]].agg(list).reset_index(drop=True)
+    tmp2 = df.groupby('Event_ID')[[c for c in df.columns if c not in columns and c in df.columns]].agg('first').reset_index(drop=True)
     out = pd.concat([tmp2,tmp],axis=1)
     out.attrs = df.attrs
     out.attrs['compact']=True

@@ -6,13 +6,6 @@ import json
 from udp_receiver.receiver_class import convert_seconds
 import sys
 
-# first follow the instructions on this question: https://unix.stackexchange.com/questions/454957/cron-job-to-run-under-conda-virtual-environment
-# the use the command crontab -e to write:
-# SHELL=/bin/bash
-# BASH_ENV=~/.bashrc_conda
-# 0 3 * * * /bin/bash preprocessData.sh > /dev/null 2>&1
-# there are still some possibilities of improvemement here, like:
-# 1. informative output to json file
 
 def main():
     if len(sys.argv) > 1:
@@ -21,11 +14,9 @@ def main():
         folder = 'neutronDetectorData'
     baseDir = '/kalinka/storage/darkmatter/lngs-neutron-detector/' + folder
     subdirectories = [x[0] for x in os.walk(baseDir) if x[0] != baseDir]
-    namefile = 'processed.json'
+    n_jobs = -1
     begin = time()
 
-
-    # change by using the files field in the json files
     for s in subdirectories:
         start = time()
         json_files = glob(f'{s}/*results*.json')
@@ -39,7 +30,7 @@ def main():
                 namefiles = [f'{s}/{name}' for name in namefiles]
                 print(f'Analyzing files: {namefiles}')
                 processingMetadata = make_total_rootfile(
-                    namefiles , out_dir=f'{s}/processed/', namefile_output=namefile_output, mode='compact', parallel=True, n_jobs=min(len(metadata['files_written']), 4))
+                    namefiles , out_dir=f'{s}/processed/', namefile_output=namefile_output, mode='compact', parallel=True, n_jobs=n_jobs)
                 metadata['processing_time'] = time() - start
                 metadata['processed'] = True
                 processingMetadata['processing_time'] = time() - start
