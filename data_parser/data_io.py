@@ -102,7 +102,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
         x['Charge'], x['Channel_number'], Parameters.gain), axis=1)
 
     df['deltaT_us'] = df.apply(lambda x: pf.getRelativeTimeSnippets(
-        x['Subsecs'], x['Timedelta_samples'], TimeWindow, PostTriggerTime), axis=1)
+        x['Subsecs'], x['Timedelta_samples'], TimeWindow, PostTriggerTime, x['Channel_number']), axis=1)
     # df['deltaT_us_CFD'] = df.apply(pf.computeTimeWithCFD,axis=1)
     # df['BoxcarSum'] = df.apply(lambda x: pf.getBoxcarSum(x.samples,x.Baseline),axis=1)
 

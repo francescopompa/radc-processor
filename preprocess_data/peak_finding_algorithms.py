@@ -230,7 +230,7 @@ def ADC_to_mV_conversion(samples, channel):
         return list(np.zeros(64))
 
 
-def getRelativeTimeSnippets(subseconds, timedelta_samples, TimeWindow, PostTriggerTime):
+def getRelativeTimeSnippets(subseconds, timedelta_samples, TimeWindow, PostTriggerTime, channel):
     sampling_period = 16e-3
     
     if isinstance(TimeWindow,list):
@@ -246,6 +246,10 @@ def getRelativeTimeSnippets(subseconds, timedelta_samples, TimeWindow, PostTrigg
         time = ((62.5e6 + dT) - PostTriggerTime) * sampling_period
     else:
         time = (dT - PostTriggerTime)*sampling_period 
+    if channel < 8:
+        offset = offset + 0.016
+    elif channel == 6:
+        offset = offset + 0.032
     return -round(time,3) - offset
 
 def getBoxcarSum(samples,baseline):
