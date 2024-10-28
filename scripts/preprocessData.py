@@ -11,9 +11,9 @@ def main():
     if len(sys.argv) > 1:
         folder = sys.argv[1]
     else:
-        folder = 'neutronDetectorData'
-    baseDir = '/kalinka/storage/darkmatter/lngs-neutron-detector/' + folder
-    subdirectories = [x[0] for x in os.walk(baseDir) if x[0] != baseDir]
+        folder = 'FNG'
+    baseDir = f'/kalinka/storage/darkmatter/lngs-neutron-detector/{folder}'
+    subdirectories = [x[0] for x in os.walk(baseDir)]
     n_jobs = -1
     begin = time()
 
@@ -28,7 +28,11 @@ def main():
                 namefiles = [m.split('/')[-1] for m in metadata['files_written']]
                 namefile_output = namefiles[0].split('.')[0]
                 namefiles = [f'{s}/{name}' for name in namefiles]
-                print(f'Analyzing files: {namefiles}')
+                print(f'Analyzing {len(namefiles)} in the directory {s}.')
+                
+                if "SLURM_JOB_ID" not in os.environ:
+                    n_jobs=min(len(namefiles),4)
+                
                 processingMetadata = make_total_rootfile(
                     namefiles , out_dir=f'{s}/processed/', namefile_output=namefile_output, mode='compact', parallel=True, n_jobs=n_jobs)
                 metadata['processing_time'] = time() - start
