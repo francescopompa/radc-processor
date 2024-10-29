@@ -14,45 +14,45 @@ TimeWindow 6000
 
 
 
-Threshold[0] 70
-Threshold[1] 70
-Threshold[2] 70
-Threshold[3] 70
-Threshold[4] 70
-Threshold[5] 70
-Threshold[6] 70
-Threshold[7] 70
-Threshold[8] 70
-Threshold[9] 70
+Threshold[0] 100
+Threshold[1] 100
+Threshold[2] 100
+Threshold[3] 100
+Threshold[4] 100
+Threshold[5] 100
+Threshold[6] 100
+Threshold[7] 100
+Threshold[8] 100
+Threshold[9] 100
 
-Threshold[10] 70
-Threshold[11] 70
-Threshold[12] 70
-Threshold[13] 70
-Threshold[14] 70
-Threshold[15] 70
-Threshold[16] 70
-Threshold[17] 70
-Threshold[18] 70
-Threshold[19] 70
+Threshold[10] 100
+Threshold[11] 100
+Threshold[12] 100
+Threshold[13] 100
+Threshold[14] 100
+Threshold[15] 100
+Threshold[16] 100
+Threshold[17] 100
+Threshold[18] 100
+Threshold[19] 100
 
-Threshold[20] 70
-Threshold[21] 70
-Threshold[22] 70
-Threshold[23] 70
-Threshold[24] 70
-Threshold[25] 70
-Threshold[26] 70
-Threshold[27] 70
-Threshold[28] 70
-Threshold[29] 70
+Threshold[20] 100
+Threshold[21] 100
+Threshold[22] 100
+Threshold[23] 100
+Threshold[24] 100
+Threshold[25] 100
+Threshold[26] 100
+Threshold[27] 100
+Threshold[28] 100
+Threshold[29] 100
 
-Threshold[30] 70
-Threshold[31] 70
-Threshold[32] 70
-Threshold[33] 70
-Threshold[34] 70
-Threshold[35] 70
+Threshold[30] 100
+Threshold[31] 100
+Threshold[32] 100
+Threshold[33] 100
+Threshold[34] 100
+Threshold[35] 100
 
 
 ThresholdSum 30000
