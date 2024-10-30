@@ -73,10 +73,10 @@ class Control():
         df['Address'] = [f'0.{(c-1)//16}.{(c-1)%16}' for c in df['channel_id']]
         status_on = df['status_on']
         df['Power'] = ['ON' if c == True else 'OFF' for c in status_on]
-        df['V_set'] = df['control_v_set']
-        df['V_meas'] = df['status_v_measure']
-        df['I_set (uA)'] = round(df['control_c_set'] * 10**6)
-        df['I_meas (uA)'] = df['status_c_measure'] * 10**6
+        df['V_set'] = np.round(df['control_v_set'].astype(float),2)
+        df['V_meas'] = np.round(df['status_v_measure'].astype(float),2)
+        df['I_set (uA)'] = np.rint(df['control_c_set'].astype(float) * 10**6)
+        df['I_meas (uA)'] = np.rint(df['status_c_measure'].astype(float) * 10**6)
         df['vs'] = [np.abs(df['V_set'][i]-df['V_meas'][i]) < 2  if df['Power'][i]=='ON' else True for i in range(len(df))] 
         df['Voltage status'] = ['OK' if c == True else 'PROBLEM' for c in df['vs']]
         df = df[['Address','Power','V_set','V_meas','I_set (uA)','I_meas (uA)','Status','Voltage status']]
@@ -156,7 +156,7 @@ class Control():
             "title": f"Analysis of file {file}",
             "fig_trigger":fig_trigger.to_html(full_html=False),
             "fig_comp": fig_comparison.to_html(full_html=False),
-            "table_HV": df_HV.to_html(index=False,justify='left')
+            "table_HV": df_HV.to_html(index=False,justify='left',float_format="%g")
 
         }
         
@@ -178,7 +178,7 @@ class Control():
                     f'{self.target_root}/{self.target_dir}/*.bin',recursive=True)
                 latest_file = max(files,key=getctime)
                 files.sort()
-                print(f"Analyzing {files[-1]}... ")
+                print(f"Analyzing {latest_file}... ")
                 metadata = self.generate_plots(file=files[-1],previous_metadata=metadata)
         
         else:
