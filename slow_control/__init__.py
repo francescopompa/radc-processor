@@ -78,14 +78,22 @@ class Control():
         df['Address'] = [f'0.{(c-1)//16}.{(c-1)%16}' for c in df['channel_id']]
         status_on = df['status_on']
         df['Power'] = ['ON' if c == True else 'OFF' for c in status_on]
+
+        # ensure correct type by replacing unread variables
+        df.loc[df['control_v_set'] == '','control_v_set'] = 0
+        df.loc[df['status_v_measure'] == '','status_v_measure'] = 0
+        df.loc[df['control_c_set'] == '','control_c_set'] = 0
+        df.loc[df['status_c_measure'] == '','status_c_measure'] = 0
+
         df['V_set'] = np.round(
             df['control_v_set'].astype(float, errors='ignore'), 2)
         df['V_meas'] = np.round(
             df['status_v_measure'].astype(float, errors='ignore'), 2)
-        df['I_set (uA)'] = np.rint(
-            df['control_c_set'].astype(float, errors='ignore') * 10**6)
-        df['I_meas (uA)'] = np.rint(
-            df['status_c_measure'].astype(float, errors='ignore') * 10**6)
+        df['I_set (uA)'] = np.round(
+            df['control_c_set'].astype(float, errors='ignore') * 10**6, 0)
+        df['I_meas (uA)'] = np.round(
+            df['status_c_measure'].astype(float, errors='ignore') * 10**6, 0)
+        
         df['vs'] = [np.abs(df['V_set'][i]-df['V_meas'][i]) <
                     2 if df['Power'][i] == 'ON' else True for i in range(len(df))]
         df['Voltage status'] = ['OK' if c ==
