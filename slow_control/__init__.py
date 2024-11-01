@@ -9,7 +9,7 @@ import plotly.express as px
 from udp_receiver.receiver_class import convert_seconds
 from preprocess_data import Parameters
 import numpy as np
-from time import time, strftime
+from time import time
 from isegcontroller.commander import Commander
 from isegcontroller.interpreter import Interpreter
 from os.path import getctime
@@ -37,7 +37,6 @@ class Control():
         self.output_html_path = output_html_path
         self.input_template_path = input_template_path
 
-        
         self.start()
 
     def __enter__(self):
@@ -45,52 +44,64 @@ class Control():
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         exit()
-    
-    def getMetadata(self,df,file,previous_metadata = pd.DataFrame()):
+
+    def getMetadata(self, df, file, previous_metadata=pd.DataFrame()):
         metadata = {}
         totalTime = df.Timestamp_s.iloc[-1] - df.Timestamp_s.iloc[0]
-        metadata['Measurement'] = file.split('.')[-3] if 'chunk' in file else file.split('.')[-2]
+        metadata['Measurement'] = file.split(
+            '.')[-3] if 'chunk' in file else file.split('.')[-2]
         metadata['Chunk'] = file.split('.')[-2] if 'chunk' in file else 0
         metadata['Elapsed time'] = convert_seconds(totalTime)
-        metadata['Snippet rate'] = convert_units(len(df) / totalTime,'Hz')
-        metadata['Event rate'] = convert_units(len(set(df['Event_ID'])) / totalTime,'Hz')
-        metadata['Pulse detection efficiency (%)'] = len(df[df.IsPulse == True]) / len(df) * 100
+        metadata['Snippet rate'] = convert_units(len(df) / totalTime, 'Hz')
+        metadata['Event rate'] = convert_units(
+            len(set(df['Event_ID'])) / totalTime, 'Hz')
+        metadata['Pulse detection efficiency (%)'] = len(
+            df[df.IsPulse == True]) / len(df) * 100
         metadata['Duplicate events (%)'] = df.attrs['duplicated_events_fraction'] * 100
-        metadata['Corrupted snippets (%)'] = len(df[df.preprocessingFlags != ""]) / len(df) *100
-        metadata['Snippets with wrong timestamp (%)'] = 100 * len(df[(df.deltaT_us< -Parameters.PostTriggerTime*16e-3) | (df.deltaT_us> Parameters.PostTriggerTime*16e-3)]) / len(df)
-        small_df = pd.DataFrame(metadata,index=[0])
-        df_info = pd.concat([previous_metadata,small_df])
+        metadata['Corrupted snippets (%)'] = len(
+            df[df.preprocessingFlags != ""]) / len(df) * 100
+        metadata['Snippets with wrong timestamp (%)'] = 100 * len(
+            df[(df.deltaT_us < -Parameters.PostTriggerTime*16e-3) | (df.deltaT_us > Parameters.PostTriggerTime*16e-3)]) / len(df)
+        small_df = pd.DataFrame(metadata, index=[0])
+        df_info = pd.concat([previous_metadata, small_df])
         return df_info
-    
+
     def getHVInfo(self):
-        commander = Commander('/home/mnd/Software/iseg-hv-controller/iseg_libs/default_config.toml')
+        commander = Commander(
+            '/home/mnd/Software/iseg-hv-controller/iseg_libs/default_config.toml')
         interpreter = Interpreter(commander)
-        data=interpreter.get_info()
+        data = interpreter.get_info()
         df = pd.DataFrame(data)
         df['status'] = (df['status_v_limit_exceed'] == False) & (df['status_c_limit_exceed'] == False) & (df['status_current_trip'] == False)  \
-                        & (df['status_emergency'] == False)
+            & (df['status_emergency'] == False)
         df['Status'] = ['OK' if s is True else 'PROBLEM' for s in df['status']]
         df['Address'] = [f'0.{(c-1)//16}.{(c-1)%16}' for c in df['channel_id']]
         status_on = df['status_on']
         df['Power'] = ['ON' if c == True else 'OFF' for c in status_on]
-        df['V_set'] = np.round(df['control_v_set'].astype(float),2)
-        df['V_meas'] = np.round(df['status_v_measure'].astype(float),2)
-        df['I_set (uA)'] = np.rint(df['control_c_set'].astype(float) * 10**6)
-        df['I_meas (uA)'] = np.rint(df['status_c_measure'].astype(float) * 10**6)
-        df['vs'] = [np.abs(df['V_set'][i]-df['V_meas'][i]) < 2  if df['Power'][i]=='ON' else True for i in range(len(df))] 
-        df['Voltage status'] = ['OK' if c == True else 'PROBLEM' for c in df['vs']]
-        df = df[['Address','Power','V_set','V_meas','I_set (uA)','I_meas (uA)','Status','Voltage status']]
+        df['V_set'] = np.round(
+            df['control_v_set'].astype(float, errors='ignore'), 2)
+        df['V_meas'] = np.round(
+            df['status_v_measure'].astype(float, errors='ignore'), 2)
+        df['I_set (uA)'] = np.rint(
+            df['control_c_set'].astype(float, errors='ignore') * 10**6)
+        df['I_meas (uA)'] = np.rint(
+            df['status_c_measure'].astype(float, errors='ignore') * 10**6)
+        df['vs'] = [np.abs(df['V_set'][i]-df['V_meas'][i]) <
+                    2 if df['Power'][i] == 'ON' else True for i in range(len(df))]
+        df['Voltage status'] = ['OK' if c ==
+                                True else 'PROBLEM' for c in df['vs']]
+        df = df[['Address', 'Power', 'V_set', 'V_meas',
+                 'I_set (uA)', 'I_meas (uA)', 'Status', 'Voltage status']]
 
         return df
 
-
-    def generate_plots(self, previous_metadata=pd.DataFrame(),file=None):
+    def generate_plots(self, previous_metadata=pd.DataFrame(), file=None):
         print('Generating plots...')
         start = time()
-        df_HV=self.getHVInfo()
+        df_HV = self.getHVInfo()
 
         _, df = make_total_dataFrame_processed(file)
-        df_info = self.getMetadata(df,file,previous_metadata)
+        df_info = self.getMetadata(df, file, previous_metadata)
         fig, ax = plt.subplots()
         pl.plotCountsPerChannel(df, ax)
         fig.savefig('/home/mnd/Desktop/hCountsPerChannel.png')
@@ -110,9 +121,12 @@ class Control():
             title='Time distribution of all pulses'
         )
         # consider also defining the include_plotlyjs parameter to point to an external Plotly.js as described above
-        centerEnergy = df[(df.deltaT_us < 0.15) & (df.deltaT_us>-0.15)].groupby('Event_ID').Charge_keV.sum()
-        beforeTriggerEnergy = df[df.deltaT_us<-0.15].groupby('Event_ID').Charge_keV.sum()
-        afterTriggerEnergy = df[df.deltaT_us>0.15].groupby('Event_ID').Charge_keV.sum()
+        centerEnergy = df[(df.deltaT_us < 0.15) & (
+            df.deltaT_us > -0.15)].groupby('Event_ID').Charge_keV.sum()
+        beforeTriggerEnergy = df[df.deltaT_us < -
+                                 0.15].groupby('Event_ID').Charge_keV.sum()
+        afterTriggerEnergy = df[df.deltaT_us > 0.15].groupby(
+            'Event_ID').Charge_keV.sum()
 
         fig_trigger = px.histogram(x=centerEnergy, log_y=True)
         fig_trigger.update_traces(xbins=dict(
@@ -128,12 +142,14 @@ class Control():
             yaxis_title='Counts',
             title='Summed energy in the trigger region'
         )
-        
-        tmp_df=pd.DataFrame(dict(
-            series=np.concatenate((["before"]*len(beforeTriggerEnergy),["after"]*len(afterTriggerEnergy))),
+
+        tmp_df = pd.DataFrame(dict(
+            series=np.concatenate(
+                (["before"]*len(beforeTriggerEnergy), ["after"]*len(afterTriggerEnergy))),
             data=np.concatenate((beforeTriggerEnergy, afterTriggerEnergy)))
         )
-        fig_comparison=px.histogram(tmp_df,x="data",color="series",barmode="overlay",log_y=True)
+        fig_comparison = px.histogram(
+            tmp_df, x="data", color="series", barmode="overlay", log_y=True)
         fig_comparison.update_traces(xbins=dict(
             start=0,
             end=4000,
@@ -147,19 +163,17 @@ class Control():
             yaxis_title='Counts',
             title='Summed energy before and after the trigger'
         )
-        
-        
 
         context = {
             "fig": fig.to_html(full_html=False),
             "table": df_info[::-1].head(10).to_html(index=False, float_format="%.4g", justify='left'),
             "title": f"Analysis of file {file}",
-            "fig_trigger":fig_trigger.to_html(full_html=False),
+            "fig_trigger": fig_trigger.to_html(full_html=False),
             "fig_comp": fig_comparison.to_html(full_html=False),
-            "table_HV": df_HV.to_html(index=False,justify='left',float_format="%g")
+            "table_HV": df_HV.to_html(index=False, justify='left', float_format="%g")
 
         }
-        
+
         with open(self.output_html_path, "w", encoding="utf-8") as output_file:
             with open(self.input_template_path) as template_file:
                 j2_template = Template(template_file.read())
@@ -171,16 +185,17 @@ class Control():
 
     def start(self):
         print('Starting...')
-        metadata=pd.DataFrame()
+        metadata = pd.DataFrame()
         if self.target_file is None and self.target_dir is not None:
             while True:
                 files = glob(
-                    f'{self.target_root}/{self.target_dir}/*.bin',recursive=True)
-                latest_file = max(files,key=getctime)
+                    f'{self.target_root}/{self.target_dir}/*.bin', recursive=True)
+                latest_file = max(files, key=getctime)
                 files.sort()
                 print(f"Analyzing {latest_file}... ")
-                metadata = self.generate_plots(file=files[-1],previous_metadata=metadata)
-        
+                metadata = self.generate_plots(
+                    file=files[-1], previous_metadata=metadata)
+
         else:
             self.generate_plots(
                 f'{self.target_root}/{self.target_dir}/{self.target_file}')
@@ -190,8 +205,9 @@ class Control():
         self.target_file = file
         self.generate_plots(file)
 
-def convert_units(size,unit:str):
-    prefixes = ['','k','M','G','T']
+
+def convert_units(size, unit: str):
+    prefixes = ['', 'k', 'M', 'G', 'T']
     units = [p + unit for p in prefixes]
     for x in units:
         if size < 1000.:
