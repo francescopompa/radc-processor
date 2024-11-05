@@ -106,7 +106,10 @@ class Control():
     def generate_plots(self, previous_metadata=pd.DataFrame(), file=None):
         print('Generating plots...')
         start = time()
-        df_HV = self.getHVInfo()
+        try:
+            df_HV = self.getHVInfo()
+        except:
+            df_HV = pd.DataFrame({'Error':'Reading not possible'},index=[0])
 
         _, df = make_total_dataFrame_processed(file)
         df_info = self.getMetadata(df, file, previous_metadata)
