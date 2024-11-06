@@ -8,13 +8,14 @@ import sys
 
 
 def main():
-    if len(sys.argv) > 1:
+   if len(sys.argv) > 1:
         folder = sys.argv[1]
     else:
         folder = 'FNG'
-    baseDir = f'/kalinka/storage/darkmatter/lngs-neutron-detector/{folder}'
+#    baseDir = f'/kalinka/storage/darkmatter/lngs-neutron-detector/{folder}'
+    baseDir = f'/mnt'
     subdirectories = [x[0] for x in os.walk(baseDir)]
-    n_jobs = -1
+    n_jobs = 20
     begin = time()
 
     for s in subdirectories:
