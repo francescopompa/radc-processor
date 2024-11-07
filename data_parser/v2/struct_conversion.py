@@ -269,7 +269,7 @@ class Event(BaseSnippet):
     def get_record(self):
         return {
             **self.header,
-            **self.stats,
+            # **self.stats,
             "snippets": [
                 snippet.get_record() for snippet in self.snippets
             ]

@@ -120,10 +120,10 @@ class BaseSnippet():
         self.udp_header = {}
         self.header = {}
         # self.samples = []
-        self.trigger_IDs = []
+        # self.trigger_IDs = []
         self.include_UDP_header = include_UDP_header or self._include_UDP_header_default
 
-        self.stats = self._stats_default.copy()
+        # self.stats = self._stats_default.copy()
 
         for key, default in self._kwargs.items():
             setattr(self, key, kwargs.pop(key, default))
@@ -200,9 +200,9 @@ class BaseSnippet():
             unsigned_val = sample & 0b0011111111111111
             s = unsigned_val >> 13  # 1: negative, 0:positive
 
-            if (t and not i):
-                # Real trigger case that wasn't inhibited:
-                self.trigger_IDs.append(ID)
+            # if (t and not i):
+            #     # Real trigger case that wasn't inhibited:
+            #     self.trigger_IDs.append(ID)
 
             # Considering the ADC to use two's-complement signed values
             yield -s*2**14 + unsigned_val
@@ -222,7 +222,7 @@ class BaseSnippet():
         return {
             **self.udp_header,
             **self.header,
-            **self.stats,
-            "trigger_IDs": self.trigger_IDs,
+            # **self.stats,
+            # "trigger_IDs": self.trigger_IDs,
             "samples": self.samples
         }
