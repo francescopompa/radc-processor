@@ -1,3 +1,4 @@
+from curses import meta
 from os import error
 import data_parser
 data_parser.init('v2')
@@ -29,10 +30,6 @@ def datafile_to_df(file: DataFile) -> pd.DataFrame:
         exclude=None,
         columns=None,
     )
-
-    if "Timestamp_s" in df:
-        # df["Datetime"] = pd.to_datetime(df["Timestamp_s"]),
-        df["Datetime"] = df["Timestamp_s"].apply(pd.Timestamp)
 
     return df
 
@@ -116,9 +113,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     events = set(df.Event_ID)
     df = findDuplicateEvents(df)
 
-    # dropping completely the datetime column until the bug in data_parser.data_io is corrected
-    df = df.drop(columns=['Snippet_count','Snippet_index','Datetime'],errors='ignore')
-    
+    df = df.drop(columns=['Snippet_count','Snippet_index'],errors='ignore')
     diffEvents = max(events) - min(events) + 1
     df['Event_ID'] = reorderEventIDs(df['Event_ID']) 
     df.attrs['missing_events_fraction']= 1 - len(events) / diffEvents
@@ -365,6 +360,6 @@ def getAdditionalParameters(df,metadata):
     metadata['snippets_wrong_timestamp_fraction'] = len(df[(df.PulseTime_us< -posttriggertime*16e-3) | (df.PulseTime_us> posttriggertime*16e-3)]) / len(df)
     metadata['n_snippets'] = len(df.index)
     metadata['n_events'] = len(set(df.Event_ID))
-    
+    metadata['start_time'] = str(pd.to_datetime(df.Timestamp_s.iloc[0],unit='s'))
     
                 
