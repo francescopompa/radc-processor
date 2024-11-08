@@ -117,6 +117,9 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     df['Event_ID'] = reorderEventIDs(df['Event_ID']) 
     df.attrs['missing_events_fraction']= 1 - len(events) / diffEvents
     df.attrs['duplicated_events_fraction'] = len(set(df.Event_ID[df.duplicateEvent==True])) / len(events)
+    df.attrs['start_time'] = str(pd.to_datetime(df.Timestamp_s.iloc[0],unit='s'))
+    df.attrs['end_time'] = str(pd.to_datetime(df.Timestamp_s.iloc[-1],unit='s'))
+
     df = df.sort_values(['Event_ID','PulseTime_us']).reset_index(drop=True)
 
     return df
@@ -359,6 +362,5 @@ def getAdditionalParameters(df,metadata):
     metadata['snippets_wrong_timestamp_fraction'] = len(df[(df.PulseTime_us< -posttriggertime*16e-3) | (df.PulseTime_us> posttriggertime*16e-3)]) / len(df)
     metadata['n_snippets'] = len(df.index)
     metadata['n_events'] = len(set(df.Event_ID))
-    metadata['start_time'] = str(pd.to_datetime(df.Timestamp_s.iloc[0],unit='s'))
     
                 
