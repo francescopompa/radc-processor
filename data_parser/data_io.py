@@ -105,15 +105,14 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     df['PulseTime_us'] = df.apply(lambda x: pf.getRelativeTimeSnippets(
         x['Subsecs'], x['Timedelta_samples'], TimeWindow, PostTriggerTime, x['Channel_number']), axis=1)
     df = df.drop(columns=['Seconds','Subsecs','Timedelta_samples'],errors='ignore')
-    # df['deltaT_us_CFD'] = df.apply(pf.computeTimeWithCFD,axis=1)
-    # df['BoxcarSum'] = df.apply(lambda x: pf.getBoxcarSum(x.PulseWaveform,x.BaselineADCC),axis=1)
+
 
     df['preprocessingFlags'] = df.apply(lambda x: pf.getFlagsCorruptedData(x.Channel_number,x.PulseWaveform,x.Timestamp_s),axis=1)
 
     events = set(df.Event_ID)
     df = findDuplicateEvents(df)
 
-    df = df.drop(columns=['Snippet_count','Snippet_index'],errors='ignore')
+    df = df.drop(columns=['Snippet_count','Snippet_index','BoxcarSum'],errors='ignore')
     diffEvents = max(events) - min(events) + 1
     df['Event_ID'] = reorderEventIDs(df['Event_ID']) 
     df.attrs['missing_events_fraction']= 1 - len(events) / diffEvents
