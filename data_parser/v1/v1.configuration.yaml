@@ -20,7 +20,7 @@ struct_fields_mapping:
     Channel_number: "B"  # 1 Byte unsigned char integer
     Trigger_info: "B"    # 1 Byte unsigned char integer
     Event_ID: "H"    # 2 Bytes unsigned short integer
-    Energy: "3s"     # 3 Bytes arbitrary char
+    BoxcarSum: "3s"     # 3 Bytes arbitrary char
     Multiplicity: "B" # 1 Byte unsigned char integer
     Subsecs: "I"     # 4 Bytes unsigned integer
     Seconds: "I"     # 4 Bytes unsigned integer

@@ -44,7 +44,7 @@ def convert_adc_mV(adc: Iterable|int) -> Iterable|int:
     else:
         return adc*factor
 
-def _get_samples_data(entry, key="samples"):
+def _get_samples_data(entry, key="PulseWaveform"):
 
     if isinstance(entry, pd.core.series.Series):
         # entry is a row OR a column of a DataFrame
@@ -79,7 +79,7 @@ def _plot_row(row, ax_flags, ax_samples, **kwargs):
     color = kwargs.pop("color")
     minor_locator = kwargs.pop("minor_locator", 10.0)# or 10.0
 
-    x_array = range(len(row.samples))
+    x_array = range(len(row.PulseWaveform))
     flags = [1 if i in row.trigger_IDs else 0 for i in x_array]
 
     ax_flags.plot(
@@ -89,7 +89,7 @@ def _plot_row(row, ax_flags, ax_samples, **kwargs):
         color=color, linewidth=1, alpha=0.7)
     ax_samples.plot(
         x_array,
-        row.samples,
+        row.PulseWaveform,
         label=row.Event_ID,
         color=color, linewidth=1, alpha=0.7,
         **kwargs)
@@ -129,11 +129,11 @@ def _plot_series(series, ax_flags, ax_samples, cmap, **kwargs):
     eid = series.Event_ID
     suptitle = kwargs.get("suptitle") or f"Event {eid}"
     udp_str = f"UDP-Infos: Type {series['Type']}, # {series['Number']}, Rest {series['Rest']}"
-    eve_str = f"Event-Infos: Energy {series['Energy']}, Multiplicity {series['Multiplicity']}, Time {series['Seconds']}.{series['Subsecs']}"
+    eve_str = f"Event-Infos: BoxcarSum {series['BoxcarSum']}, Multiplicity {series['Multiplicity']}, Time {series['Seconds']}.{series['Subsecs']}"
     sta_str = f"Trigger count: {series['trigger_count']}, Min {series['min']}, Max {series['max']}"
     # title = kwargs.get("title") or ', '.join(
     #     f"{key}: {series[key]}" for key in series.keys()
-    #     if key not in ["trigger_IDs", "samples", "Event_ID"]
+    #     if key not in ["trigger_IDs", "PulseWaveform", "Event_ID"]
     #     )
     title = kwargs.get("title") or ' '.join(
         [udp_str, eve_str, sta_str]
@@ -214,7 +214,7 @@ def plot_rows(rows, **kwargs):
 
 
 
-def plot_samples(entry, key="samples"):
+def plot_samples(entry, key="PulseWaveform"):
     cmap = plt.colormaps["plasma"]
 
     data = _get_samples_data(entry, key=key)
@@ -325,23 +325,23 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
     counter = 0
     for (event_ID), event_DF in events:
         counter += 1
-        event_DF = event_DF.sort_values(['deltaT_us'])
+        event_DF = event_DF.sort_values(['PulseTime_us'])
 
         channels = event_DF['Channel_number']
         if mode == 'boxcar':
-            energies = event_DF['Energy']
+            energies = event_DF['BoxcarSum']
         else:
-            energies = event_DF['Charge_keV']
+            energies = event_DF['ApproxEnergy_keVee']
         
 
-        relativeTime = event_DF['deltaT_us']
+        relativeTime = event_DF['PulseTime_us']
         
         fig, ax = plt.subplots(figsize=(12, 4), ncols=3, nrows=1)
         fig.suptitle(
-            f'Event {event_ID[0]}: {event_DF["Snippet_count"].iloc[0]} snippets')
+            f'Event {event_ID[0]}: {len(event_DF)} snippets')
         
         for i in range(len(event_DF.index)):
-            ax[0].plot(event_DF['samples'].iloc[i],
+            ax[0].plot(event_DF['PulseWaveform'].iloc[i],
                        label=f'Channel {channels.iloc[i]}', color=cmap_function(norm(relativeTime.iloc[i])))
         ax[1].scatter(relativeTime, energies,
                       c=relativeTime, norm=norm, cmap=cmap)
@@ -358,7 +358,7 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
         plotChannelMap(ax[2])
         x = [Parameters.map_channels[c][0] if c in range(36) else 2.5 for c in channels] + np.random.normal(0, 0.1, len(channels))
         y = [Parameters.map_channels[c][1] if c in range(36) else 2.5 for c in channels] + np.random.normal(0, 0.1, len(channels))
-        ax[2].scatter(x, y, c=event_DF.deltaT_us, norm=norm, cmap=cmap)
+        ax[2].scatter(x, y, c=event_DF.PulseTime_us, norm=norm, cmap=cmap)
         if time_scale == 'linear': 
             format = lambda x, _: f"{x:.0f}"
         elif time_scale == 'log':
@@ -367,7 +367,7 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
         c.set_label(r'Time ($\mu s$)')
         
         if mode == 'energy':
-            ax[1].set_ylabel('Energy (keV)')
+            ax[1].set_ylabel(r'Energy (keV$_{ee}$)')
         elif mode == 'boxcar':
             ax[1].set_ylabel('Boxcar energy (ADCC)')
         fig.tight_layout()
@@ -401,10 +401,10 @@ def plotPulsesSameAxis(df: pd.DataFrame, n_events=50, save=False, outDir="./imag
         counter += 1
         fig,ax = plt.subplots(figsize=(12, 4))
         for i in range(len(event_DF.index)):
-            max_index = event_DF['MaxIndex'].iloc[i]
+            max_index = event_DF['MaximumIndex'].iloc[i]
             t = np.arange(0,64*16e-3,16e-3)
-            t = event_DF['deltaT_us'].iloc[i] - max_index*16e-3 + t
-            ax.plot(t,event_DF['samples'].iloc[i],
+            t = event_DF['PulseTime_us'].iloc[i] - max_index*16e-3 + t
+            ax.plot(t,event_DF['PulseWaveform'].iloc[i],
                        label=f'Channel {event_DF.Channel_number.iloc[i]}')
         ax.set_xlabel(r'Time ($\mu s$)')
         ax.set_ylabel('ADCC')
@@ -427,22 +427,26 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events = 50, save = False, outDir 
         p = Path(outDir)
         p.mkdir(parents=True, exist_ok=True)
     counter =0
-    for _,row in df.iterrows():
+    snippet_index=1
+
+    for i,row in df.iterrows():
+        if df.Event_ID.iloc[i] != df.Event_ID.iloc[i-1]:
+            snippet_index = 1
         fig, ax = plt.subplots()
-        ax.plot(row['samples'],'b')
-        ax.axvline(x=row['StartPulse'],label=f'Start: {row["StartPulse"]}',color = 'green',linestyle='dashed')
-        ax.axvline(x=row['EndPulse'],label=f'End: {row["EndPulse"]}',color = 'red',linestyle='dashed')
-        ax.plot(row['MaxIndex'],row['samples'][row['MaxIndex']],'bo',label = f'Height: {int(row["PulseHeight"])}')
+        ax.plot(row['PulseWaveform'],'b')
+        ax.axvline(x=row['PulseStart'],label=f'Start: {row["PulseStart"]}',color = 'green',linestyle='dashed')
+        ax.axvline(x=row['PulseEnd'],label=f'End: {row["PulseEnd"]}',color = 'red',linestyle='dashed')
+        ax.plot(row['MaximumIndex'],row['PulseWaveform'][row['MaximumIndex']],'bo',label = f'Maximum')
         props = dict(boxstyle="round", facecolor="wheat")
         ax.text(
         0.68,
         0.7,
-        f"Area:    {int(row['Charge'])} ADCC\n"
+        f"Area:    {int(row['PulseAreaADCC'])} ADCC\n"
         + f"Width:   {int(row['PulseWidth'])} samples\n"
         + f"Height:  {int(row['PulseHeight'])} ADCC\n"
-        + f"Charge/height: {row['Charge']/(row['PulseHeight']+0.01):.2f}\n"
-        + f"Energy: {row['Charge_keV']:.0f} keV\n" 
-        + f"Baseline: {int(row['Baseline'])} ADCC",
+        + f"Area/height: {row['PulseAreaADCC']/(row['PulseHeight']+0.01):.2f}\n"
+        + f"Energy: {row['ApproxEnergy_keVee']:.0f} " + r"keV$_{ee}$" + "\n" 
+        + f"Baseline: {int(row['BaselineADCC'])} ADCC",
         transform=ax.transAxes,
         fontsize=10,
         verticalalignment="top",
@@ -452,12 +456,13 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events = 50, save = False, outDir 
         ax.grid()
         ax.set_xlabel('Sample ID')
         ax.set_ylabel('ADC counts')
-        ax.set_title(f'Event {row["Event_ID"]} - Snippet {row["Snippet_number"]:.0f}')
+        ax.set_title(f'Event {row["Event_ID"]} - Snippet {snippet_index}')
         ax.legend(framealpha = 1,loc = 'upper right')
         if save == True:
-            fig.savefig(f'{outDir}/Event{row["Event_ID"]}_snippet{int(row["Snippet_number"])}.pdf')
+            fig.savefig(f'{outDir}/Event{row["Event_ID"]}_snippet{snippet_index}.pdf')
         plt.show()
         plt.close()
+        snippet_index += 1
         counter = counter + 1
         if counter > n_events:
             break
