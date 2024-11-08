@@ -74,7 +74,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
           f'\t- Post trigger time: {PostTriggerTime} samples\n'
           f'\t- Gain: {Parameters.gain}')
     
-    df = df.drop(columns=['Trigger_type','Frame_number'],errors='ignore')
+    df = df.drop(columns=['Trigger_type','Frame_number','PulsePileUpFlag'],errors='ignore')
     
     if 'snippets' in df.columns:
         df = explode_dataframe(df)
@@ -153,7 +153,7 @@ def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal
     if reduced == True:
         df_output = reduceDataframe(df_output)
     
-    df_output = df_output.drop(columns=['trigger_IDs','EventFlag'], errors='ignore')
+    df_output = df_output.drop(columns=['trigger_IDs','PulsePileUpFlag'], errors='ignore')
     df['corruptedEvent'] = [d != '' for d in df.preprocessingFlags ]
 
     if 'compact' in df_output.attrs and df_output.attrs['compact'] == True:
@@ -297,7 +297,7 @@ def compactDataframe(df):
     return out
 
 def reduceDataframe(df):
-    columns = ['Timedelta_samples', 'BoxcarSum', 'min', 'max', 'trigger_IDs', 'Trigger_type','Frame_number', 'Subsecs', 'Seconds',  'length', 'snippet_space', 'Datetime', 'EventFlag', 'trigger_count']
+    columns = ['Timedelta_samples', 'BoxcarSum', 'min', 'max', 'trigger_IDs', 'Trigger_type','Frame_number', 'Subsecs', 'Seconds',  'length', 'snippet_space', 'Datetime', 'PulsePileUpFlag', 'trigger_count']
     df=df.drop(columns=columns, errors = 'ignore')
     return df
 

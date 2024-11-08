@@ -167,7 +167,7 @@ class BaseSnippet():
     def _check_integrity(self):
         # return (self.header['Channel_number'] in range(36) 
         #         and self.header['Snippet_index'] in range(1,30)
-        #         and (int(self.header['EventFlag']) == 0 or int(self.header['EventFlag']) == 1)
+        #         and (int(self.header['PulsePileUpFlag']) == 0 or int(self.header['PulsePileUpFlag']) == 1)
         #         and 0 < self.header['BoxcarSum'] < 50000 
         #         )
         return True
@@ -182,7 +182,7 @@ class BaseSnippet():
                 return int.from_bytes(
                     bytes([entry[2], entry[1], entry[0]]), "big"
                 )
-            case 'EventFlag':
+            case 'PulsePileUpFlag':
                 return int.from_bytes(entry,'big')
             case _:
                 return entry

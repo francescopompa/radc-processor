@@ -284,7 +284,7 @@ class Snippet(BaseSnippet):
     # BoxcarSum: "3s"     # 3 Bytes arbitrary char
     # Timedelta_samples: "h"  # 2 Byte signed int ("short")
     # Snippet_index: "B" # 1 Byte unsigned int
-    # EventFlag: "c" # 1 Byte bits
+    # PulsePileUpFlag: "c" # 1 Byte bits
     _include_UDP_header_default = False
 
     pass
