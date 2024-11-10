@@ -74,7 +74,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
           f'\t- Post trigger time: {PostTriggerTime} samples\n'
           f'\t- Gain: {Parameters.gain}')
     
-    df = df.drop(columns=['Trigger_type','Frame_number','PulsePileUpFlag'],errors='ignore')
+    df = df.drop(columns=['Trigger_type','Frame_number'],errors='ignore')
     
     if 'snippets' in df.columns:
         df = explode_dataframe(df)
@@ -89,7 +89,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     df['PulseWaveform'] = df['PulseWaveform'] - df['BaselineADCC']
     
     floats = ['PulseAreaADCC', 'BaselineADCC', 'PulseHeight']
-    bools = ['AreaOverHeightPass']
+    bools = ['AreaOverHeightPass','PulsePileUpFlag']
     integers = [c for c in columns if c not in [*floats,*bools]]
     df= df.astype({f:float for f in floats})
     df= df.astype({b:bool for b in bools})
@@ -117,8 +117,6 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     df['Event_ID'] = reorderEventIDs(df['Event_ID']) 
     df.attrs['missing_events_fraction']= 1 - len(events) / diffEvents
     df.attrs['duplicated_events_fraction'] = len(set(df.Event_ID[df.duplicateEvent==True])) / len(events)
-    df.attrs['start_time'] = str(pd.to_datetime(df.Timestamp_s.iloc[0],unit='s'))
-    df.attrs['end_time'] = str(pd.to_datetime(df.Timestamp_s.iloc[-1],unit='s'))
 
     df = df.sort_values(['Event_ID','PulseTime_us']).reset_index(drop=True)
 
