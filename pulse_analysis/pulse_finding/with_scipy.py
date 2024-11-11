@@ -6,7 +6,7 @@ scipy.signal.
 import scipy.signal as scp
 
 
-def find_peaks(row, column="samples", **kwargs):
+def find_peaks(row, column="PulseWaveform", **kwargs):
     """
     Wrapper for scipy.signal.find_peaks.
     Apply with
@@ -19,10 +19,10 @@ def find_peaks(row, column="samples", **kwargs):
     - column: Name of the column of row to get the waveform from.
     If None, use row as-is instead.
     - height: Absolute minimal value of the peak sample value.
-    - width: Interpolated peak width in samples at given rel_height
+    - width: Interpolated peak width in PulseWaveform at given rel_height
     - wlen: Window length of area to inspect, centered around peak, to determine prominence and width. Cuts signal at those limits.
     - rel_height: Relative height at which peak width is measured (% of its prominence). 1.0: width of the peak at lowest contour line. 0.5: evaluates at half the prominence height.
-    - plateau_size: Minimum required width in samples of peak's flat top.
+    - plateau_size: Minimum required width in PulseWaveform of peak's flat top.
     """
     waveform = row[column] if column else row
 

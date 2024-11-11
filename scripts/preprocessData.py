@@ -19,9 +19,9 @@ def main():
     begin = time()
 
     for s in subdirectories:
-        start = time()
         json_files = glob(f'{s}/*results*.json')
-        for j in json_files:
+        for i,j in enumerate(json_files):
+            start = time()
             with open(j, 'r') as file:
                 metadata = json.load(file)
             print(f'Subdirectory: {s}')
@@ -29,13 +29,14 @@ def main():
                 namefiles = [m.split('/')[-1] for m in metadata['files_written']]
                 namefile_output = namefiles[0].split('.')[0]
                 namefiles = [f'{s}/{name}' for name in namefiles]
-                print(f'Analyzing {len(namefiles)} in the directory {s}.')
+                print(f'Analyzing {len(namefiles)} files from json file {i+1}/{len(json_files)}')
                 
                 if "SLURM_JOB_ID" not in os.environ:
                     n_jobs=min(len(namefiles),4)
                 
                 processingMetadata = make_total_rootfile(
-                    namefiles , out_dir=f'{s}/processed/', namefile_output=namefile_output, mode='compact', parallel=True, n_jobs=n_jobs)
+                    namefiles , out_dir=f'{s}/processed/', namefile_output=namefile_output, mode='compact', parallel=True, n_jobs=n_jobs
+                    )
                 metadata['processing_time'] = time() - start
                 metadata['processed'] = True
                 processingMetadata['processing_time'] = time() - start

@@ -101,7 +101,7 @@ class BaseDataFile():
 class BaseSnippet():
 
     _kwargs = {}
-    _contents = "samples"
+    _contents = "PulseWaveform"
     _include_UDP_header_default = True
     _mapping_dict = CONFIG["struct_fields_mapping"]
     _mapping_name = "Snippet_header"
@@ -119,11 +119,11 @@ class BaseSnippet():
         """
         self.udp_header = {}
         self.header = {}
-        # self.samples = []
-        self.trigger_IDs = []
+        # self.PulseWaveform = []
+        # self.trigger_IDs = []
         self.include_UDP_header = include_UDP_header or self._include_UDP_header_default
 
-        self.stats = self._stats_default.copy()
+        # self.stats = self._stats_default.copy()
 
         for key, default in self._kwargs.items():
             setattr(self, key, kwargs.pop(key, default))
@@ -166,9 +166,9 @@ class BaseSnippet():
 
     def _check_integrity(self):
         # return (self.header['Channel_number'] in range(36) 
-        #         and self.header['Snippet_number'] in range(1,30)
-        #         and (int(self.header['Info_flags']) == 0 or int(self.header['Info_flags']) == 1)
-        #         and 0 < self.header['Energy'] < 50000 
+        #         and self.header['Snippet_index'] in range(1,30)
+        #         and (int(self.header['PulsePileUpFlag']) == 0 or int(self.header['PulsePileUpFlag']) == 1)
+        #         and 0 < self.header['BoxcarSum'] < 50000 
         #         )
         return True
                 
@@ -177,12 +177,12 @@ class BaseSnippet():
         match key:
             case "Type"|'Trigger_type':
                 return entry.decode("ascii")
-            case "Energy":
+            case "BoxcarSum":
                 # Reverse the Byte order
                 return int.from_bytes(
                     bytes([entry[2], entry[1], entry[0]]), "big"
                 )
-            case 'Info_flags':
+            case 'PulsePileUpFlag':
                 return int.from_bytes(entry,'big')
             case _:
                 return entry
@@ -200,9 +200,9 @@ class BaseSnippet():
             unsigned_val = sample & 0b0011111111111111
             s = unsigned_val >> 13  # 1: negative, 0:positive
 
-            if (t and not i):
-                # Real trigger case that wasn't inhibited:
-                self.trigger_IDs.append(ID)
+            # if (t and not i):
+            #     # Real trigger case that wasn't inhibited:
+            #     self.trigger_IDs.append(ID)
 
             # Considering the ADC to use two's-complement signed values
             yield -s*2**14 + unsigned_val
@@ -214,15 +214,15 @@ class BaseSnippet():
             # }
 
     def _calculate_stats(self):
-        self.stats["min"] = min(self.samples)
-        self.stats["max"] = max(self.samples)
+        self.stats["min"] = min(self.PulseWaveform)
+        self.stats["max"] = max(self.PulseWaveform)
         self.stats["trigger_count"] = len(self.trigger_IDs)
 
     def get_record(self):
         return {
             **self.udp_header,
             **self.header,
-            **self.stats,
-            "trigger_IDs": self.trigger_IDs,
-            "samples": self.samples
+            # **self.stats,
+            # "trigger_IDs": self.trigger_IDs,
+            "PulseWaveform": self.PulseWaveform
         }

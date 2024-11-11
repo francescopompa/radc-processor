@@ -38,14 +38,14 @@ class DataFile(BaseDataFile):
             value for value in fsm["Snippet_header"].values()
         ])
 
-        samples = f"{self.tracelength}{fsm['Sample']}"
+        PulseWaveform = f"{self.tracelength}{fsm['Sample']}"
 
         self._validate_format_string(
             snippet_header, CONFIG["udp_package_structure"]["snippet_header_size_bytes"])
         self._validate_format_string(
             fsm["Sample"], CONFIG["udp_package_structure"]["sample_size_bytes"])
 
-        string = f"{endianness_struct_mapping[endianness]} {package_header} {snippet_header} {samples}"
+        string = f"{endianness_struct_mapping[endianness]} {package_header} {snippet_header} {PulseWaveform}"
 
         self.snippet_size_bytes = struct.calcsize(string)
 
@@ -77,7 +77,7 @@ class DataFile(BaseDataFile):
 class Snippet(BaseSnippet):
 
     def _convert_types(self, key, entry):
-        if key == "Energy":
+        if key == "BoxcarSum":
             # Reverse the Byte order
             return int.from_bytes(
                 bytes([entry[2], entry[1], entry[0]],"big")

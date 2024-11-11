@@ -1,21 +1,20 @@
 #! /bin/bash
 
-# Initialize our own variables:
-
 killall -u $USER screen
 
 rootDir="/data/DAQMeasurements"
 targetDir="test"
-duration=180
+duration=1800
 maxEvents=3000000
 maxVolume=500000000
+maxTime=180
 nTimes=10
 playbook="/home/mnd/Software/radc-processor/scripts/radc_playbook_neutron.txt"
 # total time is equal to n_times*duration
 
 OPTIND=1
 
-while getopts ":b:d:t:e:v:" opt; do
+while getopts ":b:d:t:e:v:n:l:" opt; do
   case "$opt" in
     b) 
     rootDir=$OPTARG
@@ -35,6 +34,8 @@ while getopts ":b:d:t:e:v:" opt; do
     n)
     nTimes=$OPTARG
     ;;
+    l)
+    maxTime=$OPTARG
   esac
 done
 
@@ -49,6 +50,7 @@ echo "Duration: ${duration} s"
 echo "Events in each chunk: ${maxEvents}"
 echo "Maximal volume of each chunk: ${maxVolume} B"
 echo "Repeated for ${nTimes} times."
+echo "Maximal run time: ${maxTime} s."
 echo "Leftovers: $@"
 echo "To see the status of data taking, type screen -r run"
 echo "To see the status of the slow control, type screen -r slow_control"
@@ -59,7 +61,7 @@ echo "The measurement will last ${totalTime} s"
 
 screen -dmS slow_control bash -c "slowControl target_root=${rootDir} target_dir=${targetDir};exec bash"
 screen -dmS run
-screen -r run -p 0 -X stuff $"for i in {1..$nTimes};do radc_receiver target_root=${rootDir} target_dir=${targetDir} start=True duration=${duration} chunk_max_events=${maxEvents} chunk_max_volume=${maxVolume};done\n"
+screen -r run -p 0 -X stuff $"for i in {1..$nTimes};do radc_receiver target_root=${rootDir} target_dir=${targetDir} start=True duration=${duration} chunk_max_events=${maxEvents} chunk_max_volume=${maxVolume} chunk_max_time=${maxTime};done\n"
 
 
     

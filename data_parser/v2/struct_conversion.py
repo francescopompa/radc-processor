@@ -34,7 +34,7 @@ class DataFile(BaseDataFile):
             value for value in fsm["Snippet_header"].values()
         ])
 
-        samples = f"{self.tracelength}{fsm['Sample']}"
+        PulseWaveform = f"{self.tracelength}{fsm['Sample']}"
 
         self._validate_format_string(
             event_header,
@@ -49,9 +49,9 @@ class DataFile(BaseDataFile):
             CONFIG["udp_package_structure"]["sample_size_bytes"],
             structname="sample")
 
-        # string = f"{endian} {package_header} {snippet_header} {samples}"
+        # string = f"{endian} {package_header} {snippet_header} {PulseWaveform}"
         event_string = f"{endian} {event_header}"
-        snippet_string = f"{endian} {snippet_header} {samples}"
+        snippet_string = f"{endian} {snippet_header} {PulseWaveform}"
 
         self.snippet_size_bytes = (
             struct.calcsize(event_string),
@@ -269,7 +269,7 @@ class Event(BaseSnippet):
     def get_record(self):
         return {
             **self.header,
-            **self.stats,
+            # **self.stats,
             "snippets": [
                 snippet.get_record() for snippet in self.snippets
             ]
@@ -281,10 +281,10 @@ class Event(BaseSnippet):
 
 class Snippet(BaseSnippet):
     # Channel_number: "B"  # 1 Byte unsigned char integer
-    # Energy: "3s"     # 3 Bytes arbitrary char
+    # BoxcarSum: "3s"     # 3 Bytes arbitrary char
     # Timedelta_samples: "h"  # 2 Byte signed int ("short")
-    # Snippet_number: "B" # 1 Byte unsigned int
-    # Info_flags: "c" # 1 Byte bits
+    # Snippet_index: "B" # 1 Byte unsigned int
+    # PulsePileUpFlag: "c" # 1 Byte bits
     _include_UDP_header_default = False
 
     pass
