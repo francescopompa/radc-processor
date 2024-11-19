@@ -142,7 +142,7 @@ class Control():
         fig_trigger = px.histogram(x=centerEnergy, log_y=True)
         fig_trigger.update_traces(xbins=dict(
             start=0,
-            end=8000,
+            end=20000,
             size=50
         ))
         fig_trigger.update_layout(
@@ -163,7 +163,7 @@ class Control():
             tmp_df, x="data", color="series", barmode="overlay", log_y=True)
         fig_comparison.update_traces(xbins=dict(
             start=0,
-            end=4000,
+            end=20000,
             size=20
         ))
         fig_comparison.update_layout(
@@ -184,6 +184,9 @@ class Control():
             "table_HV": df_HV.to_html(index=False, justify='left', float_format="%g")
 
         }
+
+        pl.plot_events_coincidence(df[-2000:],save=True,outDir=f'/home/mnd/Desktop/slowControl/events')
+        pl.plotEventsPulseFinder(df[-2000:],save=True,outDir=f'/home/mnd/Desktop/slowControl/pulses')
 
         with open(self.output_html_path, "w", encoding="utf-8") as output_file:
             with open(self.input_template_path) as template_file:

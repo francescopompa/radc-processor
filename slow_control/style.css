@@ -23,16 +23,16 @@ div {
     padding: 10px;
 }
 .container {
-    background-color:#2E4272;
+    background-color: transparent;
     display:flex;
 }
 .fixed {
-    background-color:#4F628E;
+    background-color: transparent;
     /* width: 1200px;
     height: 550px; */
 }
 .flex-item {
-    background-color:#7887AB;
+    background-color: transparent;
     flex-grow: 1;
     /* height: 550px; */
 }
@@ -41,24 +41,25 @@ table {
 	border-collapse: collapse;
     font-family: Tahoma, Geneva, sans-serif;
     margin-left: auto;
-    margin-right: auto
+    margin-right: auto;
+    table-layout: auto;
 }
 table td {
 	padding: 15px;
 }
 table thead td {
-	background-color: #281af4;
+	background-color: #554be4;
 	color: #ffffff;
 	font-weight: bold;
 	font-size: 13px;
 	border: 1px solid #144f98;
 }
 table tbody td {
-	color: #636363;
-	border: 1px solid #0d0f10;
+	color: #000000;
+	border: 1px solid #000000;
 }
 table tbody tr {
-	background-color: #5fbde0;
+	background-color: #dbecf2;
 }
 table tbody tr:nth-child(odd) {
 	background-color: #ffffff;
