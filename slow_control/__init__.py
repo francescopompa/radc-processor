@@ -117,7 +117,7 @@ class Control():
         pl.plotCountsPerChannel(df, ax)
         fig.savefig('/home/mnd/Desktop/hCountsPerChannel.png')
         plt.close()
-        fig = px.histogram(x=df['PulseTime_us'][df.PulseWaveform == True], log_y=True)
+        fig = px.histogram(x=df['PulseTime_us'][df.AreaOverHeightPass == True], log_y=True)
         fig.update_traces(xbins=dict(
             start=-Parameters.PostTriggerTime*16e-3,
             end=Parameters.PostTriggerTime*16e-3,
