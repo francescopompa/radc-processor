@@ -1,3 +1,5 @@
+from curses import meta
+from os import error
 import data_parser
 data_parser.init('v2')
 import numpy as np
@@ -11,6 +13,7 @@ import uproot
 from pathlib import Path
 from typing import Literal
 from joblib import Parallel, delayed
+import time
 
 
 
@@ -27,10 +30,6 @@ def datafile_to_df(file: DataFile) -> pd.DataFrame:
         exclude=None,
         columns=None,
     )
-
-    if "Timestamp_s" in df:
-        # df["Datetime"] = pd.to_datetime(df["Timestamp_s"]),
-        df["Datetime"] = df["Timestamp_s"].apply(pd.Timestamp)
 
     return df
 
@@ -75,20 +74,22 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
           f'\t- Post trigger time: {PostTriggerTime} samples\n'
           f'\t- Gain: {Parameters.gain}')
     
+    df = df.drop(columns=['Trigger_type','Frame_number'],errors='ignore')
+    
     if 'snippets' in df.columns:
         df = explode_dataframe(df)
     
-    tmp = df['samples'].apply(pf.pulse_operations)
+    tmp = df['PulseWaveform'].apply(pf.pulse_operations)
 
-    columns = ['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
-               'StartPulse', 'EndPulse', 'Baseline']
+    columns = ['AreaOverHeightPass', 'MaximumIndex', 'PulseHeight', 'PulseWidth', 'PulseAreaADCC',
+               'PulseStart', 'PulseEnd', 'BaselineADCC']
     for i, col in enumerate(columns):
         df[col] = [row[i] for row in tmp]
     df = df.explode(columns).reset_index(drop=True)
-    df['samples'] = df['samples'] - df['Baseline']
+    df['PulseWaveform'] = df['PulseWaveform'] - df['BaselineADCC']
     
-    floats = ['Charge', 'Baseline', 'PulseHeight']
-    bools = ['IsPulse']
+    floats = ['PulseAreaADCC', 'BaselineADCC', 'PulseHeight']
+    bools = ['AreaOverHeightPass','PulsePileUpFlag']
     integers = [c for c in columns if c not in [*floats,*bools]]
     df= df.astype({f:float for f in floats})
     df= df.astype({b:bool for b in bools})
@@ -98,45 +99,45 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
         df.loc[:, 'Type'] = df.Type.astype('str')
         df.loc[:, 'Rest'] = df.Rest.astype('str')
 
-    df['Charge_keV'] = df.apply(lambda x: pf.energyConversion(
-        x['Charge'], x['Channel_number'], Parameters.gain), axis=1)
+    df['ApproxEnergy_keVee'] = df.apply(lambda x: pf.energyConversion(
+        x['PulseAreaADCC'], x['Channel_number'], Parameters.gain), axis=1)
 
-    df['deltaT_us'] = df.apply(lambda x: pf.getRelativeTimeSnippets(
+    df['PulseTime_us'] = df.apply(lambda x: pf.getRelativeTimeSnippets(
         x['Subsecs'], x['Timedelta_samples'], TimeWindow, PostTriggerTime, x['Channel_number']), axis=1)
-    # df['deltaT_us_CFD'] = df.apply(pf.computeTimeWithCFD,axis=1)
-    # df['BoxcarSum'] = df.apply(lambda x: pf.getBoxcarSum(x.samples,x.Baseline),axis=1)
+    df = df.drop(columns=['Seconds','Subsecs','Timedelta_samples'],errors='ignore')
 
-    df['preprocessingFlags'] = df.apply(lambda x: pf.getFlagsCorruptedData(x.Channel_number,x.samples,x.Timestamp_s),axis=1)
 
-    df.loc[:, 'Datetime'] = df['Datetime'].dt.strftime('%Y%m%d')
-    df.loc[:, 'Datetime'] = df.Datetime.astype('int64')
+    df['preprocessingFlags'] = df.apply(lambda x: pf.getFlagsCorruptedData(x.Channel_number,x.PulseWaveform,x.Timestamp_s),axis=1)
 
     events = set(df.Event_ID)
     df = findDuplicateEvents(df)
+
+    df = df.drop(columns=['Snippet_count','Snippet_index','BoxcarSum'],errors='ignore')
     diffEvents = max(events) - min(events) + 1
     df['Event_ID'] = reorderEventIDs(df['Event_ID']) 
     df.attrs['missing_events_fraction']= 1 - len(events) / diffEvents
     df.attrs['duplicated_events_fraction'] = len(set(df.Event_ID[df.duplicateEvent==True])) / len(events)
-    df = df.sort_values(['Event_ID','deltaT_us']).reset_index(drop=True)
+
+    df = df.sort_values(['Event_ID','PulseTime_us']).reset_index(drop=True)
 
     return df
 
 def cleanupDataframe(df):
-    df = df[(df['preprocessingFlags'] == '') & (df['IsPulse'] == True)]
+    df = df[(df['preprocessingFlags'] == '') & (df['AreaOverHeightPass'] == True)]
     tmp = df.groupby('Event_ID')
     for (event_ID), event_DF in tmp:
         if len(event_DF.index) < event_DF['snippet_space'].iloc[0]:
             df.loc[df['Event_ID'] == event_ID,
                    'snippet_space'] = len(event_DF.index)
-            df.loc[df['Event_ID'] == event_ID, 'Snippet_number'] = range(
+            df.loc[df['Event_ID'] == event_ID, 'Snippet_index'] = range(
                 1, len(event_DF.index)+1)
 
-    df = df.sort_values(['Event_ID', 'Snippet_number']).reset_index(drop=True)
+    df = df.sort_values(['Event_ID', 'Snippet_index']).reset_index(drop=True)
     
     return df
 
-def flattenSamples(samples):
-    return [x for xs in samples for x in xs]
+def flattenSamples(PulseWaveform):
+    return [x for xs in PulseWaveform for x in xs]
 
 def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal['snippet','compact'] = 'compact', reduced = False) -> "list[uproot.writing.writable.WritableDirectory]":
     '''
@@ -144,7 +145,7 @@ def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal
     If the mode is snippet, the function expects an exploded dataframe (i.e. each row is a pulse), 
     otherwise it expect each row is an event. In the last case it drops the column of the samples and of the preprocessing flags. To handle large datasets, it's recommended to use TChain and wildcards.
     '''
-    df = df.sort_values(['Event_ID','deltaT_us']).reset_index(drop=True)
+    df = df.sort_values(['Event_ID','PulseTime_us']).reset_index(drop=True)
     df_output = df
 
     if (mode == 'compact') and ('compact' not in df.attrs):
@@ -152,12 +153,12 @@ def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal
     if reduced == True:
         df_output = reduceDataframe(df_output)
     
-    df_output = df_output.drop(columns=['trigger_IDs','Info_flags'], errors='ignore')
+    df_output = df_output.drop(columns=['trigger_IDs','PulsePileUpFlag'], errors='ignore')
     df['corruptedEvent'] = [d != '' for d in df.preprocessingFlags ]
 
     if 'compact' in df_output.attrs and df_output.attrs['compact'] == True:
-        if 'samples' in df_output:
-            df_output['samples'] = df_output.apply(lambda x: flattenSamples(x['samples']),axis=1)
+        if 'PulseWaveform' in df_output:
+            df_output['PulseWaveform'] = df_output.apply(lambda x: flattenSamples(x['PulseWaveform']),axis=1)
         df_output = df_output.drop(columns=['preprocessingFlags'], errors='ignore')
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -284,9 +285,9 @@ def explode_dataframe(df):
     return df
 
 def compactDataframe(df):
-    columns = ['IsPulse', 'MaxIndex', 'PulseHeight', 'PulseWidth', 'Charge',
-               'StartPulse', 'EndPulse', 'Baseline', 'Channel_number', 'Energy', 'Timedelta_samples',
-               'Snippet_number', 'min', 'max', 'samples', 'Charge_keV', 'deltaT_us',
+    columns = ['AreaOverHeightPass', 'MaximumIndex', 'PulseHeight', 'PulseWidth', 'PulseAreaADCC',
+               'PulseStart', 'PulseEnd', 'BaselineADCC', 'Channel_number', 'BoxcarSum', 'Timedelta_samples',
+               'Snippet_index', 'min', 'max', 'PulseWaveform', 'ApproxEnergy_keVee', 'PulseTime_us',
                'preprocessingFlags', 'trigger_IDs']
     tmp=df.groupby('Event_ID')[[c for c in columns if c in df.columns]].agg(list).reset_index(drop=True)
     tmp2 = df.groupby('Event_ID')[[c for c in df.columns if c not in columns and c in df.columns]].agg('first').reset_index(drop=True)
@@ -296,7 +297,7 @@ def compactDataframe(df):
     return out
 
 def reduceDataframe(df):
-    columns = ['Timedelta_samples', 'Energy', 'min', 'max', 'trigger_IDs', 'Trigger_type','Frame_number', 'Subsecs', 'Seconds',  'length', 'snippet_space', 'Datetime', 'Info_flags', 'trigger_count']
+    columns = ['Timedelta_samples', 'BoxcarSum', 'min', 'max', 'trigger_IDs', 'Trigger_type','Frame_number', 'Subsecs', 'Seconds',  'length', 'snippet_space', 'Datetime', 'PulsePileUpFlag', 'trigger_count']
     df=df.drop(columns=columns, errors = 'ignore')
     return df
 
@@ -332,7 +333,7 @@ def getParametersFromJson(files: list|str):
 
 def findDuplicateEvents(df: pd.DataFrame):
     duplicate_events = []
-    energies = df.Energy
+    energies = df.BoxcarSum
     snippet_count = df.Snippet_count
     for i,e in enumerate(energies):
             if i>snippet_count.iloc[i] and e == energies.iloc[i-snippet_count.iloc[i]] and df.Event_ID.iloc[i] != df.Event_ID.iloc[i-snippet_count.iloc[i]] and e > 1000:
@@ -347,7 +348,7 @@ def getAdditionalParameters(df,metadata):
     metadata['snippet_rate'] = len(df.index) / metadata['total_time']
     metadata['event_rate'] = len(set(df['Event_ID'])) / metadata['total_time']
 
-    metadata['pulse_detection_efficiency'] = len(df[df.IsPulse == True].index) / len(df.index)
+    metadata['pulse_detection_efficiency'] = len(df[df.AreaOverHeightPass == True].index) / len(df.index)
     metadata['corrupted_snippets_fraction'] = len(df[df.preprocessingFlags != ""])/len(df.index)
     metadata['missing_events_fraction'] = df.attrs['missing_events_fraction']
     metadata['duplicated_events_fraction'] = df.attrs['duplicated_events_fraction']
@@ -356,9 +357,8 @@ def getAdditionalParameters(df,metadata):
     if isinstance(posttriggertime,list):
         posttriggertime = Parameters.PostTriggerTime
     
-    metadata['snippets_wrong_timestamp_fraction'] = len(df[(df.deltaT_us< -posttriggertime*16e-3) | (df.deltaT_us> posttriggertime*16e-3)]) / len(df)
+    metadata['snippets_wrong_timestamp_fraction'] = len(df[(df.PulseTime_us< -posttriggertime*16e-3) | (df.PulseTime_us> posttriggertime*16e-3)]) / len(df)
     metadata['n_snippets'] = len(df.index)
     metadata['n_events'] = len(set(df.Event_ID))
-    
     
                 

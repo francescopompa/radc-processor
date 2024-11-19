@@ -25,7 +25,7 @@ def fit_histo(data: pd.Series, axes, nbins, x_array, label, color=hist_colors[0]
 def plot_distribution(df, binwidth=None, nbins=15, colors=hist_colors, **kwargs):
     colors = iter(hist_colors)
 
-    title = kwargs.get("title") or "Energy distribution with Filter v2"
+    title = kwargs.get("title") or "BoxcarSum distribution with Filter v2"
     xlabel= kwargs.get("xlabel") or "Summed ADC-Counts of pulse"
     columns = kwargs.get("columns") or ["Sum"]
     labels = kwargs.get("labels") or ["Peak-finding sum"]

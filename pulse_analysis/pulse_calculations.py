@@ -13,8 +13,8 @@ def get_baseline_avg(row):
     WARNING: only works for a single pulse per Snippet!
     """
     List = (
-        row["samples"][:row["Limits"][0]]
-        + row["samples"][row["Limits"][1]+1:-1] # Exclude last sample, as it's always 0
+        row["PulseWaveform"][:row["Limits"][0]]
+        + row["PulseWaveform"][row["Limits"][1]+1:-1] # Exclude last sample, as it's always 0
         )
     return np.mean(List)
 
@@ -30,10 +30,10 @@ def add_samples(row):
     """Shift pulse by BaselineCorr and return sum of all pulse samples."""
     return sum(
         [i - row["BaselineCorr"]
-        for i in row["samples"][row["Limits"][0]:row["Limits"][1]+1]]
+        for i in row["PulseWaveform"][row["Limits"][0]:row["Limits"][1]+1]]
         )
 
-def fix_overflows(row, column="samples", threshold=-2000):
+def fix_overflows(row, column="PulseWaveform", threshold=-2000):
     """
     Fix sign overflows in ADC counts (represented as 14 bit signed int).
 
@@ -52,17 +52,17 @@ def fix_overflows(row, column="samples", threshold=-2000):
     sample is higher than half the value range plus the value of the
     previous sample, are not detected.
     """
-    samples = row[column] if column else row
+    PulseWaveform = row[column] if column else row
     upper_range = pd.Interval(left=2**12 -1, right=2**13 -1, closed="both") # [4095,8191]
     lower_range = pd.Interval(left=-2**13, right=-2**12, closed="both")     # [-8192, -4096]
     offset = (2**13) + (2**13 -1)
 
     # early exit if no correction necessary
-    if all(s not in lower_range for s in samples):
-        return samples
+    if all(s not in lower_range for s in PulseWaveform):
+        return PulseWaveform
 
-    # Get regions where samples are in the upper range
-    high = [i for i,s in enumerate(samples) if s in upper_range]
+    # Get regions where PulseWaveform are in the upper range
+    high = [i for i,s in enumerate(PulseWaveform) if s in upper_range]
     between = [
         (high[_j-1]+1, i-1)
         for _j,i in enumerate(high)
@@ -72,15 +72,15 @@ def fix_overflows(row, column="samples", threshold=-2000):
     # look at interruptions between those regions
     need_correction =[]
     for left_end, right_end in between:
-        if (samples[left_end] in lower_range
-        and samples[right_end] in lower_range):
+        if (PulseWaveform[left_end] in lower_range
+        and PulseWaveform[right_end] in lower_range):
             need_correction += range(left_end, right_end+1)
 
-    # correct samples within those interruptions
+    # correct PulseWaveform within those interruptions
     for index in need_correction:
-        samples[index] = samples[index] + offset
+        PulseWaveform[index] = PulseWaveform[index] + offset
 
-    return samples
+    return PulseWaveform
     # return [i if i > threshold else 8192+8192+i for i in a] # i is negative in else case
 
 
@@ -92,21 +92,21 @@ def adjust_baseline(data):
     """
     data["Limits"] = data["PeakFinding"].apply(get_limits)
     data["BaselineCorr"] = data.apply(get_baseline_avg, axis=1)
-    data["Sum"] = data[["samples", "Limits", "BaselineCorr"]].apply(add_samples, axis=1)
+    data["Sum"] = data[["PulseWaveform", "Limits", "BaselineCorr"]].apply(add_samples, axis=1)
 
 
-def get_peak_to_peak(row, column="samples"):
+def get_peak_to_peak(row, column="PulseWaveform"):
     """
-    Returns peak-to-peak distance of the samples within the samples list.
+    Returns peak-to-peak distance of the PulseWaveform within the PulseWaveform list.
     Uses a simple abs(max()-min()) calculation and no statistics/averaging.
     """
-    samples = row[column] if column else row
-    return abs(max(samples)-min(samples))
+    PulseWaveform = row[column] if column else row
+    return abs(max(PulseWaveform)-min(PulseWaveform))
 
 
-def detect_saturation(row, column="samples"):
+def detect_saturation(row, column="PulseWaveform"):
     """
-    Returns the list of sample indices from the samples list;
+    Returns the list of sample indices from the PulseWaveform list;
     where each entry marks one sample index of a chain where
         - the sample value is >= the maximum of the value range
         AND
@@ -120,32 +120,32 @@ def detect_saturation(row, column="samples"):
 
     The value range is determined as 2**13-1 (for 14bit signed integers)
     """
-    samples = row[column] if column else row
+    PulseWaveform = row[column] if column else row
     max = 2**13-1
 
     return [
         i+1
-        for i,s in enumerate(samples[1:-1])
+        for i,s in enumerate(PulseWaveform[1:-1])
         # if i>0
         if s>=max
-        and (s==samples[i-1+1] or s==samples[i+1+1])
+        and (s==PulseWaveform[i-1+1] or s==PulseWaveform[i+1+1])
         ]
     # [i for j,i in enumerate(high) if j>0 and i == high[j-1]+1]
 
 
-def detect_flatlines(row, column="samples", bandwidth=5):
+def detect_flatlines(row, column="PulseWaveform", bandwidth=5):
     """
     Returns True if the value range of a waveform is limited to
     bandwidth, hinting at a (mostly) flat waveform not showing any information.
 
-    Returns False if max(samples) - min(samples) > bandwidth
+    Returns False if max(PulseWaveform) - min(PulseWaveform) > bandwidth
 
-    Rightmost samples with value 0 are stripped from the waveform beforehand.
+    Rightmost PulseWaveform with value 0 are stripped from the waveform beforehand.
     """
-    samples = row[column] if column else row
+    PulseWaveform = row[column] if column else row
 
-    # strip zero values at (right) end of the samples
-    stripped_samples = list(itertools.dropwhile(lambda x: x == 0, samples[::-1]))
+    # strip zero values at (right) end of the PulseWaveform
+    stripped_samples = list(itertools.dropwhile(lambda x: x == 0, PulseWaveform[::-1]))
 
     # Compare value range to bandwidth
     return (max(stripped_samples)-min(stripped_samples)) <= bandwidth
@@ -157,25 +157,25 @@ def detect_flatlines(row, column="samples", bandwidth=5):
     #
 
 
-def detect_sharp_peaks(row, column="samples", threshold=4096, count=5):
+def detect_sharp_peaks(row, column="PulseWaveform", threshold=4096, count=5):
     """
-    Returns True if the samples list contains single samples that are
+    Returns True if the PulseWaveform list contains single PulseWaveform that are
     at least `threshold` above from their neighbours.
     """
-    samples = row[column] if column else row
+    PulseWaveform = row[column] if column else row
     exceeding = [
         i+1
-        for i,s in enumerate(samples[1:-1])
-        if s - samples[i-1+1] > threshold
-        and s - samples[i+1+1]> threshold
+        for i,s in enumerate(PulseWaveform[1:-1])
+        if s - PulseWaveform[i-1+1] > threshold
+        and s - PulseWaveform[i+1+1]> threshold
     ]
     return len(exceeding) > 0
-    # nb_samples = len(samples)
-    # average = sum(samples)/nb_samples
-    # above = [s for s in samples if s > average]
+    # nb_samples = len(PulseWaveform)
+    # average = sum(PulseWaveform)/nb_samples
+    # above = [s for s in PulseWaveform if s > average]
     # return len(above) < count
 
     # for i in exceeding:
-    #     samples[i] = (samples[i+1]+samples[i-1])/2
+    #     PulseWaveform[i] = (PulseWaveform[i+1]+PulseWaveform[i-1])/2
 
-    # return samples
+    # return PulseWaveform

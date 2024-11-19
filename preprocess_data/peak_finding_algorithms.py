@@ -27,7 +27,7 @@ def find_first_n_less(min_value, vector, n):
         return 0
 
 
-def calc_puls_params(samples, peak, min_threshold_height, window_size, n_below_min):
+def calc_puls_params(PulseWaveform, peak, min_threshold_height, window_size, n_below_min):
     """
     part of pulse_finder function
     :param n_below_min:
@@ -44,16 +44,16 @@ def calc_puls_params(samples, peak, min_threshold_height, window_size, n_below_m
     peak_window_start = peak - window_size
     peak_window_end = peak + window_size
 
-    if peak_window_end >= len(samples):
-        peak_window_end = len(samples) - 1
+    if peak_window_end >= len(PulseWaveform):
+        peak_window_end = len(PulseWaveform) - 1
     if peak_window_start <= 1:
         peak_window_start = 0
     # searching for the signal peak in the given window around the smoothed peak
     peak_max_index = peak_window_start + \
-        np.argmax(samples[peak_window_start: peak_window_end + 1])
+        np.argmax(PulseWaveform[peak_window_start: peak_window_end + 1])
 
     # here a moving average of 3 points is made
-    sig_windows_start = np.flip(samples[: (peak_max_index + 2)])
+    sig_windows_start = np.flip(PulseWaveform[: (peak_max_index + 2)])
     # taking the averages starting at peak_max + 1 so the average is centered around the current index
     #                       one before peak         peak                    one after
     averaged_sig_window = np.convolve(sig_windows_start,np.ones(Parameters.n_samples_baseline)/Parameters.n_samples_baseline,mode = 'valid')
@@ -62,11 +62,11 @@ def calc_puls_params(samples, peak, min_threshold_height, window_size, n_below_m
     pulse_start = peak_max_index - \
         find_first_n_less(min_threshold_height,
                           averaged_sig_window, n_below_min)
-    if samples[pulse_start] > (Parameters.height +5):
+    if PulseWaveform[pulse_start] > (Parameters.height +5):
         pulse_start = max(0,pulse_start -10)
     # same for the pulse_end
     # 3 wide box car average centered on each value (-1 current_index +1)
-    sig_windows_end = samples[peak_max_index - 1:]
+    sig_windows_end = PulseWaveform[peak_max_index - 1:]
     averaged_sig_window = np.convolve(sig_windows_end, np.ones(Parameters.n_samples_running_average)/Parameters.n_samples_baseline,mode = 'valid')
 
     n_samples = find_first_n_less(min_threshold_height,
@@ -78,10 +78,10 @@ def calc_puls_params(samples, peak, min_threshold_height, window_size, n_below_m
     elif pulse_width < 30:
         pulse_end = min(pulse_start + 40, 63)
         
-    if pulse_start >= len(samples):
-        pulse_start = len(samples) - 1
-    if pulse_end >= len(samples):
-        pulse_end = len(samples) - 1
+    if pulse_start >= len(PulseWaveform):
+        pulse_start = len(PulseWaveform) - 1
+    if pulse_end >= len(PulseWaveform):
+        pulse_end = len(PulseWaveform) - 1
 
     # check if pulse index width is larger than 0
     if pulse_end - pulse_start > 0 and pulse_end != -1 and pulse_start != -1:
@@ -89,28 +89,28 @@ def calc_puls_params(samples, peak, min_threshold_height, window_size, n_below_m
         pulse_width = pulse_end - pulse_start
         # Area via trapezoid integration from pulse start to end
         # ,dx=sample_width) #16 ns sample width
-        pulse_area = np.trapz(samples[pulse_start: pulse_end + 1])
+        pulse_area = np.trapz(PulseWaveform[pulse_start: pulse_end + 1])
         try:
             pulse_max_index = pulse_start + \
-                np.argmax(samples[pulse_start: pulse_end + 1])
+                np.argmax(PulseWaveform[pulse_start: pulse_end + 1])
         except ValueError:
             pulse_max_index = peak
         if pulse_max_index <= pulse_start or pulse_end <= pulse_max_index:
             # max height could not be found so just using peak from smoothed signal
             pulse_max_index = peak
-        pulse_height = samples[pulse_max_index]
+        pulse_height = PulseWaveform[pulse_max_index]
         return True, pulse_max_index, pulse_height, pulse_width, pulse_area, pulse_start, pulse_end
     return False, 0, 0, 0, 0, 0, 0
 
 
-def pulse_operations(samples: list | pd.Series):
+def pulse_operations(PulseWaveform: list | pd.Series):
     """
     The procedure implemented here is the following:
     1. The pulses are found with scipy find_peaks
     2. They are ordered by height
     3. Only the number decided by the Parameters class will be processed
     4. For each peak, the pulse parameters are computed once for the first time to determine the start of the pulse
-    5. The baseline is computed with samples before the pulse
+    5. The baseline is computed with PulseWaveform before the pulse
     6. The parameters of the pulse are computed again and returned
     Support for multiple pulses per snippet
     """
@@ -123,12 +123,12 @@ def pulse_operations(samples: list | pd.Series):
     ends = []
     baselines = []
 
-    samples = np.array(samples)
-    if samples.any() == np.nan:
-        samples = np.zeros(64)
+    PulseWaveform = np.array(PulseWaveform)
+    if PulseWaveform.any() == np.nan:
+        PulseWaveform = np.zeros(64)
     try:
         sig_boxcar = sp.ndimage.uniform_filter1d(
-            samples, size=Parameters.sp_width
+            PulseWaveform, size=Parameters.sp_width
         )
     except np.AxisError:
         return [False], [0], [0], [0], [0], [0], [0], [0]
@@ -142,15 +142,15 @@ def pulse_operations(samples: list | pd.Series):
     
     num_pulses = min(len(peaks), Parameters.max_number_of_pulses)
     if num_pulses == 0:
-        baseline = np.mean(samples[:Parameters.n_samples_baseline])
-        area = np.trapz(samples[10:56]-baseline)
-        height = np.max(samples)-baseline
+        baseline = np.mean(PulseWaveform[:Parameters.n_samples_baseline])
+        area = np.trapz(PulseWaveform[10:56]-baseline)
+        height = np.max(PulseWaveform)-baseline
         ratio = area / (height + 0.01)
         if ((ratio < Parameters.min_ratio_charge_height) | (ratio > Parameters.max_ratio_charge_height) | (area < 0)) & (height < 8000):
             successes.append(False)
         else:
             successes.append(True)
-        max_indices.append(np.argmax(samples))
+        max_indices.append(np.argmax(PulseWaveform))
         pulse_heights.append(height)
         pulse_widths.append(45)
         areas.append(area)
@@ -163,11 +163,11 @@ def pulse_operations(samples: list | pd.Series):
 
     for _, peak in enumerate(peaks_sorted[:num_pulses]):
 
-        baseline = np.mean(samples[:Parameters.n_samples_baseline+1])
+        baseline = np.mean(PulseWaveform[:Parameters.n_samples_baseline+1])
 
-        samples = samples - baseline
+        PulseWaveform = PulseWaveform - baseline
         success, max_index, pulse_height, pulse_width, area, start, end = calc_puls_params(
-            samples,
+            PulseWaveform,
             peak,
             Parameters.height,
             Parameters.width,
@@ -213,18 +213,18 @@ def energyConversion(charge, channel, gain=Parameters.gain):
         return E_keV / gain * 2e6
 
 
-def ADC_to_mV_conversion(samples, channel):
-    samples = np.array(samples)
+def ADC_to_mV_conversion(PulseWaveform, channel):
+    PulseWaveform = np.array(PulseWaveform)
     if channel in range(8):
-        return list((samples - 13)/31.06)
+        return list((PulseWaveform - 13)/31.06)
     elif channel in range(8, 16):
-        return list((samples - 19)/30.68)
+        return list((PulseWaveform - 19)/30.68)
     elif channel in range(16, 24):
-        return list((samples - 19)/31.07)
+        return list((PulseWaveform - 19)/31.07)
     elif channel in range(24, 32):
-        return list((samples - 14.06)/30.07)
+        return list((PulseWaveform - 14.06)/30.07)
     elif channel in range(32, 36):
-        return list((samples - 18)/30.66)
+        return list((PulseWaveform - 18)/30.66)
     else:
         # print(f'The channel {channel} does not exist!')
         return list(np.zeros(64))
@@ -252,17 +252,17 @@ def getRelativeTimeSnippets(subseconds, timedelta_samples, TimeWindow, PostTrigg
         offset = offset + 0.032
     return -round(time,3) - offset
 
-def getBoxcarSum(samples,baseline):
-    samples = np.array(samples) - baseline
-    samples_averaged = np.convolve(samples, np.ones(4)/4, mode='valid')
+def getBoxcarSum(PulseWaveform,baseline):
+    PulseWaveform = np.array(PulseWaveform) - baseline
+    samples_averaged = np.convolve(PulseWaveform, np.ones(4)/4, mode='valid')
     return max(samples_averaged)*4
 
-def getFlagsCorruptedData(channel, samples, timestamp):
+def getFlagsCorruptedData(channel, PulseWaveform, timestamp):
     preprocessingFlags=''
     
     if (channel < 0) or (channel > 36) or (channel != channel):
         preprocessingFlags += 'C'
-    if isinstance(samples,np.float64) or (isinstance(samples,list) and (len(samples) != 64)):
+    if isinstance(PulseWaveform,np.float64) or (isinstance(PulseWaveform,list) and (len(PulseWaveform) != 64)):
         preprocessingFlags += 'S'
     if timestamp > time() or timestamp < 1699000000:
         preprocessingFlags += 'T'
@@ -270,11 +270,11 @@ def getFlagsCorruptedData(channel, samples, timestamp):
 
 def computeTimeWithCFD(df):
     fraction_cfd = 0.5
-    x1 = df['MaxIndex'] - find_first_n_less(df['PulseHeight']* fraction_cfd, df['samples'],1)
+    x1 = df['MaximumIndex'] - find_first_n_less(df['PulseHeight']* fraction_cfd, df['PulseWaveform'],1)
     if x1>62:x1=62
     x2 = x1 + 1
-    y2 = df['samples'][x2]
-    y1 = df['samples'][x1]
+    y2 = df['PulseWaveform'][x2]
+    y1 = df['PulseWaveform'][x1]
     time_cfd = x1 + (df['PulseHeight'] * fraction_cfd - y1) * \
         (x2 - x1) / (y2 - y1 + 0.0001)
-    return round(df['deltaT_us'] - (df['MaxIndex']- time_cfd) * 16e-3,3)
+    return round(df['PulseTime_us'] - (df['MaximumIndex']- time_cfd) * 16e-3,3)

@@ -56,12 +56,12 @@ class Control():
         metadata['Event rate'] = convert_units(
             len(set(df['Event_ID'])) / totalTime, 'Hz')
         metadata['Pulse detection efficiency (%)'] = len(
-            df[df.IsPulse == True]) / len(df) * 100
+            df[df.AreaOverHeightPass == True]) / len(df) * 100
         metadata['Duplicate events (%)'] = df.attrs['duplicated_events_fraction'] * 100
         metadata['Corrupted snippets (%)'] = len(
             df[df.preprocessingFlags != ""]) / len(df) * 100
         metadata['Snippets with wrong timestamp (%)'] = 100 * len(
-            df[(df.deltaT_us < -Parameters.PostTriggerTime*16e-3) | (df.deltaT_us > Parameters.PostTriggerTime*16e-3)]) / len(df)
+            df[(df.PulseTime_us < -Parameters.PostTriggerTime*16e-3) | (df.PulseTime_us > Parameters.PostTriggerTime*16e-3)]) / len(df)
         small_df = pd.DataFrame(metadata, index=[0])
         df_info = pd.concat([previous_metadata, small_df])
         return df_info
@@ -117,7 +117,7 @@ class Control():
         pl.plotCountsPerChannel(df, ax)
         fig.savefig('/home/mnd/Desktop/hCountsPerChannel.png')
         plt.close()
-        fig = px.histogram(x=df['deltaT_us'][df.IsPulse == True], log_y=True)
+        fig = px.histogram(x=df['PulseTime_us'][df.AreaOverHeightPass == True], log_y=True)
         fig.update_traces(xbins=dict(
             start=-Parameters.PostTriggerTime*16e-3,
             end=Parameters.PostTriggerTime*16e-3,
@@ -132,12 +132,12 @@ class Control():
             title='Time distribution of all pulses'
         )
         # consider also defining the include_plotlyjs parameter to point to an external Plotly.js as described above
-        centerEnergy = df[(df.deltaT_us < 0.15) & (
-            df.deltaT_us > -0.15)].groupby('Event_ID').Charge_keV.sum()
-        beforeTriggerEnergy = df[df.deltaT_us < -
-                                 0.15].groupby('Event_ID').Charge_keV.sum()
-        afterTriggerEnergy = df[df.deltaT_us > 0.15].groupby(
-            'Event_ID').Charge_keV.sum()
+        centerEnergy = df[(df.PulseTime_us < 0.15) & (
+            df.PulseTime_us > -0.15)].groupby('Event_ID').ApproxEnergy_keVee.sum()
+        beforeTriggerEnergy = df[df.PulseTime_us < -
+                                 0.15].groupby('Event_ID').ApproxEnergy_keVee.sum()
+        afterTriggerEnergy = df[df.PulseTime_us > 0.15].groupby(
+            'Event_ID').ApproxEnergy_keVee.sum()
 
         fig_trigger = px.histogram(x=centerEnergy, log_y=True)
         fig_trigger.update_traces(xbins=dict(

@@ -28,11 +28,11 @@ struct_fields_mapping:
   # RADC Header for each snippet
   Snippet_header:
     Channel_number: "B"  # 1 Byte unsigned char integer
-    Energy: "3s"     # 3 Bytes arbitrary char
-    Info_flags: "c" # 1 Byte bits
+    BoxcarSum: "3s"     # 3 Bytes arbitrary char
+    PulsePileUpFlag: "c" # 1 Byte bits
     # Timedelta_samples: "h"  # 2 Byte signed int ("short")
     Timedelta_samples: "H"  # 2 Byte UNsigned int ("short")
-    Snippet_number: "B" # 1 Byte unsigned int
+    Snippet_index: "B" # 1 Byte unsigned int
 
 
   # RADC single sample

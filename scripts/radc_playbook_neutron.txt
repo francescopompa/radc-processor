@@ -9,8 +9,8 @@ fullinit
 FilterSet.T_Time 10
 FilterSet.BP_Time 4
 FilterSet.BS_Time 8
-PostTriggerTime 3000
-TimeWindow 6000
+PostTriggerTime 3125
+TimeWindow 6250
 
 
 
@@ -55,6 +55,6 @@ Threshold[34] 100
 Threshold[35] 100
 
 
-ThresholdSum 30000
+ThresholdSum 25000
 
 
