@@ -6,7 +6,7 @@ fi
 
 echo "Copying folder /data/${1} on Kalinka"
 
-rsync -cavu --info=progress2 /data/${1}/ zm6876@kalinka5.iap.kit.edu:/kalinka/storage/darkmatter/${1}lngs-neutron-detector/ 
+rsync -cavu --info=progress2 /data/${1}/ zm6876@kalinka5.iap.kit.edu:/kalinka/storage/darkmatter/lngs-neutron-detector/${1}
 
 uuid=331C2D4743721BBE
 if lsblk -f | grep -wq $uuid; then
