@@ -192,12 +192,13 @@ class Receiver():
             time.sleep(duration)
             print("Reached end of timer")
             self.stop()
-            exit()
+            exit(-1)
 
 
     def stop(self):
         """Shutdown routine of the reveicer instance.
         Closes all threads, queues and sockets.
+        It needs to be stopped if it exceeds a timer: to be implemented.
         """
         #
         # Alternative idea: Use this function to send a last package to the
@@ -208,6 +209,7 @@ class Receiver():
 
         if self.__do_readout is False:
             print("Receiver has already stopped, or was never started.")
+            exit(-1)
             return self.results
 
         print(thr.enumerate())
@@ -235,7 +237,7 @@ class Receiver():
         if len(thr_list) > 0:
             print(thr.enumerate())
         else:
-            print("Receiver: threads, queues and sockets all closed succesfullly.")
+            print("Receiver: threads, queues and sockets all closed successfully.")
         os.system(f'radc_nd_reg {self.host} 6000 FeControl.EnTr 0')
         self.dump_results()
 
@@ -344,6 +346,7 @@ class Receiver():
                 pass
         else:
             print("Stopped readout")
+            exit(-1)
 
     def __new_writer_thread(self, target=None, **kwargs):
         """Shadowed function to create a new thread writing to a file."""

@@ -185,8 +185,8 @@ class Control():
 
         }
 
-        pl.plot_events_coincidence(df[-2000:],save=True,outDir=f'/home/mnd/Desktop/slowControl/events')
-        pl.plotEventsPulseFinder(df[-2000:],save=True,outDir=f'/home/mnd/Desktop/slowControl/pulses')
+        pl.plot_events_coincidence(df,save=True,outDir=f'/home/mnd/Desktop/slowControl/events')
+        pl.plotEventsPulseFinder(df,save=True,outDir=f'/home/mnd/Desktop/slowControl/pulses')
 
         with open(self.output_html_path, "w", encoding="utf-8") as output_file:
             with open(self.input_template_path) as template_file:

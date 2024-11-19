@@ -11,6 +11,7 @@ from pathlib import Path
 import numpy as np
 from typing import Literal
 from preprocess_data import Parameters
+import sys
 
 # CONFIG = configuration.CONFIG
 CONVERSIONS = {
@@ -233,7 +234,8 @@ def plot_samples(entry, key="PulseWaveform"):
         plot_data(index, d, axs[1])
 
     # fig.tight_layout()
-    # plt.show()
+    if hasattr(sys,'ps1'):
+        plt.show()
     return fig
 
 
@@ -371,7 +373,8 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
         elif mode == 'boxcar':
             ax[1].set_ylabel('Boxcar energy (ADCC)')
         fig.tight_layout()
-        plt.show()
+        if hasattr(sys,'ps1'):
+            plt.show()
         plt.close()
         if save == True:
             fig.savefig(f'{outDir}/Event{event_ID[0]}.pdf')
@@ -412,7 +415,8 @@ def plotPulsesSameAxis(df: pd.DataFrame, n_events=50, save=False, outDir="./imag
         ax.set_xlim(-PostTriggerTime*16e-3,PostTriggerTime*16e-3)
         if xlim is not None:
             ax.set_xlim(xlim)
-        plt.show()
+        if hasattr(sys,'ps1'):
+            plt.show()
         if save== True:
             fig.savefig(f'{outDir}/Event{event_ID[0]}.pdf')
         plt.close()
@@ -460,7 +464,9 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events = 50, save = False, outDir 
         ax.legend(framealpha = 1,loc = 'upper right')
         if save == True:
             fig.savefig(f'{outDir}/Event{row["Event_ID"]}_snippet{snippet_index}.pdf')
-        plt.show()
+        
+        if hasattr(sys,'ps1'):
+            plt.show()
         plt.close()
         snippet_index += 1
         counter = counter + 1

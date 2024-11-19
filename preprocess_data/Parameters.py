@@ -22,8 +22,8 @@ max_ratio_charge_height = 15
 
 
 gain = 'matched_v3'
-PostTriggerTime = 6250
-TimeWindow = 12500
+PostTriggerTime = 3125
+TimeWindow = 6250
 
 df_energy_conversion = read_csv(Path(__file__).parent / 'channel_map_energy.csv')
 df_energy_conversion = df_energy_conversion.sort_values('DAQ').reset_index(drop=True)

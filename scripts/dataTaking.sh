@@ -2,13 +2,17 @@
 
 killall -u $USER screen
 
-rootDir="/data/DAQMeasurements"
+# duration = 3000/rate
+# maxTime = duration / 12
+# nTimes = totalTime / duration
+
+rootDir="/data/FNG/"
 targetDir="test"
-duration=1800
-maxEvents=3000000
-maxVolume=500000000
-maxTime=180
-nTimes=10
+duration=2900
+maxEvents=30000000000000
+maxVolume=100000000
+maxTime=240
+nTimes=7
 playbook="/home/mnd/Software/radc-processor/scripts/radc_playbook_neutron.txt"
 # total time is equal to n_times*duration
 
