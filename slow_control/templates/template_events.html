@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+  <title>ALMOND Slow control</title>
+
+  <meta charset="utf-8" />
+  <!--It is necessary to use the UTF-8 encoding with plotly graphics to get e.g. negative signs to render correctly -->
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="stylesheet" type="text/css" href="/home/mnd/Software/radc-processor/slow_control/style.css">
+
+</head>
+
+
+<body>
+
+  <h1>{{title}}</h1>
+
+  {{topbar}}
+  <div style="text-align: center;">
+  {% for filename in file_list %}
+    <embed src={{filename}} width="1500px" height="600px" margin=auto/>
+  {% endfor %}
+</div>
+
+</body>
+
+</html>

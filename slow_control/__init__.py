@@ -9,11 +9,12 @@ import plotly.express as px
 from udp_receiver.receiver_class import convert_seconds
 from preprocess_data import Parameters
 import numpy as np
-from time import time
+from time import time, strftime, gmtime
 from isegcontroller.commander import Commander
 from isegcontroller.interpreter import Interpreter
 from os.path import getctime
 import numpy as np
+import shutil
 # based on https://plotly.com/python/interactive-html-export/
 
 
@@ -25,15 +26,15 @@ class Control():
                  target_root=_base_path,
                  target_dir='.',
                  target_file=None,
-                 output_html_path=r"/home/mnd/Desktop/online_analysis.html",
-                 input_template_path=r"/home/mnd/Software/radc-processor/slow_control/template.html"
+                 output_html_path=r"/home/mnd/Desktop/slowControl/pages/",
+                 input_template_path=r"/home/mnd/Software/radc-processor/slow_control/templates/"
                  ) -> None:
 
         self.target_root = target_root
         self.target_dir = target_dir
         self.target_file = target_file
         self.n_files = len(
-            glob(f'{self.target_root}/{self.target_dir}/data/*.bin'))
+            glob(f'{self.target_root}/{self.target_dir}/*.bin'))
         self.output_html_path = output_html_path
         self.input_template_path = input_template_path
 
@@ -51,17 +52,17 @@ class Control():
         metadata['Measurement'] = file.split(
             '.')[-3] if 'chunk' in file else file.split('.')[-2]
         metadata['Chunk'] = file.split('.')[-2] if 'chunk' in file else 0
-        metadata['Elapsed time'] = convert_seconds(totalTime)
+        metadata['Time'] = strftime('%X',gmtime(df.Timestamp_s.iloc[-1]))
         metadata['Snippet rate'] = convert_units(len(df) / totalTime, 'Hz')
         metadata['Event rate'] = convert_units(
             len(set(df['Event_ID'])) / totalTime, 'Hz')
         metadata['Pulse detection efficiency (%)'] = len(
-            df[df.AreaOverHeightPass == True]) / len(df) * 100
+            df[df.AreaOverHeightPass]) / len(df) * 100
         metadata['Duplicate events (%)'] = df.attrs['duplicated_events_fraction'] * 100
         metadata['Corrupted snippets (%)'] = len(
             df[df.preprocessingFlags != ""]) / len(df) * 100
         metadata['Snippets with wrong timestamp (%)'] = 100 * len(
-            df[(df.PulseTime_us < -Parameters.PostTriggerTime*16e-3) | (df.PulseTime_us > Parameters.PostTriggerTime*16e-3)]) / len(df)
+            df[np.abs(df.PulseTime_us) > Parameters.PostTriggerTime*16e-3]) / len(df)
         small_df = pd.DataFrame(metadata, index=[0])
         df_info = pd.concat([previous_metadata, small_df])
         return df_info
@@ -74,10 +75,10 @@ class Control():
         df = pd.DataFrame(data)
         df['status'] = (df['status_v_limit_exceed'] == False) & (df['status_c_limit_exceed'] == False) & (df['status_current_trip'] == False)  \
             & (df['status_emergency'] == False)
-        df['Status'] = ['OK' if s is True else 'PROBLEM' for s in df['status']]
+        df['Status'] = ['OK' if s else 'PROBLEM' for s in df['status']]
         df['Address'] = [f'0.{(c-1)//16}.{(c-1)%16}' for c in df['channel_id']]
         status_on = df['status_on']
-        df['Power'] = ['ON' if c == True else 'OFF' for c in status_on]
+        df['Power'] = ['ON' if c else 'OFF' for c in status_on]
 
         # ensure correct type by replacing unread variables
         df.loc[df['control_v_set'] == '','control_v_set'] = 0
@@ -102,6 +103,11 @@ class Control():
                  'I_set (uA)', 'I_meas (uA)', 'Status', 'Voltage status']]
 
         return df
+    def generateHTMLFile(self,input_file,output_file,context):
+        with open(self.output_html_path + output_file, "w", encoding="utf-8") as output_file:
+            with open(self.input_template_path + input_file) as template_file:
+                j2_template = Template(template_file.read())
+                output_file.write(j2_template.render(context))
 
     def generate_plots(self, previous_metadata=pd.DataFrame(), file=None):
         print('Generating plots...')
@@ -115,7 +121,7 @@ class Control():
         df_info = self.getMetadata(df, file, previous_metadata)
         fig, ax = plt.subplots()
         pl.plotCountsPerChannel(df, ax)
-        fig.savefig('/home/mnd/Desktop/hCountsPerChannel.png')
+        fig.savefig('/home/mnd/Desktop/slowControl/images/hCountsPerChannel.png')
         plt.close()
         fig = px.histogram(x=df['PulseTime_us'][df.AreaOverHeightPass == True], log_y=True)
         fig.update_traces(xbins=dict(
@@ -174,8 +180,15 @@ class Control():
             yaxis_title='Counts',
             title='Summed energy before and after the trigger'
         )
-
+        topbar='''<div class="topnav">
+        <a class="active" href="file:///home/mnd/Desktop/slowControl/pages/online_analysis.html">Home</a>
+        <a class="active" href="file:///home/mnd/Desktop/slowControl/pages/high_voltage.html">High voltage</a>
+        <a class="active" href="file:///home/mnd/Desktop/slowControl/pages/eventsPage.html">Events</a>
+        <a class="active" href="file:///home/mnd/Desktop/slowControl/pages/pulsesPage.html">Pulses</a>
+        </div>\n'''
+        
         context = {
+            "topbar":topbar,
             "fig": fig.to_html(full_html=False),
             "table": df_info[::-1].head(10).to_html(index=False, float_format="%.4g", justify='left'),
             "title": f"Analysis of file {file}",
@@ -185,16 +198,44 @@ class Control():
 
         }
 
-        pl.plot_events_coincidence(df,save=True,outDir=f'/home/mnd/Desktop/slowControl/events')
-        pl.plotEventsPulseFinder(df,save=True,outDir=f'/home/mnd/Desktop/slowControl/pulses')
+        context_HV = {
+            "topbar":topbar,
+            "title": f"Analysis of file {file}",
+            "table_HV": df_HV.to_html(index=False, justify='left', float_format="%g")
+        }
 
-        with open(self.output_html_path, "w", encoding="utf-8") as output_file:
-            with open(self.input_template_path) as template_file:
-                j2_template = Template(template_file.read())
-                output_file.write(j2_template.render(context))
+        eventsDir = f'/home/mnd/Desktop/slowControl/events'
+        pulsesDir = f'/home/mnd/Desktop/slowControl/pulses'
 
-        print(f"You can see the plots at file://{self.output_html_path}\n\n")
-        print(f'Processing time: {convert_seconds(time()-start)}')
+        shutil.rmtree(eventsDir,ignore_errors=True)
+        pl.plot_events_coincidence(df,save=True,outDir=eventsDir)
+        
+        shutil.rmtree(pulsesDir,ignore_errors=True)
+        pl.plotEventsPulseFinder(df,save=True,outDir=pulsesDir)
+
+        eventsImages = glob(f'{eventsDir}/*.pdf')
+        pulsesImages = glob(f'{pulsesDir}/*.pdf')
+
+        context_events = {
+            "topbar":topbar,
+            "title": f"Analysis of file {file}",
+            "file_list":eventsImages
+        }
+
+        context_pulses = {
+            "topbar":topbar,
+            "title": f"Analysis of file {file}",
+            "file_list":pulsesImages
+        }
+
+        self.generateHTMLFile("template.html","online_analysis.html",context)
+        self.generateHTMLFile("template_HV.html","high_voltage.html",context_HV)
+        self.generateHTMLFile("template_events.html","eventsPage.html",context_events)
+        self.generateHTMLFile("template_events.html","pulsesPage.html",context_pulses)
+        
+
+        print(f"You can see the plots at file://{self.output_html_path}online_analysis.html")
+        print(f'Processing time: {convert_seconds(time()-start)}\n\n')
         return df_info
 
     def start(self):
