@@ -139,7 +139,15 @@ def cleanupDataframe(df):
     return df
 
 def flattenSamples(PulseWaveform):
-    return [x for xs in PulseWaveform for x in xs]
+    flattend=[]
+    for xs in PulseWaveform :
+        try:
+            for x in xs :
+                flattend.append(x)
+        except:
+            flattend=flattend+[xs]*64
+            print("!!! Empty Sample Detected !!!")
+    return flattend
 
 def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal['snippet','compact'] = 'compact', reduced = False) -> "list[uproot.writing.writable.WritableDirectory]":
     '''

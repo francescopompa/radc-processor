@@ -130,7 +130,8 @@ def pulse_operations(PulseWaveform: list | pd.Series):
         sig_boxcar = sp.ndimage.uniform_filter1d(
             PulseWaveform, size=Parameters.sp_width
         )
-    except np.AxisError:
+    except np.exceptions.AxisError:
+        print(PulseWaveform)
         return [False], [0], [0], [0], [0], [0], [0], [0]
 
 
