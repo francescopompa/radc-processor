@@ -11,11 +11,9 @@ from preprocess_data import Parameters
 from preprocess_data import peak_finding_algorithms as pf
 import json
 import uproot
-import ROOT
 from pathlib import Path
 from typing import Literal
 from joblib import Parallel, delayed
-import time
 
 
 
@@ -189,7 +187,6 @@ def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal
             import ROOT
             build_rootfile(df_tmp,pars,out_dir,namefile,i)
         except:
-            import uproot
             build_rootfile_with_uproot(df_tmp,pars,out_dir,namefile,i)
 
         list_of_files.append(f'{out_dir}/{namefile}_{i}.root')
@@ -198,20 +195,25 @@ def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal
 
 
 def build_rootfile(df_tmp,pars,out_dir,namefile,i):
+
+    try:
+        import ROOT
     
-    opts=ROOT.RDF.RSnapshotOptions()
-    opts.fMode = "UPDATE";
-    
-    columns=df_tmp.columns
-    Dict={column: ak.Array(df_tmp[column]) for column in columns}
-    rdf=ak.to_rdataframe(Dict)
-    rdf.Snapshot('events/events', f'{out_dir}/{namefile}_{i}.root')
-    
-    if pars != {}:
-        Dictpars = {keys.replace(".", "_"): v for keys, v in pars.items() if not v==[[]]}
-        rdfpar=ak.to_rdataframe(Dictpars)
-        rdfpar.Snapshot('metadata/pars',f'{out_dir}/{namefile}_{i}.root',options=opts)
-    
+        opts=ROOT.RDF.RSnapshotOptions()
+        opts.fMode = "UPDATE"
+        
+        columns=df_tmp.columns
+        Dict={column: ak.Array(df_tmp[column]) for column in columns}
+        rdf=ak.to_rdataframe(Dict)
+        rdf.Snapshot('events/events', f'{out_dir}/{namefile}_{i}.root')
+        
+        if pars != {}:
+            Dictpars = {keys.replace(".", "_"): v for keys, v in pars.items() if not v==[[]]}
+            rdfpar=ak.to_rdataframe(Dictpars)
+            rdfpar.Snapshot('metadata/pars',f'{out_dir}/{namefile}_{i}.root',options=opts)
+    except:
+        print("ROOT can't be imported. Using uproot")
+        
 
 def build_rootfile_with_uproot(df_tmp,pars,out_dir,namefile,i):
     
