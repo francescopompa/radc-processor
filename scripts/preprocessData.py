@@ -10,10 +10,12 @@ import sys
 def main():
     if len(sys.argv) > 1:
         folder = sys.argv[1]
-        baseDir = f'{folder}'
     else:
         folder = 'FNG'
-        baseDir = f'/kalinka/storage/darkmatter/lngs-neutron-detector/{folder}'
+        
+    baseDir = f'/kalinka/storage/darkmatter/lngs-neutron-detector/{folder}'
+    
+    forcePreprocessing = False
 
     subdirectories = [x[0] for x in os.walk(baseDir)]
     n_jobs = -1
@@ -26,11 +28,15 @@ def main():
             with open(j, 'r') as file:
                 metadata = json.load(file)
             print(f'Subdirectory: {s}')
-            if ('processed' not in metadata or metadata['processed'] == False) and 'files_written' in metadata:
+            if (('processed' not in metadata or metadata['processed'] == False) and 'files_written' in metadata) | forcePreprocessing :
                 namefiles = [m.split('/')[-1] for m in metadata['files_written']]
                 namefile_output = namefiles[0].split('.')[0]
                 namefiles = [f'{s}/{name}' for name in namefiles]
                 print(f'Analyzing {len(namefiles)} files from json file {i+1}/{len(json_files)}')
+
+                if all(os.stat(namefile).st_size == 0 for namefile in namefiles) :
+                    print(f'Warning: All binaries for {j} where empty. Continuing with next .json')
+                    continue
                 
                 if "SLURM_JOB_ID" not in os.environ:
                     n_jobs=min(len(namefiles),4)
