@@ -11,4 +11,4 @@ if [ -z "$1" ]; then
   set -- "${1:-FNG}"
 fi
 
-singularity exec --bind /kalinka/:/kalinka/ preprocessData.simg preprocessData ${1}
+singularity exec --bind /kalinka/:/kalinka/ ~/.local/preprocessData.simg preprocessData ${1}
