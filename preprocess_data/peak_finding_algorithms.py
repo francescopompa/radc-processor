@@ -143,7 +143,7 @@ def pulse_operations(PulseWaveform: list | pd.Series):
     
     num_pulses = min(len(peaks), Parameters.max_number_of_pulses)
     if num_pulses == 0:
-        baseline = np.mean(PulseWaveform[:Parameters.n_samples_baseline])
+        baseline = np.mean(PulseWaveform[1:Parameters.n_samples_baseline])
         area = np.trapz(PulseWaveform[10:56]-baseline)
         height = np.max(PulseWaveform)-baseline
         ratio = area / (height + 0.01)
@@ -164,7 +164,7 @@ def pulse_operations(PulseWaveform: list | pd.Series):
 
     for _, peak in enumerate(peaks_sorted[:num_pulses]):
 
-        baseline = np.mean(PulseWaveform[:Parameters.n_samples_baseline+1])
+        baseline = np.mean(PulseWaveform[1:Parameters.n_samples_baseline+1])
 
         PulseWaveform = PulseWaveform - baseline
         success, max_index, pulse_height, pulse_width, area, start, end = calc_puls_params(
