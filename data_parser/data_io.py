@@ -87,10 +87,6 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     df = df[np.abs(df['PulseTime_us']) < (PostTriggerTime * 16e-3)]
     df = df[df['Channel_number'].isin(range(37))]
 
-    df = findDuplicatePulses(df)
-    
-    
-    
     tmp = df['PulseWaveform'].apply(pf.pulse_operations)
 
     columns = ['AreaOverHeightPass', 'MaximumIndex', 'PulseHeight', 'PulseWidth', 'PulseAreaADCC',
@@ -114,6 +110,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     df['ApproxEnergy_keVee'] = df.apply(lambda x: pf.energyConversion(
         x['PulseAreaADCC'], x['Channel_number'], Parameters.gain), axis=1)
 
+    df = findDuplicatePulses(df)
 
     events = set(df.Event_ID)
     
@@ -366,14 +363,14 @@ def getParametersFromJson(files: list|str):
 def findDuplicatePulses(df: pd.DataFrame):
     df['DistanceDuplicatePulse'] = 0
     for i in range(1,100):
-        condition = (df.BoxcarSum.shift(i)== df.BoxcarSum) & (df.Event_ID == df.Event_ID.shift(i))
+        condition = (df.ApproxEnergy_keVee.shift(i)== df.ApproxEnergy_keVee) & (df.Event_ID == df.Event_ID.shift(i))
         df = df.drop(df[condition].index)
     for i in range(1,100):
-        condition=(df.BoxcarSum.shift(i) == df.BoxcarSum) & (df.Event_ID != df.Event_ID.shift(i))
+        condition=(df.ApproxEnergy_keVee.shift(i) == df.ApproxEnergy_keVee) & (df.Event_ID != df.Event_ID.shift(i))
         df.loc[condition,'DistanceDuplicatePulse'] = -i
         df.loc[pd.Series(condition).shift(-i,fill_value=False),'DistanceDuplicatePulse'] = i
 
-    return df
+    return df.reset_index(drop=True)
 
 
 def getAdditionalParameters(df,metadata):
