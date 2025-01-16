@@ -4,6 +4,7 @@ import data_parser
 data_parser.init('v2')
 import numpy as np
 import pandas as pd
+import awkward as ak
 # from . import struct_conversion
 from data_parser.struct_conversion import DataFile
 from preprocess_data import Parameters
@@ -13,7 +14,6 @@ import uproot
 from pathlib import Path
 from typing import Literal
 from joblib import Parallel, delayed
-import time
 
 
 
@@ -137,7 +137,15 @@ def cleanupDataframe(df):
     return df
 
 def flattenSamples(PulseWaveform):
-    return [x for xs in PulseWaveform for x in xs]
+    flattend=[]
+    for xs in PulseWaveform :
+        try:
+            for x in xs :
+                flattend.append(x)
+        except:
+            flattend=flattend+[xs]*64
+            print("!!! Empty Sample Detected !!!")
+    return flattend
 
 def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal['snippet','compact'] = 'compact', reduced = False) -> "list[uproot.writing.writable.WritableDirectory]":
     '''
@@ -173,16 +181,47 @@ def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal
             pars[f'Threshold_{i}'] = pars.pop(f'Threshold[{i}]')
     chunks = len(set(df.Event_ID)) // max_events +1
     for i in range(chunks):
-        file = uproot.recreate(out / f'{namefile}_{i}.root')
         df_tmp = df_output[(df_output.Event_ID >= int(min(df_output.Event_ID)+i*max_events)) & (df_output.Event_ID < int(min(df_output.Event_ID)+(i+1)*max_events))].reset_index(drop=True)
-        file['eventsTree'] = df_tmp
-        if pars != {}:
-            file['infoTree'] = pars
-        # file['eventsTree'].show()
-        list_of_files.append(file)
-        file.close()
+        
+        try:
+            import ROOT
+            build_rootfile(df_tmp,pars,out_dir,namefile,i)
+        except:
+            build_rootfile_with_uproot(df_tmp,pars,out_dir,namefile,i)
+
+        list_of_files.append(f'{out_dir}/{namefile}_{i}.root')
 
     return list_of_files
+
+
+def build_rootfile(df_tmp,pars,out_dir,namefile,i):
+
+    try:
+        import ROOT
+    
+        opts=ROOT.RDF.RSnapshotOptions()
+        opts.fMode = "UPDATE"
+        
+        columns=df_tmp.columns
+        Dict={column: ak.Array(df_tmp[column]) for column in columns}
+        rdf=ak.to_rdataframe(Dict)
+        rdf.Snapshot('events/events', f'{out_dir}/{namefile}_{i}.root')
+        
+        if pars != {}:
+            Dictpars = {keys.replace(".", "_"): v for keys, v in pars.items() if not v==[[]]}
+            rdfpar=ak.to_rdataframe(Dictpars)
+            rdfpar.Snapshot('metadata/pars',f'{out_dir}/{namefile}_{i}.root',options=opts)
+    except:
+        print("ROOT can't be imported. Using uproot")
+        
+
+def build_rootfile_with_uproot(df_tmp,pars,out_dir,namefile,i):
+    
+    file = uproot.recreate(f'{out_dir}/{namefile}_{i}.root')
+    file['eventsTree'] = df_tmp
+    if pars != {}:
+        file['infoTree'] = pars
+
 
 def make_total_dataFrame_processed(files: list|str) -> pd.DataFrame:
 
@@ -193,7 +232,6 @@ def make_total_dataFrame_processed(files: list|str) -> pd.DataFrame:
         ignore_index=True
     )
     metadata = getParametersFromJson(files)
-    
     preprocessed_df=preprocessDataframe(df,TimeWindow=metadata['TimeWindow'],PostTriggerTime=metadata['PostTriggerTime'])
 
     getAdditionalParameters(preprocessed_df,metadata)
@@ -215,6 +253,9 @@ def convertDataframeToJson(df):
     columns_only_first = [c for c in df.columns if c not in [*columns_to_average_snippets,*columns_to_average_events,*columns_to_sum]]
     
     for c in columns_only_first:
+        if df[c].dtype=='object':
+            print(f'Warning: Entry in Column "{c}" of Metadata is empty. Continuing with next column')
+            continue
         metadata_dict[c] = int(df[c].agg(lambda x: x.value_counts().index[0]))
     for c in columns_to_average_events:
         metadata_dict[c] = float(np.average(df[c],weights=df['n_events']))

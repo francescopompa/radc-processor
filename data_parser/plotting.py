@@ -411,7 +411,7 @@ def plotPulsesSameAxis(df: pd.DataFrame, n_events=50, save=False, outDir="./imag
                        label=f'Channel {event_DF.Channel_number.iloc[i]}')
         ax.set_xlabel(r'Time ($\mu s$)')
         ax.set_ylabel('ADCC')
-        ax.set_title(f'Event {event_ID[0]}: {event_DF["Snippet_count"].iloc[0]} snippets')
+        ax.set_title(f'Event {event_ID[0]}: {len(event_DF)} snippets')
         ax.set_xlim(-PostTriggerTime*16e-3,PostTriggerTime*16e-3)
         if xlim is not None:
             ax.set_xlim(xlim)
@@ -432,10 +432,11 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events = 50, save = False, outDir 
         p.mkdir(parents=True, exist_ok=True)
     counter =0
     snippet_index=1
-
+    previous_event = 0
     for i,row in df.iterrows():
-        if df.Event_ID.iloc[i] != df.Event_ID.iloc[i-1]:
+        if row.Event_ID != previous_event:
             snippet_index = 1
+            previous_event = row.Event_ID
         fig, ax = plt.subplots()
         ax.plot(row['PulseWaveform'],'b')
         ax.axvline(x=row['PulseStart'],label=f'Start: {row["PulseStart"]}',color = 'green',linestyle='dashed')
