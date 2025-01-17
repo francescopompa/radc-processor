@@ -115,7 +115,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     events = set(df.Event_ID)
     
 
-    df = df.drop(columns=['Snippet_count','Snippet_index','BoxcarSum'],errors='ignore')
+    df = df.drop(columns=['Snippet_index','BoxcarSum'],errors='ignore')
     diffEvents = max(events) - min(events) + 1
     df['Event_ID'] = reorderEventIDs(df['Event_ID']) 
     df.attrs['missing_events_fraction']= 1 - len(events) / diffEvents
@@ -362,11 +362,11 @@ def getParametersFromJson(files: list|str):
 
 def findDuplicatePulses(df: pd.DataFrame):
     df['DistanceDuplicatePulse'] = 0
-    for i in range(1,100):
-        condition = (df.ApproxEnergy_keVee.shift(i)== df.ApproxEnergy_keVee) & (df.Event_ID == df.Event_ID.shift(i))
+    for i in range(1,10):
+        condition = (df.ApproxEnergy_keVee.shift(i)== df.ApproxEnergy_keVee) & (df.BaselineADCC.shift(i)== df.BaselineADCC) & (df.Event_ID == df.Event_ID.shift(i))
         df = df.drop(df[condition].index)
-    for i in range(1,100):
-        condition=(df.ApproxEnergy_keVee.shift(i) == df.ApproxEnergy_keVee) & (df.Event_ID != df.Event_ID.shift(i))
+    for i in range(100,0,-1):
+        condition=(df.ApproxEnergy_keVee.shift(i) == df.ApproxEnergy_keVee) & (df.BaselineADCC.shift(i)== df.BaselineADCC) &  (df.Event_ID != df.Event_ID.shift(i)) & (df.Channel_number == df.Channel_number.shift(i))
         df.loc[condition,'DistanceDuplicatePulse'] = -i
         df.loc[pd.Series(condition).shift(-i,fill_value=False),'DistanceDuplicatePulse'] = i
 
