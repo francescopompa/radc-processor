@@ -130,7 +130,8 @@ def pulse_operations(PulseWaveform: list | pd.Series):
         sig_boxcar = sp.ndimage.uniform_filter1d(
             PulseWaveform, size=Parameters.sp_width
         )
-    except np.AxisError:
+    except np.exceptions.AxisError:
+        print(PulseWaveform)
         return [False], [0], [0], [0], [0], [0], [0], [0]
 
 
@@ -142,7 +143,7 @@ def pulse_operations(PulseWaveform: list | pd.Series):
     
     num_pulses = min(len(peaks), Parameters.max_number_of_pulses)
     if num_pulses == 0:
-        baseline = np.mean(PulseWaveform[:Parameters.n_samples_baseline])
+        baseline = np.mean(PulseWaveform[1:Parameters.n_samples_baseline])
         area = np.trapz(PulseWaveform[10:56]-baseline)
         height = np.max(PulseWaveform)-baseline
         ratio = area / (height + 0.01)
@@ -163,7 +164,7 @@ def pulse_operations(PulseWaveform: list | pd.Series):
 
     for _, peak in enumerate(peaks_sorted[:num_pulses]):
 
-        baseline = np.mean(PulseWaveform[:Parameters.n_samples_baseline+1])
+        baseline = np.mean(PulseWaveform[1:Parameters.n_samples_baseline+1])
 
         PulseWaveform = PulseWaveform - baseline
         success, max_index, pulse_height, pulse_width, area, start, end = calc_puls_params(
@@ -201,9 +202,9 @@ def energyConversion(charge, channel, gain=Parameters.gain):
     try:
         rescalingFactor = Parameters.rescalingFactors[channel] 
     except:
-        return -1
+        return charge * Parameters.slope[10] + Parameters.constant[10]
     if charge < 0:
-        return -1
+        return charge * Parameters.slope[10] + Parameters.constant[10]
     E_keV = (charge + 169.3)/16.20 
     if gain == 'matched' or gain == 'matched_v2':
         return E_keV * rescalingFactor
@@ -248,8 +249,8 @@ def getRelativeTimeSnippets(subseconds, timedelta_samples, TimeWindow, PostTrigg
         time = (dT - PostTriggerTime)*sampling_period 
     if channel < 8:
         offset = offset + 0.016
-    elif channel == 6:
-        offset = offset + 0.032
+    if channel == 6:
+        offset = offset + 0.016
     return -round(time,3) - offset
 
 def getBoxcarSum(PulseWaveform,baseline):

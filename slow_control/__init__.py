@@ -58,11 +58,8 @@ class Control():
             len(set(df['Event_ID'])) / totalTime, 'Hz')
         metadata['Pulse detection efficiency (%)'] = len(
             df[df.AreaOverHeightPass]) / len(df) * 100
-        metadata['Duplicate events (%)'] = df.attrs['duplicated_events_fraction'] * 100
-        metadata['Corrupted snippets (%)'] = len(
-            df[df.preprocessingFlags != ""]) / len(df) * 100
-        metadata['Snippets with wrong timestamp (%)'] = 100 * len(
-            df[np.abs(df.PulseTime_us) > Parameters.PostTriggerTime*16e-3]) / len(df)
+        metadata['Duplicate pulses (%)'] = df.attrs['duplicated_pulses_fraction'] * 100
+        metadata['Corrupted snippets (%)'] = df.attrs['corrupted_snippets_fraction'] * 100
         small_df = pd.DataFrame(metadata, index=[0])
         df_info = pd.concat([previous_metadata, small_df])
         return df_info

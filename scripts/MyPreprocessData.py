@@ -7,33 +7,35 @@ from udp_receiver.receiver_class import convert_seconds
 import sys
 
 
+
 def main():
     if len(sys.argv) > 1:
         folder = sys.argv[1]
     else:
         folder = 'FNG'
-        
-    baseDir = f'/kalinka/storage/darkmatter/lngs-neutron-detector/{folder}'
-    
-    forcePreprocessing = False
-
+#    baseDir = f'/kalinka/storage/darkmatter/lngs-neutron-detector/{folder}'
+#    baseDir = f'/mnt'
+    baseDir =f'../../data'
     subdirectories = [x[0] for x in os.walk(baseDir)]
+    
     n_jobs = -1
     begin = time()
 
     for s in subdirectories:
+        if s==f'{baseDir}/.ipynb_checkpoints':
+            continue
+        start = time()
         json_files = glob(f'{s}/*results*.json')
-        for i,j in enumerate(json_files):
-            start = time()
+        for j in json_files:
             with open(j, 'r') as file:
                 metadata = json.load(file)
             print(f'Subdirectory: {s}')
-            if (('processed' not in metadata or metadata['processed'] == False) and 'files_written' in metadata) | forcePreprocessing :
+            if ('processed' not in metadata or metadata['processed'] == False) and 'files_written' in metadata:
                 namefiles = [m.split('/')[-1] for m in metadata['files_written']]
                 namefile_output = namefiles[0].split('.')[0]
                 namefiles = [f'{s}/{name}' for name in namefiles]
-                print(f'Analyzing {len(namefiles)} files from json file {i+1}/{len(json_files)}')
-
+                for namefile in namefiles:
+                    print(f'Analyzing {namefile} in the directory {s}.')
                 if all(os.stat(namefile).st_size == 0 for namefile in namefiles) :
                     print(f'Warning: All binaries for {j} where empty. Continuing with next .json')
                     continue
@@ -41,9 +43,10 @@ def main():
                 if "SLURM_JOB_ID" not in os.environ:
                     n_jobs=min(len(namefiles),4)
                 
+                n_jaobs=1
+
                 processingMetadata = make_total_rootfile(
-                    namefiles , out_dir=f'{s}/processed/', namefile_output=namefile_output, mode='compact', parallel=True, n_jobs=n_jobs
-                    )
+                    namefiles , out_dir=f'{s}/processed/', namefile_output=namefile_output, mode='compact', parallel=True, n_jobs=n_jobs)
                 metadata['processing_time'] = time() - start
                 metadata['processed'] = True
                 processingMetadata['processing_time'] = time() - start

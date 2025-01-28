@@ -4,6 +4,7 @@ import data_parser
 data_parser.init('v2')
 import numpy as np
 import pandas as pd
+import awkward as ak
 # from . import struct_conversion
 from data_parser.struct_conversion import DataFile
 from preprocess_data import Parameters
@@ -13,7 +14,6 @@ import uproot
 from pathlib import Path
 from typing import Literal
 from joblib import Parallel, delayed
-import time
 
 
 
@@ -74,11 +74,19 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
           f'\t- Post trigger time: {PostTriggerTime} samples\n'
           f'\t- Gain: {Parameters.gain}')
     
-    df = df.drop(columns=['Trigger_type','Frame_number'],errors='ignore')
-    
     if 'snippets' in df.columns:
         df = explode_dataframe(df)
     
+    df = df.drop(columns=['Trigger_type','Frame_number'],errors='ignore')
+
+    df['PulseTime_us'] = df.apply(lambda x: pf.getRelativeTimeSnippets(
+        x['Subsecs'], x['Timedelta_samples'], TimeWindow, PostTriggerTime, x['Channel_number']), axis=1)
+    df = df.drop(columns=['Seconds','Subsecs','Timedelta_samples'],errors='ignore')
+
+    df.attrs['corrupted_snippets_fraction'] = len(df[(np.abs(df['PulseTime_us']) > (PostTriggerTime * 16e-3)) | (~df['Channel_number'].isin(range(37)))] ) / len(df)
+    df = df[np.abs(df['PulseTime_us']) < (PostTriggerTime * 16e-3)]
+    df = df[df['Channel_number'].isin(range(37))]
+
     tmp = df['PulseWaveform'].apply(pf.pulse_operations)
 
     columns = ['AreaOverHeightPass', 'MaximumIndex', 'PulseHeight', 'PulseWidth', 'PulseAreaADCC',
@@ -102,42 +110,31 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     df['ApproxEnergy_keVee'] = df.apply(lambda x: pf.energyConversion(
         x['PulseAreaADCC'], x['Channel_number'], Parameters.gain), axis=1)
 
-    df['PulseTime_us'] = df.apply(lambda x: pf.getRelativeTimeSnippets(
-        x['Subsecs'], x['Timedelta_samples'], TimeWindow, PostTriggerTime, x['Channel_number']), axis=1)
-    df = df.drop(columns=['Seconds','Subsecs','Timedelta_samples'],errors='ignore')
-
-
-    df['preprocessingFlags'] = df.apply(lambda x: pf.getFlagsCorruptedData(x.Channel_number,x.PulseWaveform,x.Timestamp_s),axis=1)
+    df = findDuplicatePulses(df)
 
     events = set(df.Event_ID)
-    df = findDuplicateEvents(df)
+    
 
-    df = df.drop(columns=['Snippet_count','Snippet_index','BoxcarSum'],errors='ignore')
+    df = df.drop(columns=['Snippet_index','BoxcarSum'],errors='ignore')
     diffEvents = max(events) - min(events) + 1
     df['Event_ID'] = reorderEventIDs(df['Event_ID']) 
     df.attrs['missing_events_fraction']= 1 - len(events) / diffEvents
-    df.attrs['duplicated_events_fraction'] = len(set(df.Event_ID[df.duplicateEvent==True])) / len(events)
+    df.attrs['duplicated_pulses_fraction'] = len(df[df['DistanceDuplicatePulse'] != 0]) / len(df)
 
     df = df.sort_values(['Event_ID','PulseTime_us']).reset_index(drop=True)
 
     return df
 
-def cleanupDataframe(df):
-    df = df[(df['preprocessingFlags'] == '') & (df['AreaOverHeightPass'] == True)]
-    tmp = df.groupby('Event_ID')
-    for (event_ID), event_DF in tmp:
-        if len(event_DF.index) < event_DF['snippet_space'].iloc[0]:
-            df.loc[df['Event_ID'] == event_ID,
-                   'snippet_space'] = len(event_DF.index)
-            df.loc[df['Event_ID'] == event_ID, 'Snippet_index'] = range(
-                1, len(event_DF.index)+1)
-
-    df = df.sort_values(['Event_ID', 'Snippet_index']).reset_index(drop=True)
-    
-    return df
-
 def flattenSamples(PulseWaveform):
-    return [x for xs in PulseWaveform for x in xs]
+    flattend=[]
+    for xs in PulseWaveform :
+        try:
+            for x in xs :
+                flattend.append(x)
+        except:
+            flattend=flattend+[xs]*64
+            print("!!! Empty Sample Detected !!!")
+    return flattend
 
 def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal['snippet','compact'] = 'compact', reduced = False) -> "list[uproot.writing.writable.WritableDirectory]":
     '''
@@ -154,12 +151,11 @@ def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal
         df_output = reduceDataframe(df_output)
     
     df_output = df_output.drop(columns=['trigger_IDs','PulsePileUpFlag'], errors='ignore')
-    df['corruptedEvent'] = [d != '' for d in df.preprocessingFlags ]
 
     if 'compact' in df_output.attrs and df_output.attrs['compact'] == True:
         if 'PulseWaveform' in df_output:
             df_output['PulseWaveform'] = df_output.apply(lambda x: flattenSamples(x['PulseWaveform']),axis=1)
-        df_output = df_output.drop(columns=['preprocessingFlags'], errors='ignore')
+    
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     max_events = int(3e5)
@@ -173,16 +169,47 @@ def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal
             pars[f'Threshold_{i}'] = pars.pop(f'Threshold[{i}]')
     chunks = len(set(df.Event_ID)) // max_events +1
     for i in range(chunks):
-        file = uproot.recreate(out / f'{namefile}_{i}.root')
         df_tmp = df_output[(df_output.Event_ID >= int(min(df_output.Event_ID)+i*max_events)) & (df_output.Event_ID < int(min(df_output.Event_ID)+(i+1)*max_events))].reset_index(drop=True)
-        file['eventsTree'] = df_tmp
-        if pars != {}:
-            file['infoTree'] = pars
-        # file['eventsTree'].show()
-        list_of_files.append(file)
-        file.close()
+        
+        try:
+            import ROOT
+            build_rootfile(df_tmp,pars,out_dir,namefile,i)
+        except:
+            build_rootfile_with_uproot(df_tmp,pars,out_dir,namefile,i)
+
+        list_of_files.append(f'{out_dir}/{namefile}_{i}.root')
 
     return list_of_files
+
+
+def build_rootfile(df_tmp,pars,out_dir,namefile,i):
+
+    try:
+        import ROOT
+    
+        opts=ROOT.RDF.RSnapshotOptions()
+        opts.fMode = "UPDATE"
+        
+        columns=df_tmp.columns
+        Dict={column: ak.Array(df_tmp[column]) for column in columns}
+        rdf=ak.to_rdataframe(Dict)
+        rdf.Snapshot('events/events', f'{out_dir}/{namefile}_{i}.root')
+        
+        if pars != {}:
+            Dictpars = {keys.replace(".", "_"): v for keys, v in pars.items() if not v==[[]]}
+            rdfpar=ak.to_rdataframe(Dictpars)
+            rdfpar.Snapshot('metadata/pars',f'{out_dir}/{namefile}_{i}.root',options=opts)
+    except:
+        print("ROOT can't be imported. Using uproot")
+        
+
+def build_rootfile_with_uproot(df_tmp,pars,out_dir,namefile,i):
+    
+    file = uproot.recreate(f'{out_dir}/{namefile}_{i}.root')
+    file['eventsTree'] = df_tmp
+    if pars != {}:
+        file['infoTree'] = pars
+
 
 def make_total_dataFrame_processed(files: list|str) -> pd.DataFrame:
 
@@ -193,7 +220,6 @@ def make_total_dataFrame_processed(files: list|str) -> pd.DataFrame:
         ignore_index=True
     )
     metadata = getParametersFromJson(files)
-    
     preprocessed_df=preprocessDataframe(df,TimeWindow=metadata['TimeWindow'],PostTriggerTime=metadata['PostTriggerTime'])
 
     getAdditionalParameters(preprocessed_df,metadata)
@@ -209,12 +235,15 @@ def convertDataframeToJson(df):
     metadata about each dataset
     '''
     metadata_dict = {}
-    columns_to_average_snippets=['pulse_detection_efficiency', 'corrupted_snippets_fraction', 'snippets_wrong_timestamp_fraction']
-    columns_to_average_events=['missing_events_fraction', 'duplicated_events_fraction']
+    columns_to_average_snippets=['pulse_detection_efficiency', 'corrupted_snippets_fraction', 'snippets_wrong_timestamp_fraction', 'duplicated_pulses_fraction']
+    columns_to_average_events=['missing_events_fraction']
     columns_to_sum = ['n_snippets','n_events','event_rate','snippet_rate']
     columns_only_first = [c for c in df.columns if c not in [*columns_to_average_snippets,*columns_to_average_events,*columns_to_sum]]
     
     for c in columns_only_first:
+        if df[c].dtype=='object':
+            print(f'Warning: Entry in Column "{c}" of Metadata is empty. Continuing with next column')
+            continue
         metadata_dict[c] = int(df[c].agg(lambda x: x.value_counts().index[0]))
     for c in columns_to_average_events:
         metadata_dict[c] = float(np.average(df[c],weights=df['n_events']))
@@ -331,27 +360,27 @@ def getParametersFromJson(files: list|str):
             metadata[p]=metadata[p][0]
     return metadata
 
-def findDuplicateEvents(df: pd.DataFrame):
-    duplicate_events = []
-    energies = df.BoxcarSum
-    snippet_count = df.Snippet_count
-    for i,e in enumerate(energies):
-            if i>snippet_count.iloc[i] and e == energies.iloc[i-snippet_count.iloc[i]] and df.Event_ID.iloc[i] != df.Event_ID.iloc[i-snippet_count.iloc[i]] and e > 1000:
-                        duplicate_events.append(df.Event_ID.iloc[i])
-                        duplicate_events.append(df.Event_ID.iloc[i-snippet_count.iloc[i]])
-        
-    duplicate_events = set(duplicate_events)
-    df['duplicateEvent'] = [e in duplicate_events for e in df.Event_ID]
-    return df
+def findDuplicatePulses(df: pd.DataFrame):
+    df['DistanceDuplicatePulse'] = 0
+    for i in range(1,10):
+        condition = (df.ApproxEnergy_keVee.shift(i)== df.ApproxEnergy_keVee) & (df.BaselineADCC.shift(i)== df.BaselineADCC) & (df.Event_ID == df.Event_ID.shift(i))
+        df = df.drop(df[condition].index)
+    for i in range(100,0,-1):
+        condition=(df.ApproxEnergy_keVee.shift(i) == df.ApproxEnergy_keVee) & (df.BaselineADCC.shift(i)== df.BaselineADCC) &  (df.Event_ID != df.Event_ID.shift(i)) & (df.Channel_number == df.Channel_number.shift(i))
+        df.loc[condition,'DistanceDuplicatePulse'] = -i
+        df.loc[pd.Series(condition).shift(-i,fill_value=False),'DistanceDuplicatePulse'] = i
+
+    return df.reset_index(drop=True)
+
 
 def getAdditionalParameters(df,metadata):
     metadata['snippet_rate'] = len(df.index) / metadata['total_time']
     metadata['event_rate'] = len(set(df['Event_ID'])) / metadata['total_time']
 
     metadata['pulse_detection_efficiency'] = len(df[df.AreaOverHeightPass == True].index) / len(df.index)
-    metadata['corrupted_snippets_fraction'] = len(df[df.preprocessingFlags != ""])/len(df.index)
+    metadata['corrupted_snippets_fraction'] = df.attrs['corrupted_snippets_fraction']
     metadata['missing_events_fraction'] = df.attrs['missing_events_fraction']
-    metadata['duplicated_events_fraction'] = df.attrs['duplicated_events_fraction']
+    metadata['duplicated_pulses_fraction'] = df.attrs['duplicated_pulses_fraction']
     
     posttriggertime = metadata["PostTriggerTime"]
     if isinstance(posttriggertime,list):
