@@ -361,6 +361,9 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
         x = [Parameters.map_channels[c][0] if c in range(36) else 2.5 for c in channels] + np.random.normal(0, 0.1, len(channels))
         y = [Parameters.map_channels[c][1] if c in range(36) else 2.5 for c in channels] + np.random.normal(0, 0.1, len(channels))
         ax[2].scatter(x, y, c=event_DF.PulseTime_us, norm=norm, cmap=cmap)
+        circle = plt.Circle((2.5, 2.5), 0.3, color='grey', fill=False, alpha=0.5)
+        ax[2].add_patch(circle)
+        ax[2].text(2.5, 2.5, '36', ha="center", va="center", color='black')
         if time_scale == 'linear': 
             format = lambda x, _: f"{x:.0f}"
         elif time_scale == 'log':
