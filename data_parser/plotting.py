@@ -450,9 +450,9 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events = 50, save = False, outDir 
         0.68,
         0.7,
         f"Area:    {int(row['PulseAreaADCC'])} ADCC\n"
-        + f"Width:   {int(row['PulseWidth'])} samples\n"
         + f"Height:  {int(row['PulseHeight'])} ADCC\n"
         + f"Area/height: {row['PulseAreaADCC']/(row['PulseHeight']+0.01):.2f}\n"
+        + f"RE: {row.RE:.2f}\n"
         + f"Energy: {row['ApproxEnergy_keVee']:.0f} " + r"keV$_{ee}$" + "\n" 
         + f"Baseline: {int(row['BaselineADCC'])} ADCC",
         transform=ax.transAxes,

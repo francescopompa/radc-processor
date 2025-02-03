@@ -189,8 +189,75 @@ def pulse_operations(PulseWaveform: list | pd.Series):
 
     return successes, max_indices, pulse_heights, pulse_widths, areas, starts, ends, baselines
 
-    
+def BGOPulseQuantities(waveform):
+    baseline = np.mean(waveform[1:5])
+    waveform = waveform - baseline
+    area = np.trapezoid(waveform[5:])
+    height = max(waveform)
+    max_index = np.argmax(waveform)
+    wf_norm = waveform[1:] / np.sum(waveform[1:])
+    if Parameters.match_pulse_maximum:
+        wf_norm = np.roll(wf_norm,-max_index + np.argmax(Parameters.average_pulse))
+        wf_norm[:4] = 0
+    RE = np.linalg.norm(wf_norm - Parameters.BGO_average_pulse_cut) / Parameters.BGO_norm_function(height)
+    flag = 'b'
+    average_pulse_pass = RE < Parameters.BGO_RE_threshold
+    if average_pulse_pass == False:
+        flag += 'p'
+    return average_pulse_pass, RE, max_index, height, area, baseline, flag
 
+def saturatedPulseQuantities(waveform):
+    baseline = np.mean(waveform[1:10])
+    waveform = waveform - baseline
+    height = max(waveform)
+    max_index = np.argmax(waveform)
+    sum_waveform = np.sum(waveform[1:])
+    wf_norm = waveform[1:] / sum_waveform
+    matrix = np.vstack([Parameters.last30samples, np.ones(len(Parameters.last30samples))]).T
+    m, c = np.linalg.lstsq(matrix, Parameters.last30samples)[0]
+    RE = np.linalg.norm(wf_norm[-30:] - m*Parameters.last30samples - c) / Parameters.norm_RE_saturation
+    area = (m + c) * sum_waveform
+    average_pulse_pass = RE < Parameters.saturation_RE_threshold
+    flag = 's'
+    if average_pulse_pass == False:
+        flag += 'p'
+    return average_pulse_pass, RE, max_index, height, area, baseline, flag
+
+
+def pulseQuantities(waveform):
+    baseline = np.mean(waveform[1:10])
+    waveform = waveform - baseline
+    height = max(waveform)
+    max_index = np.argmax(waveform)
+    sum_waveform = np.sum(waveform[1:])
+    wf_norm = waveform[1:] / (0.01 + np.abs(sum_waveform))
+    if Parameters.match_pulse_maximum:
+        wf_norm = np.roll(wf_norm,-max_index + np.argmax(Parameters.average_pulse))
+    RE = np.linalg.norm(wf_norm - Parameters.average_pulse_cut) / Parameters.norm_function(height)
+    area = np.trapezoid(waveform[12:])
+    average_pulse_pass = RE < Parameters.saturation_RE_threshold
+    if (max(waveform) < 50) & (average_pulse_pass == False):
+        flag = 't'
+    elif average_pulse_pass == False:
+        flag = 'p'
+    elif average_pulse_pass & (min(wf_norm) < -0.03):
+        flag = 'u'
+    else:
+        flag = 'n'
+    return average_pulse_pass, RE, max_index, height, area, baseline, flag
+
+        
+def getPulseQuantities(df):
+    waveform = df.PulseWaveform
+    channel = df.Channel_number
+    if channel == Parameters.BGO_channel:
+        q = BGOPulseQuantities(waveform)
+    elif max(waveform) > 8185:
+        q = saturatedPulseQuantities(waveform)
+    else:
+        q = pulseQuantities(waveform)
+    return q
+    
 
 def energyConversion(charge, channel, gain=Parameters.gain):
     '''
@@ -199,14 +266,12 @@ def energyConversion(charge, channel, gain=Parameters.gain):
     otherwise for now it's necessary to convert in postprocessing or to use always the same channel
     with the same module
     '''
-    try:
-        rescalingFactor = Parameters.rescalingFactors[channel] 
-    except:
-        return charge * Parameters.slope[10] + Parameters.constant[10]
-    if charge < 0:
-        return charge * Parameters.slope[10] + Parameters.constant[10]
     E_keV = (charge + 169.3)/16.20 
     if gain == 'matched' or gain == 'matched_v2':
+        try:
+            rescalingFactor = Parameters.rescalingFactors[channel] 
+        except:
+            return charge * Parameters.slope[10] + Parameters.constant[10]
         return E_keV * rescalingFactor
     elif gain == 'matched_v3':
         return charge * Parameters.slope[channel] + Parameters.constant[channel]

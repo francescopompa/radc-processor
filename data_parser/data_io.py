@@ -86,19 +86,17 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     df.attrs['corrupted_snippets_fraction'] = len(df[(np.abs(df['PulseTime_us']) > (PostTriggerTime * 16e-3)) | (~df['Channel_number'].isin(range(37)))] ) / len(df)
     df = df[np.abs(df['PulseTime_us']) < (PostTriggerTime * 16e-3)]
     df = df[df['Channel_number'].isin(range(37))]
+    df = df.reset_index(drop=True)
 
-    tmp = df['PulseWaveform'].apply(pf.pulse_operations)
-
-    columns = ['AreaOverHeightPass', 'MaximumIndex', 'PulseHeight', 'PulseWidth', 'PulseAreaADCC',
-               'PulseStart', 'PulseEnd', 'BaselineADCC']
-    for i, col in enumerate(columns):
-        df[col] = [row[i] for row in tmp]
-    df = df.explode(columns).reset_index(drop=True)
-    df['PulseWaveform'] = df['PulseWaveform'] - df['BaselineADCC']
+    df[['AveragePulsePass','RE','MaximumIndex','PulseHeight', 'PulseAreaADCC', 'BaselineADCC', 'PulseFlag']] = df.apply(pf.getPulseQuantities, axis=1).tolist()
+    df['PulseWaveform'] = df.apply(lambda row: np.subtract(row.PulseWaveform, row.BaselineADCC), axis=1)
+    df.loc[:,'AreaOverHeightRatio'] = df.PulseAreaADCC / (df.PulseHeight + 0.01)
+    df['AreaOverHeightPass'] = (df.AreaOverHeightRatio < Parameters.max_ratio_charge_height) & (df.AreaOverHeightRatio > Parameters.min_ratio_charge_height)
+    df = df.drop(columns='AreaOverHeightRatio')
     
-    floats = ['PulseAreaADCC', 'BaselineADCC', 'PulseHeight']
-    bools = ['AreaOverHeightPass','PulsePileUpFlag']
-    integers = [c for c in columns if c not in [*floats,*bools]]
+    integers = ['MaximumIndex']
+    floats = ['PulseAreaADCC', 'BaselineADCC', 'PulseHeight', 'RE','PulseAreaADCC', 'BaselineADCC']
+    bools = ['AveragePulsePass','AreaOverHeightPass','PulsePileUpFlag']
     df= df.astype({f:float for f in floats})
     df= df.astype({b:bool for b in bools})
     df= df.astype({i:int for i in integers})
@@ -119,6 +117,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
 
     df = findDuplicatePulses(df,TimeWindow)
     df.attrs['duplicated_pulses_fraction'] = len(df[df['DistanceDuplicatePulse'] != 0]) / len(df)
+    df.loc[df['DistanceDuplicatePulse'] != 0,'PulseFlag'] = df[df['DistanceDuplicatePulse'] != 0]['PulseFlag'] + 'd'
     df = df.drop(columns=['Snippet_index','BoxcarSum'],errors='ignore')
 
     return df
@@ -377,10 +376,10 @@ def findDuplicatePulses(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow):
 
 
 def getAdditionalParameters(df,metadata):
-    metadata['snippet_rate'] = len(df.index) / metadata['total_time']
+    metadata['snippet_rate'] = len(df) / metadata['total_time']
     metadata['event_rate'] = len(set(df['Event_ID'])) / metadata['total_time']
 
-    metadata['pulse_detection_efficiency'] = len(df[df.AreaOverHeightPass == True].index) / len(df.index)
+    metadata['pulse_detection_efficiency'] = len(df[df.AveragePulsePass]) / len(df)
     metadata['corrupted_snippets_fraction'] = df.attrs['corrupted_snippets_fraction']
     metadata['missing_events_fraction'] = df.attrs['missing_events_fraction']
     metadata['duplicated_pulses_fraction'] = df.attrs['duplicated_pulses_fraction']
@@ -390,7 +389,7 @@ def getAdditionalParameters(df,metadata):
         posttriggertime = Parameters.PostTriggerTime
     
     metadata['snippets_wrong_timestamp_fraction'] = len(df[(df.PulseTime_us< -posttriggertime*16e-3) | (df.PulseTime_us> posttriggertime*16e-3)]) / len(df)
-    metadata['n_snippets'] = len(df.index)
+    metadata['n_snippets'] = len(df)
     metadata['n_events'] = len(set(df.Event_ID))
     
                 
