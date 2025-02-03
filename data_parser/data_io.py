@@ -117,7 +117,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
 
     df = df.sort_values(['Event_ID','PulseTime_us']).reset_index(drop=True)
 
-    df = findDuplicatePulses(df)
+    df = findDuplicatePulses(df,TimeWindow)
     df.attrs['duplicated_pulses_fraction'] = len(df[df['DistanceDuplicatePulse'] != 0]) / len(df)
     df = df.drop(columns=['Snippet_index','BoxcarSum'],errors='ignore')
 
@@ -358,7 +358,7 @@ def getParametersFromJson(files: list|str):
             metadata[p]=metadata[p][0]
     return metadata
 
-def findDuplicatePulses(df: pd.DataFrame):
+def findDuplicatePulses(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow):
     df['DistanceDuplicatePulse'] = 0
     for i in range(1,20):
         condition = (df.PulseAreaADCC.shift(i)== df.PulseAreaADCC) & (df.BaselineADCC.shift(i)== df.BaselineADCC) & (df.Event_ID == df.Event_ID.shift(i))
@@ -367,9 +367,10 @@ def findDuplicatePulses(df: pd.DataFrame):
         condition=(df.PulseAreaADCC.shift(i) == df.PulseAreaADCC) & (df.BaselineADCC.shift(i) == df.BaselineADCC) & (df.Event_ID != df.Event_ID.shift(i)) & (df.Channel_number == df.Channel_number.shift(i))
         df.loc[condition,'DistanceDuplicatePulse'] = -i
         df.loc[pd.Series(condition).shift(-i,fill_value=False),'DistanceDuplicatePulse'] = i
+    df = df.reset_index(drop=True)
     df.loc[:,'TimeDifference'] = df.apply(lambda x: (df['Timestamp_s'][x.name + x.DistanceDuplicatePulse]-df['Timestamp_s'][x.name])*1e6,axis=1)
 
-    df = df[df.TimeDifference > -df.attrs['TimeWindow']*16e-3]
+    df = df[df.TimeDifference > -TimeWindow*16e-3]
     df = df.drop(columns='TimeDifference')
 
     return df.reset_index(drop=True)
