@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import pickle
 
-directory = Path(__file__).parent
+directory = Path(__file__).parent / 'tables'
 match_pulse_maximum = False
 
 # BGO pulse finding parameters

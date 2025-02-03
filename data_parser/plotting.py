@@ -10,7 +10,7 @@ from .configuration import CONFIG
 from pathlib import Path
 import numpy as np
 from typing import Literal
-from preprocess_data import Parameters
+from data_parser import Parameters
 import sys
 
 # CONFIG = configuration.CONFIG
@@ -442,8 +442,6 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events = 50, save = False, outDir 
             previous_event = row.Event_ID
         fig, ax = plt.subplots()
         ax.plot(row['PulseWaveform'],'b')
-        ax.axvline(x=row['PulseStart'],label=f'Start: {row["PulseStart"]}',color = 'green',linestyle='dashed')
-        ax.axvline(x=row['PulseEnd'],label=f'End: {row["PulseEnd"]}',color = 'red',linestyle='dashed')
         ax.plot(row['MaximumIndex'],row['PulseWaveform'][row['MaximumIndex']],'bo',label = f'Maximum')
         props = dict(boxstyle="round", facecolor="wheat")
         ax.text(

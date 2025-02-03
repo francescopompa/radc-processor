@@ -7,8 +7,8 @@ import pandas as pd
 import awkward as ak
 # from . import struct_conversion
 from data_parser.struct_conversion import DataFile
-from preprocess_data import Parameters
-from preprocess_data import peak_finding_algorithms as pf
+from data_parser import Parameters
+from data_parser import pulseFunctions as pf
 import json
 import uproot
 from pathlib import Path

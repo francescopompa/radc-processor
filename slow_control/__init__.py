@@ -7,7 +7,7 @@ from jinja2 import Template
 import pandas as pd
 import plotly.express as px
 from udp_receiver.receiver_class import convert_seconds
-from preprocess_data import Parameters
+from data_parser import Parameters
 import numpy as np
 from time import time, strftime, gmtime
 from isegcontroller.commander import Commander

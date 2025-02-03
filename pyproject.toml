@@ -35,7 +35,6 @@ pulse_analysis = "pulse_analysis"
 udp_receiver = "udp_receiver"
 import_helper = "import_helper"
 slow_control = "slow_control"
-preprocess_data = "preprocess_data"
 scripts = "scripts"
 
 [options.packages_data]
