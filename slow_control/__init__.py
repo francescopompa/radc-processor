@@ -57,7 +57,7 @@ class Control():
         metadata['Event rate'] = convert_units(
             len(set(df['Event_ID'])) / totalTime, 'Hz')
         metadata['Pulse detection efficiency (%)'] = len(
-            df[df.AreaOverHeightPass]) / len(df) * 100
+            df[df.AveragePulsePass]) / len(df) * 100
         metadata['Duplicate pulses (%)'] = df.attrs['duplicated_pulses_fraction'] * 100
         metadata['Corrupted snippets (%)'] = df.attrs['corrupted_snippets_fraction'] * 100
         small_df = pd.DataFrame(metadata, index=[0])
