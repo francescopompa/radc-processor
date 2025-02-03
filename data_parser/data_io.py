@@ -110,18 +110,16 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow, Po
     df['ApproxEnergy_keVee'] = df.apply(lambda x: pf.energyConversion(
         x['PulseAreaADCC'], x['Channel_number'], Parameters.gain), axis=1)
 
-    df = findDuplicatePulses(df)
-
     events = set(df.Event_ID)
-    
-
-    df = df.drop(columns=['Snippet_index','BoxcarSum'],errors='ignore')
     diffEvents = max(events) - min(events) + 1
     df['Event_ID'] = reorderEventIDs(df['Event_ID']) 
     df.attrs['missing_events_fraction']= 1 - len(events) / diffEvents
-    df.attrs['duplicated_pulses_fraction'] = len(df[df['DistanceDuplicatePulse'] != 0]) / len(df)
 
     df = df.sort_values(['Event_ID','PulseTime_us']).reset_index(drop=True)
+
+    df = findDuplicatePulses(df)
+    df.attrs['duplicated_pulses_fraction'] = len(df[df['DistanceDuplicatePulse'] != 0]) / len(df)
+    df = df.drop(columns=['Snippet_index','BoxcarSum'],errors='ignore')
 
     return df
 
@@ -200,7 +198,7 @@ def build_rootfile(df_tmp,pars,out_dir,namefile,i):
             rdfpar=ak.to_rdataframe(Dictpars)
             rdfpar.Snapshot('metadata/pars',f'{out_dir}/{namefile}_{i}.root',options=opts)
     except:
-        print("ROOT can't be imported. Using uproot")
+        print("ROOT can't be imported. Using uproot...")
         
 
 def build_rootfile_with_uproot(df_tmp,pars,out_dir,namefile,i):
@@ -251,9 +249,9 @@ def convertDataframeToJson(df):
         metadata_dict[c] = float(np.average(df[c],weights=df['n_snippets']))
     for c in columns_to_sum:
         if c in ['n_snippets','n_events']:
-            metadata_dict[c] = int(df[c].agg(sum))
+            metadata_dict[c] = int(df[c].agg('sum'))
         else:
-            metadata_dict[c] = float(df[c].agg(sum))
+            metadata_dict[c] = float(df[c].agg('sum'))
 
 
     return metadata_dict
@@ -362,13 +360,17 @@ def getParametersFromJson(files: list|str):
 
 def findDuplicatePulses(df: pd.DataFrame):
     df['DistanceDuplicatePulse'] = 0
-    for i in range(1,10):
-        condition = (df.ApproxEnergy_keVee.shift(i)== df.ApproxEnergy_keVee) & (df.BaselineADCC.shift(i)== df.BaselineADCC) & (df.Event_ID == df.Event_ID.shift(i))
+    for i in range(1,20):
+        condition = (df.PulseAreaADCC.shift(i)== df.PulseAreaADCC) & (df.BaselineADCC.shift(i)== df.BaselineADCC) & (df.Event_ID == df.Event_ID.shift(i))
         df = df.drop(df[condition].index)
-    for i in range(100,0,-1):
-        condition=(df.ApproxEnergy_keVee.shift(i) == df.ApproxEnergy_keVee) & (df.BaselineADCC.shift(i)== df.BaselineADCC) &  (df.Event_ID != df.Event_ID.shift(i)) & (df.Channel_number == df.Channel_number.shift(i))
+    for i in range(200,0,-1):
+        condition=(df.PulseAreaADCC.shift(i) == df.PulseAreaADCC) & (df.BaselineADCC.shift(i) == df.BaselineADCC) & (df.Event_ID != df.Event_ID.shift(i)) & (df.Channel_number == df.Channel_number.shift(i))
         df.loc[condition,'DistanceDuplicatePulse'] = -i
         df.loc[pd.Series(condition).shift(-i,fill_value=False),'DistanceDuplicatePulse'] = i
+    df.loc[:,'TimeDifference'] = df.apply(lambda x: (df['Timestamp_s'][x.name + x.DistanceDuplicatePulse]-df['Timestamp_s'][x.name])*1e6,axis=1)
+
+    df = df[df.TimeDifference > -df.attrs['TimeWindow']*16e-3]
+    df = df.drop(columns='TimeDifference')
 
     return df.reset_index(drop=True)
 
