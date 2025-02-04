@@ -199,7 +199,9 @@ def BGOPulseQuantities(waveform):
     if Parameters.match_pulse_maximum:
         wf_norm = np.roll(wf_norm,-max_index + np.argmax(Parameters.average_pulse))
         wf_norm[:4] = 0
-    RE = np.linalg.norm(wf_norm - Parameters.BGO_average_pulse_cut) / Parameters.BGO_norm_function(height)
+    if height < 2000 & height > 0:
+        RE = np.linalg.norm(wf_norm - Parameters.BGO_average_pulse_cut) / Parameters.BGO_norm_function(height)
+    else: RE = 50
     flag = 'b'
     average_pulse_pass = RE < Parameters.BGO_RE_threshold
     if average_pulse_pass == False:
@@ -233,7 +235,9 @@ def pulseQuantities(waveform):
     wf_norm = waveform[1:] / (0.01 + np.abs(sum_waveform))
     if Parameters.match_pulse_maximum:
         wf_norm = np.roll(wf_norm,-max_index + np.argmax(Parameters.average_pulse))
-    RE = np.linalg.norm(wf_norm - Parameters.average_pulse_cut) / Parameters.norm_function(height)
+    if height > 0:
+        RE = np.linalg.norm(wf_norm - Parameters.average_pulse_cut) / Parameters.norm_function(height)
+    else: RE = 50
     area = np.trapezoid(waveform[12:])
     average_pulse_pass = RE < Parameters.saturation_RE_threshold
     if (max(waveform) < 50) & (average_pulse_pass == False):

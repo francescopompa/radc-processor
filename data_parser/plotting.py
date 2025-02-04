@@ -440,19 +440,21 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events = 50, save = False, outDir 
         if row.Event_ID != previous_event:
             snippet_index = 1
             previous_event = row.Event_ID
+        box_string = f"Area:    {int(row['PulseAreaADCC'])} ADCC\n"
+        box_string += f"Height:  {int(row['PulseHeight'])} ADCC\n"
+        box_string += f"Energy: {row['ApproxEnergy_keVee']:.0f} " + r"keV$_{ee}$" + "\n" 
+        box_string += f"Baseline: {int(row['BaselineADCC'])} ADCC\n"
+        box_string += f"Area/height: {row['PulseAreaADCC']/(row['PulseHeight']+0.01):.2f}"
+        if 'RE' in df.columns:
+            box_string += f"\nRE: {row.RE:.2f}"
         fig, ax = plt.subplots()
         ax.plot(row['PulseWaveform'],'b')
-        ax.plot(row['MaximumIndex'],row['PulseWaveform'][row['MaximumIndex']],'bo',label = f'Maximum')
+        ax.plot(row['MaximumIndex'],row['PulseWaveform'][row['MaximumIndex']],'bo',label = f'Maximum: {row["MaximumIndex"]}')
         props = dict(boxstyle="round", facecolor="wheat")
         ax.text(
         0.68,
         0.7,
-        f"Area:    {int(row['PulseAreaADCC'])} ADCC\n"
-        + f"Height:  {int(row['PulseHeight'])} ADCC\n"
-        + f"Area/height: {row['PulseAreaADCC']/(row['PulseHeight']+0.01):.2f}\n"
-        + f"RE: {row.RE:.2f}\n"
-        + f"Energy: {row['ApproxEnergy_keVee']:.0f} " + r"keV$_{ee}$" + "\n" 
-        + f"Baseline: {int(row['BaselineADCC'])} ADCC",
+        box_string,
         transform=ax.transAxes,
         fontsize=10,
         verticalalignment="top",
