@@ -177,6 +177,8 @@ def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal
     df = df.sort_values(['Event_ID', 'PulseTime_us']).reset_index(drop=True)
     df_output = df
 
+    df_output['PulseFlag'] = df_output['PulseFlag'].apply(convertPulseFlagsToInt)
+
     if (mode == 'compact') and ('compact' not in df.attrs):
         df_output = compactDataframe(df_output)
     if reduced == True:
@@ -224,7 +226,6 @@ def build_rootfile(df_tmp, pars, out_dir, namefile, i):
 
         opts = ROOT.RDF.RSnapshotOptions()
         opts.fMode = "UPDATE"
-        df_tmp['PulseFlag'] = df_tmp['PulseFlag'].apply(convertPulseFlagsToInt)
         columns = df_tmp.columns
         Dict = {column: ak.Array(df_tmp[column]) for column in columns}
         rdf = ak.to_rdataframe(Dict)
