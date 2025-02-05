@@ -290,11 +290,11 @@ def energyConversion(charge, channel, gain=Parameters.gain):
     otherwise it uses the linear fits.
     '''
     E_keV = (charge + 169.3)/16.20 
+    try:
+        rescalingFactor = Parameters.rescalingFactors[channel] 
+    except:
+        return charge * Parameters.slope[10] + Parameters.constant[10]
     if gain == 'matched' or gain == 'matched_v2':
-        try:
-            rescalingFactor = Parameters.rescalingFactors[channel] 
-        except:
-            return charge * Parameters.slope[10] + Parameters.constant[10]
         return E_keV * rescalingFactor
     elif gain == 'matched_v3':
         return charge * Parameters.slope[channel] + Parameters.constant[channel]

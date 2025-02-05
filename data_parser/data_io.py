@@ -376,7 +376,7 @@ def compactDataframe(df):
     columns = ['AreaOverHeightPass', 'MaximumIndex', 'PulseHeight', 'PulseWidth', 'PulseAreaADCC',
                'PulseStart', 'PulseEnd', 'BaselineADCC', 'Channel_number', 'BoxcarSum', 'Timedelta_samples',
                'Snippet_index', 'min', 'max', 'PulseWaveform', 'ApproxEnergy_keVee', 'PulseTime_us',
-               'preprocessingFlags', 'trigger_IDs']
+               'preprocessingFlags', 'trigger_IDs', 'DistanceDuplicatePulse', 'RE', 'PulseFlag', 'AveragePulsePass', 'PulsePileUpFlag']
     tmp = df.groupby('Event_ID')[[c for c in columns if c in df.columns]].agg(
         list).reset_index(drop=True)
     tmp2 = df.groupby('Event_ID')[[c for c in df.columns if c not in columns and c in df.columns]].agg(
