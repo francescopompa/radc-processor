@@ -5,17 +5,41 @@ from time import time
 import json
 from udp_receiver.receiver_class import convert_seconds
 import sys
+from argparse import ArgumentParser
 
 
 def main():
-    if len(sys.argv) > 1:
-        folder = sys.argv[1]
-    else:
-        folder = 'FNG'
-        
-    baseDir = f'/kalinka/storage/darkmatter/lngs-neutron-detector/{folder}'
     
-    forcePreprocessing = False
+
+    parser = ArgumentParser()
+    parser.add_argument("-r", "--relative",
+                        help="Directory relative to /kalinka/storage/darkmatter/lngs-neutron-detector")
+    parser.add_argument("-a", "--absolute",
+                        help="Absolute directory")
+    parser.add_argument("-f", "--force",
+                        action="store_true", default=False,
+                        help="Force processing of the folder")
+    
+    parser.print_help()
+
+    args = vars(parser.parse_args())
+    if args['relative'] is not None:
+        baseDir = f'/kalinka/storage/darkmatter/lngs-neutron-detector/{args["relative"]}'
+    elif args['absolute'] is not None:
+        baseDir = args['absolute']
+    elif args['absolute'] is not None and args['relative'] is not None:
+        print('Impossible to set relative and absolute path to the directory at the same time.')
+        exit()
+    else:
+        print('It is required to set a folder to process.')
+        exit()
+    
+    
+    forcePreprocessing = args['force']
+    
+    print(f'Processing directory {baseDir}')
+    if forcePreprocessing:
+        print('All files in the directory will be processed')
 
     subdirectories = [x[0] for x in os.walk(baseDir)]
     n_jobs = -1
