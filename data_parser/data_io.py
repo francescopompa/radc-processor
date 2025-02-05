@@ -1,17 +1,17 @@
 import data_parser
 data_parser.init('v2')
 
-from joblib import Parallel, delayed
-from typing import Literal
-from pathlib import Path
-import uproot
-import json
-from data_parser import pulseFunctions as pf
-from data_parser import Parameters
-from data_parser.struct_conversion import DataFile
-import awkward as ak
-import pandas as pd
 import numpy as np
+import pandas as pd
+import awkward as ak
+from data_parser.struct_conversion import DataFile
+from data_parser import Parameters
+from data_parser import pulseFunctions as pf
+import json
+import uproot
+from pathlib import Path
+from typing import Literal
+from joblib import Parallel, delayed
 
 
 
@@ -41,7 +41,9 @@ def load_files_to_df(files: list):
 
 
 def make_total_dataFrame(files: list | str) -> pd.DataFrame:
-
+    """
+    Creates a dataframe from a list of files without any processing
+    """
     if not isinstance(files, list):
         files = [files]
 
@@ -52,7 +54,9 @@ def make_total_dataFrame(files: list | str) -> pd.DataFrame:
 
 
 def reorderEventIDs(series):
-    # Initialize the output list with the same size
+    """
+    It puts all the event IDs in consecutive order.
+    """
     consecutive_list = pd.Series(index=range(len(series)))
     counter = series[0]
     consecutive_list[0] = counter
@@ -132,6 +136,9 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, Post
 
 
 def flattenSamples(PulseWaveform):
+    """
+    Function to convert the 2d waveforms in a 1d array for root export.
+    """
     flattend = []
     for xs in PulseWaveform:
         try:
@@ -144,6 +151,14 @@ def flattenSamples(PulseWaveform):
 
 
 def convertPulseFlagsToInt(flag):
+    """
+    It converts the pulse flags to a binary mask:
+    - undershoot and normal pulses (u and n): 0
+    - saturation (s): 10
+    - duplicate (d): 100
+    - tail/small pileup/noise (t): 1000
+    - pileup (p): 10000
+    """
     flag_dictionary = {'s': 10, 'b': 1, 'p': 10000,
                        'n': 0, 'u': 0, 'd': 100, 't': 1000}
     flag_int = 0
@@ -157,6 +172,7 @@ def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal
     It creates the root file using the dataframe. It creates automatically the folder.
     If the mode is snippet, the function expects an exploded dataframe (i.e. each row is a pulse), 
     otherwise it expect each row is an event. In the last case it drops the column of the samples and of the preprocessing flags. To handle large datasets, it's recommended to use TChain and wildcards.
+    It detects automatically if ROOT is available in the environment: if so, it uses awkward to convert the dataframe to a ROOT file with STL vectors as columns.
     '''
     df = df.sort_values(['Event_ID', 'PulseTime_us']).reset_index(drop=True)
     df_output = df
@@ -199,6 +215,9 @@ def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal
 
 
 def build_rootfile(df_tmp, pars, out_dir, namefile, i):
+    """
+    It builds a ROOT file using awkward.
+    """
 
     try:
         import ROOT
@@ -222,6 +241,9 @@ def build_rootfile(df_tmp, pars, out_dir, namefile, i):
 
 
 def build_rootfile_with_uproot(df_tmp, pars, out_dir, namefile, i):
+    """
+    It builds the rootfile using uproot. To be used if ROOT is not available in the environment.
+    """
 
     file = uproot.recreate(f'{out_dir}/{namefile}_{i}.root')
     file['eventsTree'] = df_tmp
@@ -230,6 +252,9 @@ def build_rootfile_with_uproot(df_tmp, pars, out_dir, namefile, i):
 
 
 def make_total_dataFrame_processed(files: list | str) -> pd.DataFrame:
+    """ 
+    It processes the list of files and returns the unprocessed and processed dataframes and the root file.
+    """
 
     if not isinstance(files, list):
         files = [files]
@@ -301,8 +326,7 @@ def wrapper_make_total_rootfile(files: list | str, out_dir: str, namefile_output
 def make_total_rootfile(files: list | str, out_dir: str, namefile_output: str, mode: Literal['snippet', 'compact'] = 'compact', reduced=False, parallel=False, n_jobs=4) -> list | dict:
     '''
     Function to generate ROOT and pickle files from datasets. For large datasets, it is recommended to use
-    the parallel function that doesn't return the dataframes. The compact mode is used to output a root file where each entry is an event, in the snippet mode each entry is a pulse. Use the reduced mode to remove 
-    unnecessary columns. Note: in the parallel mode not all the metadata in df.attrs aren't reliable because in some cases they must be averaged over the number of snippets or events.
+    the parallel function that doesn't return the dataframes. The compact mode is used to output a root file where each entry is an event, in the snippet mode each entry is a pulse. Use the reduced mode to remove unnecessary columns. Note: in the parallel mode not all the metadata in df.attrs are reliable because in some cases they must be averaged over the number of snippets or events.
     '''
 
     if not isinstance(files, list):
@@ -337,12 +361,18 @@ def make_total_rootfile(files: list | str, out_dir: str, namefile_output: str, m
 
 
 def explode_dataframe(df):
+    """
+    It changes the structure of the unprocessed dataframe. The snippets column is a dictionary and it's converted to different columns corresponding to the keys of the dictionary.
+    """
     dfc = df.explode('snippets').reset_index(drop=True)
     df = dfc.join(pd.json_normalize(dfc['snippets'])).drop(columns='snippets')
     return df
 
 
 def compactDataframe(df):
+    """
+    It converts the entries in the same events to lists. To be used for ROOT export.
+    """
     columns = ['AreaOverHeightPass', 'MaximumIndex', 'PulseHeight', 'PulseWidth', 'PulseAreaADCC',
                'PulseStart', 'PulseEnd', 'BaselineADCC', 'Channel_number', 'BoxcarSum', 'Timedelta_samples',
                'Snippet_index', 'min', 'max', 'PulseWaveform', 'ApproxEnergy_keVee', 'PulseTime_us',
@@ -358,6 +388,9 @@ def compactDataframe(df):
 
 
 def reduceDataframe(df):
+    """
+    It reduces the dataframe size by removing some useless columns. 
+    """
     columns = ['Timedelta_samples', 'BoxcarSum', 'min', 'max', 'trigger_IDs', 'Trigger_type', 'Frame_number',
                'Subsecs', 'Seconds',  'length', 'snippet_space', 'Datetime', 'PulsePileUpFlag', 'trigger_count']
     df = df.drop(columns=columns, errors='ignore')
@@ -398,6 +431,11 @@ def getParametersFromJson(files: list | str):
 
 
 def findDuplicatePulses(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow):
+    """
+    This function finds all the duplicate pulses.
+    If the pulses are in the same event, one is removed.
+    If the pulses are in different events, the second in order of time is removed if it has a time difference to the first greater than the time window.
+    """
     df['DistanceDuplicatePulse'] = 0
     for i in range(1, 20):
         condition = (df.PulseAreaADCC.shift(i) == df.PulseAreaADCC) & (

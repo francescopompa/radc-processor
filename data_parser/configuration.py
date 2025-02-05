@@ -31,10 +31,7 @@ def _loop_through_dict(config, dpath=None):
 def validate_config(version: str = VERSION_STR):
 
     config_path = Path(
-        __file__,
-        "..",
-        version,
-        f"{version}.configuration.yaml"
+        '/home/ws/zm6876/DAQMeasurements/radc-processor/data_parser/v2/v2.configuration.yaml'
         ).resolve()
 
     with open(config_path, "r", encoding="utf-8") as file:

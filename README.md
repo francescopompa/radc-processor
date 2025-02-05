@@ -12,6 +12,30 @@ Various tools are also included.
 
 ## Dependencies
 
+### Conda environment
+
+To install the conda environment, execute the following commands:
+```bash
+directory="/kalinka/storage/darkmatter/lngs-neutron-detector/zm6876/software"
+mkdir -p $directory/miniconda3
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O $directory/miniconda3/miniconda.sh
+```
+Then, exit and install the environment with:
+```bash
+conda install -n base conda-libmamba-solver
+conda config --set solver libmamba 
+
+conda config --set channel_priority strict 
+conda create -n ALMOND python==3.11
+```
+Then, it's possible to install the Jupyter kernel:
+```bash
+conda activate ALMOND         
+(ALMOND)$ conda install ipykernel
+(ALMOND)$ ipython kernel install --user --name=ALMOND
+(ALMOND)$ conda deactivate
+```
+
 ### Python modules
 > ⚠️ A virtual environment is not implemented yet (NIY).
 

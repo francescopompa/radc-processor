@@ -190,6 +190,10 @@ def pulse_operations(PulseWaveform: list | pd.Series):
     return successes, max_indices, pulse_heights, pulse_widths, areas, starts, ends, baselines
 
 def BGOPulseQuantities(waveform):
+    """
+    Function to determine the pulse quantities for BGO pulses. 
+    The BGO channel must be specified in data_parser.Parameters.
+    """
     baseline = np.mean(waveform[1:5])
     waveform = waveform - baseline
     area = np.trapezoid(waveform[5:])
@@ -209,6 +213,11 @@ def BGOPulseQuantities(waveform):
     return average_pulse_pass, RE, max_index, height, area, baseline, flag
 
 def saturatedPulseQuantities(waveform):
+    """
+    Function to determine the pulse quantities for saturated pulses.
+    The reconstruction error is calculated only on the last 30 samples with a linear fit.
+    The area is then (m+c)*sum(waveform).
+    """
     baseline = np.mean(waveform[1:10])
     waveform = waveform - baseline
     height = max(waveform)
@@ -227,6 +236,14 @@ def saturatedPulseQuantities(waveform):
 
 
 def pulseQuantities(waveform):
+    """
+    Function to determine the pulse quantities for well defined pulses.
+    It also determines the flags:
+    - t: small pileup: pulses with RE > RE_thr and pulse height < 50 ADCC
+    - p: pileup pulses: RE > RE_thr
+    - u: undershoot: minimum of the normalized waveform of less than -0.03
+    - n: all the other pulses
+    """
     baseline = np.mean(waveform[1:10])
     waveform = waveform - baseline
     height = max(waveform)
@@ -252,6 +269,9 @@ def pulseQuantities(waveform):
 
         
 def getPulseQuantities(df):
+    """
+    Function to be used with df.apply to determine pulse quantities.
+    """
     waveform = df.PulseWaveform
     channel = df.Channel_number
     if channel == Parameters.BGO_channel:
@@ -266,9 +286,8 @@ def getPulseQuantities(df):
 def energyConversion(charge, channel, gain=Parameters.gain):
     '''
     Function to convert ADCC to energy. 
-    This function gives reliable results only in the case of full detector,
-    otherwise for now it's necessary to convert in postprocessing or to use always the same channel
-    with the same module
+    It uses rescaling of Cs137 Compton edges for matched gain version 1 and 2,
+    otherwise it uses the linear fits.
     '''
     E_keV = (charge + 169.3)/16.20 
     if gain == 'matched' or gain == 'matched_v2':
@@ -284,6 +303,9 @@ def energyConversion(charge, channel, gain=Parameters.gain):
 
 
 def ADC_to_mV_conversion(PulseWaveform, channel):
+    """
+    Converts full waveforms to mV based on the conversion derived without the front end.
+    """
     PulseWaveform = np.array(PulseWaveform)
     if channel in range(8):
         return list((PulseWaveform - 13)/31.06)
@@ -293,7 +315,7 @@ def ADC_to_mV_conversion(PulseWaveform, channel):
         return list((PulseWaveform - 19)/31.07)
     elif channel in range(24, 32):
         return list((PulseWaveform - 14.06)/30.07)
-    elif channel in range(32, 36):
+    elif channel in range(32, 37):
         return list((PulseWaveform - 18)/30.66)
     else:
         # print(f'The channel {channel} does not exist!')
@@ -301,6 +323,11 @@ def ADC_to_mV_conversion(PulseWaveform, channel):
 
 
 def getRelativeTimeSnippets(subseconds, timedelta_samples, TimeWindow, PostTriggerTime, channel):
+    """
+    This function derives the time of pulses relative to master trigger.
+    It needs the subseconds and the difference in time in samples of the pulse.
+    It's weakly dependent on the channel: only one ADC is shifted by one sample.
+    """
     sampling_period = 16e-3
     
     if isinstance(TimeWindow,list):
@@ -323,11 +350,18 @@ def getRelativeTimeSnippets(subseconds, timedelta_samples, TimeWindow, PostTrigg
     return -round(time,3) - offset
 
 def getBoxcarSum(PulseWaveform,baseline):
+    """
+    Function to determine the boxcar sum of a waveform.
+    It is the maximum of the sum of 4 samples.
+    """
     PulseWaveform = np.array(PulseWaveform) - baseline
-    samples_averaged = np.convolve(PulseWaveform, np.ones(4)/4, mode='valid')
-    return max(samples_averaged)*4
+    samples_averaged = np.convolve(PulseWaveform, np.ones(4), mode='valid')
+    return max(samples_averaged)
 
 def getFlagsCorruptedData(channel, PulseWaveform, timestamp):
+    """
+    Obsolete function to derive the flags of corrupted waveforms.
+    """
     preprocessingFlags=''
     
     if (channel < 0) or (channel > 36) or (channel != channel):
@@ -339,6 +373,10 @@ def getFlagsCorruptedData(channel, PulseWaveform, timestamp):
     return preprocessingFlags
 
 def computeTimeWithCFD(df):
+    """
+    Function to determine the time of the pulse with pulse fraction discrimination.
+    It still needs to be tested.
+    """
     fraction_cfd = 0.5
     x1 = df['MaximumIndex'] - find_first_n_less(df['PulseHeight']* fraction_cfd, df['PulseWaveform'],1)
     if x1>62:x1=62
