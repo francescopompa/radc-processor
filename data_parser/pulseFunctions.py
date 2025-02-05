@@ -203,7 +203,7 @@ def BGOPulseQuantities(waveform):
     if Parameters.match_pulse_maximum:
         wf_norm = np.roll(wf_norm,-max_index + np.argmax(Parameters.average_pulse))
         wf_norm[:4] = 0
-    if height < 2000 & height > 0:
+    if height < 2000 and height > 0:
         RE = np.linalg.norm(wf_norm - Parameters.BGO_average_pulse_cut) / Parameters.BGO_norm_function(height)
     else: RE = 50
     flag = 'b'
