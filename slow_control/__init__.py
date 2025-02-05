@@ -19,6 +19,7 @@ import shutil
 
 
 class Control():
+    
 
     _base_path = "/data/DAQMeasurements"
 
