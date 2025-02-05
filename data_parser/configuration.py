@@ -31,7 +31,7 @@ def _loop_through_dict(config, dpath=None):
 def validate_config(version: str = VERSION_STR):
 
     config_path = Path(
-       __file__,
+        __file__,
         "..",
         version,
         f"{version}.configuration.yaml"
