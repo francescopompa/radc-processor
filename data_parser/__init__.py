@@ -27,7 +27,7 @@ Additionally this library provides:
 """
 # from . import data_io, dataFrame_helpers, plotting
 
-VERSION = 2
+VERSION = None
 """Integer variable holding the current converter version. Initialized with `None`."""
 VERSION_STR = ""
 """String representation of the current converter version ("vX")."""
