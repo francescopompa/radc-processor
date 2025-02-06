@@ -161,10 +161,15 @@ def convertPulseFlagsToInt(flag):
     """
     flag_dictionary = {'s': 10, 'b': 1, 'p': 10000,
                        'n': 0, 'u': 0, 'd': 100, 't': 1000}
-    flag_int = 0
-    for c in flag:
-        flag_int += flag_dictionary[c]
-    return flag_int
+
+    flag_convert=[]
+    for s in flag:
+        flag_int = 0
+        for c in s:
+            flag_int += flag_dictionary[c]
+        flag_convert.append(flag_int)
+            
+    return flag_convert
 
 
 def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal['snippet', 'compact'] = 'compact', reduced=False) -> "list[uproot.writing.writable.WritableDirectory]":
