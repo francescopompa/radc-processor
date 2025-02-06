@@ -454,6 +454,13 @@ def findDuplicatePulses(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow):
 
     df = df[df.TimeDifference > -TimeWindow*16e-3]
     df = df.drop(columns='TimeDifference')
+    df = df.reset_index(drop=True)
+    for i in range(500, 0, -1):
+        condition = (df.PulseAreaADCC.shift(i) == df.PulseAreaADCC) & (df.BaselineADCC.shift(i) == df.BaselineADCC) & (
+            df.Event_ID != df.Event_ID.shift(i)) & (df.Channel_number == df.Channel_number.shift(i))
+        df.loc[condition, 'DistanceDuplicatePulse'] = -i
+        df.loc[pd.Series(condition).shift(-i, fill_value=False),
+               'DistanceDuplicatePulse'] = i
 
     return df.reset_index(drop=True)
 
