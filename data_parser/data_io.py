@@ -65,7 +65,7 @@ def reorderEventIDs(series):
             counter += 1
         consecutive_list[i] = counter
 
-    return consecutive_list.astype(int) + 1
+    return consecutive_list.astype(int)
 
 
 def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, PostTriggerTime=Parameters.PostTriggerTime) -> pd.DataFrame:
@@ -116,7 +116,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, Post
         df.loc[:, 'Rest'] = df.Rest.astype('str')
 
     df['ApproxEnergy_keVee'] = df.apply(lambda x: pf.energyConversion(
-        x['PulseAreaADCC'], x['Channel_number'], Parameters.gain), axis=1)
+        x['PulseAreaADCC'], x['Channel_number'], x['PulseHeight'], Parameters.gain), axis=1)
 
     events = set(df.Event_ID)
     diffEvents = max(events) - min(events) + 1

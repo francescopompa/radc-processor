@@ -283,13 +283,15 @@ def getPulseQuantities(df):
     return q
     
 
-def energyConversion(charge, channel, gain=Parameters.gain):
+def energyConversion(charge, channel, height, gain=Parameters.gain):
     '''
     Function to convert ADCC to energy. 
     It uses rescaling of Cs137 Compton edges for matched gain version 1 and 2,
     otherwise it uses the linear fits.
     '''
     E_keV = (charge + 169.3)/16.20 
+    if channel == Parameters.BGO_channel:
+        return height * 4400 / 1450 # approximate value of the energy for BGO
     try:
         rescalingFactor = Parameters.rescalingFactors[channel] 
     except:
