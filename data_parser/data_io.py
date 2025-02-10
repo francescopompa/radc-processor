@@ -103,8 +103,8 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, Post
         df.AreaOverHeightRatio > Parameters.min_ratio_charge_height)
     df = df.drop(columns='AreaOverHeightRatio')
 
-    integers = ['MaximumIndex', 'PulseHeight']
-    floats = ['PulseAreaADCC', 'BaselineADCC',
+    integers = ['MaximumIndex']
+    floats = ['PulseAreaADCC', 'BaselineADCC', 'PulseHeight',
               'RE', 'PulseAreaADCC', 'BaselineADCC']
     bools = ['AveragePulsePass', 'AreaOverHeightPass', 'PulsePileUpFlag']
     df = df.astype({f: float for f in floats})

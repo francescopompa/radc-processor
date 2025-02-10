@@ -32,7 +32,7 @@ gain = 'matched_v3'
 PostTriggerTime = 3125
 TimeWindow = 6250
 
-df_energy_conversion = read_csv(directory / 'channel_map_energy.csv')
+df_energy_conversion = read_csv(directory / 'channel_map.csv')
 df_energy_conversion = df_energy_conversion.sort_values('DAQ').reset_index(drop=True)
 rescalingFactors = [df_energy_conversion.CE[10] / df_energy_conversion.CE[i] for i in range(len(df_energy_conversion))]
 if gain == 'matched_v2':
