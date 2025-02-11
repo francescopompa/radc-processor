@@ -5,24 +5,43 @@ from time import time
 import json
 from udp_receiver.receiver_class import convert_seconds
 from argparse import ArgumentParser
-
+from data_parser import Parameters
 
 def main():
 
     parser = ArgumentParser()
+    parser.add_argument("-f", "--force",
+                        action="store_true", default=False,
+                        help="Forces processing of all files in the folder.")
+    parser.add_argument("-m","--matchMaximum",
+                        action="store_true", default=False,
+                        help="It makes the pulse finding match the maximum for RMS calculation.\n" 
+                        "To be used with dated datasets." )
     parser.add_argument("-r", "--relative",
                         help="Sets the directory relative to /kalinka/storage/darkmatter/lngs-neutron-detector.")
     parser.add_argument("-a", "--absolute",
                         help="Sets the absolute path of the directory to be processed.")
     parser.add_argument("-o", "--output",
                         help="Sets the path of the output files.")
-    parser.add_argument("-f", "--force",
-                        action="store_true", default=False,
-                        help="Forces processing of all files in the folder.")
+    parser.add_argument("-b","--BGOchannel", type=int,
+                        default=Parameters.BGO_channel, choices=range(37),
+                        metavar='0:36',
+                        help="Sets the channel of the BGO for correct pulse analysis.")
+    parser.add_argument("-g","--gain",
+                        default=Parameters.gain,
+                        help="Set the gain of the PMTs for energy determination. It can be 'matched_v{Version}' or a numeric value")
+    parser.add_argument("-t","--threshold", type=float,
+                        default=Parameters.RE_threshold,
+                        help='It sets the default threshold for the average pulse cut.')
 
     parser.print_help()
 
     args = vars(parser.parse_args())
+
+    Parameters.BGO_channel = args['BGOchannel']
+    Parameters.gain = args['gain']
+    Parameters.match_pulse_maximum = args['matchMaximum']
+    Parameters.RE_threshold = args['threshold']
     
     if args['absolute'] is not None and args['relative'] is not None:
         print('Impossible to set relative and absolute path of the directory at the same time.')
@@ -32,7 +51,7 @@ def main():
     elif args['absolute'] is not None:
         baseDir = args['absolute']
     else:
-        print('It is required to set a folder to process.')
+        print('It is required to set a folder to be processed.')
         exit()
 
     forcePreprocessing = args['force']
@@ -40,6 +59,13 @@ def main():
     print(f'Processing directory {baseDir}.')
     if forcePreprocessing:
         print('All files in the directory will be processed.')
+    print(f'You are processing the dataset with the following parameters:\n'
+          f'BGO channel: {Parameters.BGO_channel}\n'
+          f'Gain: {Parameters.gain}\n'
+          f'Threshold of the RMS cut: {Parameters.RE_threshold}')
+    if Parameters.match_pulse_maximum:
+        print('The RMS cut will try to match the pulse maxima.')
+    
 
     subdirectories = [x[0] for x in os.walk(baseDir)]
     n_jobs = -1
