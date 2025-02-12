@@ -17,6 +17,10 @@ def main():
                         action="store_true", default=False,
                         help="It makes the pulse finding match the maximum for RMS calculation.\n" 
                         "To be used with dated datasets." )
+    parser.add_argument("-n","--keepNumber",
+                        action="store_true", default=False,
+                        help="It keeps the number of the measurement in the name of the output file. To be used with files named sequentially.\n" 
+                        "To be used with dated datasets." )
     parser.add_argument("-r", "--relative",
                         help="Sets the directory relative to /kalinka/storage/darkmatter/lngs-neutron-detector.")
     parser.add_argument("-a", "--absolute",
@@ -29,7 +33,7 @@ def main():
                         help="Sets the channel of the BGO for correct pulse analysis.")
     parser.add_argument("-g","--gain",
                         default=Parameters.gain,
-                        help="Set the gain of the PMTs for energy determination. It can be 'matched_v{Version}' or a numeric value")
+                        help="Sets the gain of the PMTs for energy determination. It can be 'matched_v{Version}' or a numeric value")
     parser.add_argument("-t","--threshold", type=float,
                         default=Parameters.RE_threshold,
                         help='It sets the default threshold for the average pulse cut.')
@@ -55,6 +59,7 @@ def main():
         exit()
 
     forcePreprocessing = args['force']
+    keepMeasurementNumber = args['keepNumber']
 
     print(f'Processing directory {baseDir}.')
     if forcePreprocessing:
@@ -66,6 +71,9 @@ def main():
     if Parameters.match_pulse_maximum:
         print('The RMS cut will try to match the pulse maxima.')
     
+    if not os.path.isdir(baseDir):
+        print('The directory does not exist.')
+        exit()
 
     subdirectories = [x[0] for x in os.walk(baseDir)]
     n_jobs = -1
@@ -82,13 +90,15 @@ def main():
                 namefiles = [m.split('/')[-1]
                              for m in metadata['files_written']]
                 namefile_output = namefiles[0].split('.')[0]
+                if keepMeasurementNumber:
+                    namefile_output = f"{namefiles[0].split('.')[0]}.{namefiles[0].split('.')[1]}"
                 namefiles = [f'{s}/{name}' for name in namefiles]
                 print(
                     f'Analyzing {len(namefiles)} files from json file {i+1}/{len(json_files)}')
 
                 if all(os.stat(namefile).st_size == 0 for namefile in namefiles):
                     print(
-                        f'Warning: All binaries for {j} where empty. Continuing with next .json')
+                        f'Warning: All binaries for {j} were empty. Continuing with next .json')
                     continue
 
                 if "SLURM_JOB_ID" not in os.environ:
