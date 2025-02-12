@@ -291,7 +291,7 @@ def energyConversion(charge, channel, height, gain=Parameters.gain):
     '''
     E_keV = (charge + 169.3)/16.20 
     if channel == Parameters.BGO_channel:
-        return height * 4400 / 1450 # approximate value of the energy for BGO
+        return -1 
     try:
         rescalingFactor = Parameters.rescalingFactors[channel] 
     except:

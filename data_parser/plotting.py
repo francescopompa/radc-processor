@@ -448,7 +448,7 @@ def plotPulsesSameAxis(df: pd.DataFrame, n_events=50, save=False, outDir="./imag
         for i in range(len(event_DF.index)):
             max_index = event_DF['MaximumIndex'].iloc[i]
             t = np.arange(0, 64*16e-3, 16e-3)
-            t = event_DF['PulseTime_us'].iloc[i] - max_index*16e-3 + t
+            t = event_DF['PulseTime_us'].iloc[i] + t
             ax.plot(t, event_DF['PulseWaveform'].iloc[i],
                     label=f'Channel {event_DF.Channel_number.iloc[i]}')
         ax.set_xlabel(r'Time ($\mu s$)')

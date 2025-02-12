@@ -65,7 +65,7 @@ def reorderEventIDs(series):
             counter += 1
         consecutive_list[i] = counter
 
-    return consecutive_list.astype(int)
+    return consecutive_list.astype(int) + 1
 
 
 def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, PostTriggerTime=Parameters.PostTriggerTime) -> pd.DataFrame:
