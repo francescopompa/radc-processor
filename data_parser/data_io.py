@@ -72,11 +72,6 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, Post
     '''
     It adds the columns with the pulses parameters to the dataframe and calculates other useful quantities, such as the energy in keV and the time of each pulse relative to the main trigger
     '''
-    print(f'Preprocessing dataframe with:\n'
-          f'\t- Time window: {TimeWindow} samples\n'
-          f'\t- Post trigger time: {PostTriggerTime} samples\n'
-          f'\t- Gain: {Parameters.gain}')
-
     if 'snippets' in df.columns:
         df = explode_dataframe(df)
 
