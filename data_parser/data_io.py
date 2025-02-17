@@ -125,7 +125,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, Post
         df[df['DistanceDuplicatePulse'] != 0]) / len(df)
     df.loc[df['DistanceDuplicatePulse'] != 0, 'PulseFlag'] += 'd'
     df = df.drop(columns=['Snippet_index', 'BoxcarSum', 'Snippet_count',
-                 'trigger_IDs', 'PulsePileupFlag'], errors='ignore')
+                'trigger_IDs', 'PulsePileUpFlag'], errors='ignore')
 
     return df
 
