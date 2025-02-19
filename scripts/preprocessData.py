@@ -1,11 +1,16 @@
 from data_parser.data_io import make_total_rootfile
 import os
 from glob import glob
-from time import time
+from time import time, strftime
 import json
 from udp_receiver.receiver_class import convert_seconds
 from argparse import ArgumentParser
 from data_parser import Parameters
+import subprocess
+from pathlib import Path
+
+def getCommit():
+    return subprocess.check_output(["git", "describe", "--always"], cwd=Path(__file__).resolve().parent).strip().decode()
 
 def main():
 
@@ -113,11 +118,15 @@ def main():
                 processingMetadata = make_total_rootfile(
                     namefiles, out_dir=outDir, namefile_output=namefile_output, mode='compact', parallel=True, n_jobs=n_jobs
                 )
-                processingTime = time() - start
-                metadata['processing_time'] = processingTime
+                processingDuration = time() - start
+                processingTime = strftime('%Y/%m/%d %H:%M:%S')
+                metadata['processing_duration'] = processingDuration
                 metadata['processed'] = True
-                processingMetadata['processing_time'] = processingTime
+                metadata['processing_time'] = processingTime
+                processingMetadata['processing_duration'] = processingDuration
                 processingMetadata['processed'] = True
+                processingMetadata['processing_time'] = processingTime
+                processingMetadata['commit'] = getCommit()
                 with open(j, 'w+') as file:
                     json.dump(metadata, file, indent=4)
                 with open(f'{outDir}/{namefile_output}.json', 'w+') as file:
