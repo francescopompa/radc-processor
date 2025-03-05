@@ -348,7 +348,7 @@ def getRelativeTimeSnippets(subseconds, timedelta_samples, TimeWindow, PostTrigg
     if channel < 8:
         offset = offset + 0.016
     if channel == 6:
-        offset = offset + 0.016
+        offset = offset + 0.032
     return -round(time,3) - offset
 
 def getBoxcarSum(PulseWaveform,baseline):

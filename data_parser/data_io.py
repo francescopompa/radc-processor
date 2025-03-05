@@ -12,6 +12,7 @@ import uproot
 from pathlib import Path
 from typing import Literal
 from joblib import Parallel, delayed
+import subprocess
 
 
 
@@ -336,6 +337,7 @@ def make_total_rootfile(files: list | str, out_dir: str, namefile_output: str, m
             files[i], out_dir, f'{namefile_output}_{i}', mode=mode, reduced=reduced) for i in range(len(files)))
         df_metadata = pd.DataFrame(dicts_metadata)
         metadata = convertDataframeToJson(df_metadata)
+        metadata['commit'] = getCommit()
 
         with open(f'{out_dir}/{namefile_output}.json', 'w+') as f:
             json.dump(metadata, f, indent=4)
@@ -480,3 +482,6 @@ def getAdditionalParameters(df, metadata):
         df[(df.PulseTime_us < -posttriggertime*16e-3) | (df.PulseTime_us > posttriggertime*16e-3)]) / len(df)
     metadata['n_snippets'] = len(df)
     metadata['n_events'] = len(set(df.Event_ID))
+
+def getCommit():
+    return subprocess.check_output(["git", "describe", "--always"], cwd=Path(__file__).resolve().parent).strip().decode()
