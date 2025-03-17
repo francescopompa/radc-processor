@@ -362,7 +362,7 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
 
         relativeTime = event_DF['PulseTime_us']
 
-        fig, ax = plt.subplots(figsize=(12, 4), ncols=3, nrows=1)
+        fig, ax = plt.subplots(figsize=(12.5, 4), ncols=3, nrows=1)
         fig.suptitle(
             f'Event {event_ID[0]}: {len(event_DF)} snippets')
 
@@ -378,9 +378,8 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
         if len(channels[isBGO]) > 0:
             ax2= ax[1].twinx()
             ax2.scatter(relativeTime[isBGO], event_DF.PulseHeight[isBGO], marker='x', c=relativeTime[isBGO], norm=norm, cmap=cmap)
-            ax2.set_ylabel('BGO pulse height (ADCC)',color='blue')
+            ax2.set_ylabel('BGO pulse height (ADCC)')
             ax2.set_ylim(0,max(1600,max(event_DF.PulseHeight[isBGO])))
-            ax2.tick_params(axis='y',  colors='blue') 
 
         if time_scale == 'log':
             ax[1].set_xscale('symlog')
@@ -404,13 +403,7 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
                             fill=False, alpha=0.5)
             ax[2].add_patch(circle)
             ax[2].text(2.5, 2.5, '36', ha="center", va="center", color='black')
-        if time_scale == 'linear':
-            def format(x, _): return f"{x:.0f}"
-        elif time_scale == 'log':
-            def format(x, _): return f"{x:.1f}"
-        if PostTriggerTime < 100:
-            def format(x,_): return f"{x:.2f}"
-        c = fig.colorbar(mappable, ax=ax[2], fraction=0.046, format=format)
+        c = fig.colorbar(mappable, ax=ax[2], fraction=0.046)
         c.set_label(r'Time ($\mu s$)')
 
         if mode == 'energy':
