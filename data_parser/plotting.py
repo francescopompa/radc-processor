@@ -367,35 +367,49 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
             f'Event {event_ID[0]}: {len(event_DF)} snippets')
 
         for i in range(len(event_DF.index)):
-            ax[0].plot(event_DF['PulseWaveform'].iloc[i],
-                       label=f'Channel {channels.iloc[i]}', color=cmap_function(norm(relativeTime.iloc[i])))
-        ax[1].scatter(relativeTime, energies,
-                      c=relativeTime, norm=norm, cmap=cmap)
+            ax[0].plot(event_DF['PulseWaveform'].iloc[i], color=cmap_function(norm(relativeTime.iloc[i])))
+        ax[0].set_xlabel('Sample ID')
+        ax[0].set_ylabel('ADC counts')
+        
+        isnotBGO = (channels != Parameters.BGO_channel)
+        isBGO = (channels == Parameters.BGO_channel)
+
+        ax[1].scatter(relativeTime[isnotBGO], energies[isnotBGO], c=relativeTime[isnotBGO], norm=norm, cmap=cmap)
+        if len(channels[isBGO]) > 0:
+            ax2= ax[1].twinx()
+            ax2.scatter(relativeTime[isBGO], event_DF.PulseHeight[isBGO], marker='x', c=relativeTime[isBGO], norm=norm, cmap=cmap)
+            ax2.set_ylabel('BGO pulse height (ADCC)',color='blue')
+            ax2.set_ylim(0,max(1600,max(event_DF.PulseHeight[isBGO])))
+            ax2.tick_params(axis='y',  colors='blue') 
+
         if time_scale == 'log':
             ax[1].set_xscale('symlog')
         if max(energies) > 6000:
             ax[1].axhline(6000, color='red', linestyle='dashed')
 
-        ax[0].set_xlabel('Sample ID')
-        ax[0].set_ylabel('ADC counts')
         ax[1].set_xlim(-PostTriggerTime*1.1*16e-3, PostTriggerTime*1.1*16e-3)
         ax[1].set_ylim(0, np.max(energies)*1.1+10)
         ax[1].set_xlabel(r'Time ($\mu s$)')
 
         plotChannelMap(ax[2])
-        x = [Parameters.map_channels[c][0] if c in range(
-            36) else 2.5 for c in channels] + np.random.normal(0, 0.1, len(channels))
-        y = [Parameters.map_channels[c][1] if c in range(
-            36) else 2.5 for c in channels] + np.random.normal(0, 0.1, len(channels))
-        ax[2].scatter(x, y, c=event_DF.PulseTime_us, norm=norm, cmap=cmap)
-        circle = plt.Circle((2.5, 2.5), 0.3, color='grey',
+        x = [Parameters.map_channels[c][0] for c in channels[isnotBGO]] + np.random.normal(0, 0.1, len(channels[isnotBGO]))
+        y = [Parameters.map_channels[c][1] for c in channels[isnotBGO]] + np.random.normal(0, 0.1, len(channels[isnotBGO]))
+        ax[2].scatter(x, y, c=event_DF.PulseTime_us[isnotBGO], norm=norm, cmap=cmap)
+        if len(channels[isBGO]) > 0:
+            x_BGO = [np.random.normal(0, 0.1, len(channels[isBGO])) + 2.5]
+            y_BGO = [np.random.normal(0, 0.1, len(channels[isBGO])) + 2.5]
+            ax[2].scatter(x_BGO, y_BGO, marker = 'x', c=event_DF.PulseTime_us[isBGO], norm=norm, cmap=cmap)
+        if Parameters.BGO_channel in df.Channel_number:
+            circle = plt.Circle((2.5, 2.5), 0.3, color='grey',
                             fill=False, alpha=0.5)
-        ax[2].add_patch(circle)
-        ax[2].text(2.5, 2.5, '36', ha="center", va="center", color='black')
+            ax[2].add_patch(circle)
+            ax[2].text(2.5, 2.5, '36', ha="center", va="center", color='black')
         if time_scale == 'linear':
             def format(x, _): return f"{x:.0f}"
         elif time_scale == 'log':
             def format(x, _): return f"{x:.1f}"
+        if PostTriggerTime < 100:
+            def format(x,_): return f"{x:.2f}"
         c = fig.colorbar(mappable, ax=ax[2], fraction=0.046, format=format)
         c.set_label(r'Time ($\mu s$)')
 
