@@ -5,6 +5,9 @@ import pickle
 
 directory = Path(__file__).parent / 'tables'
 match_pulse_maximum = False
+add_old_columns = True
+limit_trigger_region_us = 0.2
+max_distance_accidental_coincidence = 4 #included
 
 # BGO pulse finding parameters
 BGO_channel = 36
@@ -29,8 +32,8 @@ last30samples = average_pulse[-30:]
 saturation_RE_threshold = 2.5
 
 gain = 'matched_v3'
-PostTriggerTime = 3125
-TimeWindow = 6250
+PostTriggerTime = 6250
+TimeWindow = 12500
 
 df_energy_conversion = read_csv(directory / 'channel_map.csv')
 df_energy_conversion = df_energy_conversion.sort_values('DAQ').reset_index(drop=True)

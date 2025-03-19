@@ -349,7 +349,8 @@ def getRelativeTimeSnippets(subseconds, timedelta_samples, TimeWindow, PostTrigg
         offset = offset + 0.016
     if channel == 6:
         offset = offset + 0.032
-    return -round(time,3) - offset
+    t = -time - offset
+    return round(t,3)
 
 def getBoxcarSum(PulseWaveform,baseline):
     """
@@ -388,3 +389,14 @@ def computeTimeWithCFD(df):
     time_cfd = x1 + (df['PulseHeight'] * fraction_cfd - y1) * \
         (x2 - x1) / (y2 - y1 + 0.0001)
     return round(df['PulseTime_us'] - (df['MaximumIndex']- time_cfd) * 16e-3,3)
+
+def shiftTime(t):
+    """
+    Function to shift the time in case of anticipated triggers.
+    To be used as in this example from data_parser.data_io:
+    df.loc[df.Event_ID.isin(events_with_no_trigger),'PulseTime_us'] = df[df.Event_ID.isin(events_with_no_trigger)].groupby('Event_ID')['PulseTime_us'].transform(pf.shiftTime)
+    """
+    shifted_pulse_times = t[(t > -2) & (t < -0.2)]
+    t = t - shifted_pulse_times.iloc[-1]
+        
+    return t

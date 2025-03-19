@@ -53,6 +53,23 @@ def make_total_dataFrame(files: list | str) -> pd.DataFrame:
         ignore_index=True
     )
 
+def findAccidentalCoincidencesTriggerRegion(df):
+    """
+    This function finds the accidental coincidences in the trigger region.
+    It returns a flag to indicate if there is an accidental coincidence in the trigger region.
+    The parameters can be customized in data_parser.Parameters.
+    """
+    tmp = df[np.abs(df.PulseTime_us) < Parameters.limit_trigger_region_us]
+    grouped_df = tmp.groupby('Event_ID')
+    times_max = grouped_df['PulseTime_us'].agg('max') / 0.016
+    times_min = grouped_df['PulseTime_us'].agg('min') / 0.016
+    timediff = np.rint(times_max - times_min)
+
+    df.loc[:, 'AccidentalCoincidenceFlag'] = False
+    df.loc[df.Event_ID.isin(
+        timediff[timediff > Parameters.max_distance_accidental_coincidence].index), 'AccidentalCoincidenceFlag'] = True
+    
+    
 
 def reorderEventIDs(series):
     """
@@ -111,12 +128,12 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, Post
         df.loc[:, 'Type'] = df.Type.astype('str')
         df.loc[:, 'Rest'] = df.Rest.astype('str')
 
-    df['ApproxEnergy_keVee'] = df.apply(lambda x: pf.energyConversion(
+    df.loc[:,'ApproxEnergy_keVee'] = df.apply(lambda x: pf.energyConversion(
         x['PulseAreaADCC'], x['Channel_number'], x['PulseHeight'], Parameters.gain), axis=1)
 
     events = set(df.Event_ID)
     diffEvents = max(events) - min(events) + 1
-    df['Event_ID'] = reorderEventIDs(df['Event_ID'])
+    df.loc[:,'Event_ID'] = reorderEventIDs(df['Event_ID'])
     df.attrs['missing_events_fraction'] = 1 - len(events) / diffEvents
 
     df = df.sort_values(['Event_ID', 'PulseTime_us']).reset_index(drop=True)
@@ -127,6 +144,13 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, Post
     df.loc[df['DistanceDuplicatePulse'] != 0, 'PulseFlag'] += 'd'
     df = df.drop(columns=['Snippet_index', 'BoxcarSum', 'Snippet_count',
                 'trigger_IDs', 'PulsePileUpFlag'], errors='ignore')
+    
+    events_with_trigger = df.Event_ID[np.abs(df.PulseTime_us) < 0.2].value_counts()
+    events_with_no_trigger=df.Event_ID[~df.Event_ID.isin(events_with_trigger.index)]
+    df.loc[df.Event_ID.isin(events_with_no_trigger),'PulseTime_us'] = df[df.Event_ID.isin(events_with_no_trigger)].groupby('Event_ID')['PulseTime_us'].transform(pf.shiftTime)
+
+    findAccidentalCoincidencesTriggerRegion(df)
+
 
     return df
 
@@ -175,7 +199,7 @@ def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal
     df = df.sort_values(['Event_ID', 'PulseTime_us']).reset_index(drop=True)
     df_output = df
 
-    df_output['PulseFlag'] = df_output['PulseFlag'].apply(convertPulseFlagsToInt)
+    df_output.loc[:,'PulseFlag'] = df_output['PulseFlag'].apply(convertPulseFlagsToInt)
 
     if (mode == 'compact') and ('compact' not in df.attrs):
         df_output = compactDataframe(df_output)
@@ -184,9 +208,11 @@ def df_to_root_file(df: pd.DataFrame, out_dir: str, namefile: str, mode: Literal
 
     if 'compact' in df_output.attrs and df_output.attrs['compact'] == True:
         if 'PulseWaveform' in df_output:
-            df_output['PulseWaveform'] = df_output.apply(
+            df_output.loc[:,'PulseWaveform'] = df_output.apply(
                 lambda x: flattenSamples(x['PulseWaveform']), axis=1)
-
+        if 'samples' in df_output:
+            df_output.loc[:,'samples'] = df_output.apply(
+                lambda x: flattenSamples(x['samples']), axis=1)
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     max_events = int(3e5)
@@ -264,6 +290,8 @@ def make_total_dataFrame_processed(files: list | str) -> pd.DataFrame:
     metadata = getParametersFromJson(files)
     preprocessed_df = preprocessDataframe(
         df, TimeWindow=metadata['TimeWindow'], PostTriggerTime=metadata['PostTriggerTime'])
+    if Parameters.add_old_columns:
+        preprocessed_df = addColumnsDataframeOldNames(preprocessed_df)
 
     getAdditionalParameters(preprocessed_df, metadata)
 
@@ -280,7 +308,7 @@ def convertDataframeToJson(df):
     '''
     metadata_dict = {}
     columns_to_average_snippets = ['pulse_detection_efficiency', 'corrupted_snippets_fraction',
-                                   'snippets_wrong_timestamp_fraction', 'duplicated_pulses_fraction']
+                                   'duplicated_pulses_fraction']
     columns_to_average_events = ['missing_events_fraction']
     columns_to_sum = ['n_snippets', 'n_events', 'event_rate', 'snippet_rate']
     columns_only_first = [c for c in df.columns if c not in [
@@ -376,7 +404,7 @@ def compactDataframe(df):
     columns = ['AreaOverHeightPass', 'MaximumIndex', 'PulseHeight', 'PulseWidth', 'PulseAreaADCC',
                'PulseStart', 'PulseEnd', 'BaselineADCC', 'Channel_number', 'BoxcarSum', 'Timedelta_samples',
                'Snippet_index', 'min', 'max', 'PulseWaveform', 'ApproxEnergy_keVee', 'PulseTime_us',
-               'preprocessingFlags', 'trigger_IDs', 'DistanceDuplicatePulse', 'RE', 'PulseFlag', 'AveragePulsePass', 'PulsePileUpFlag']
+               'preprocessingFlags', 'trigger_IDs', 'DistanceDuplicatePulse', 'RE', 'PulseFlag', 'AveragePulsePass', 'PulsePileUpFlag','Charge_keV','Charge','MaxIndex','deltaT_us','samples','IsPulse','Baseline'] 
     tmp = df.groupby('Event_ID')[[c for c in columns if c in df.columns]].agg(
         list).reset_index(drop=True)
     tmp2 = df.groupby('Event_ID')[[c for c in df.columns if c not in columns and c in df.columns]].agg(
@@ -477,11 +505,39 @@ def getAdditionalParameters(df, metadata):
     posttriggertime = metadata["PostTriggerTime"]
     if isinstance(posttriggertime, list):
         posttriggertime = Parameters.PostTriggerTime
-
-    metadata['snippets_wrong_timestamp_fraction'] = len(
-        df[(df.PulseTime_us < -posttriggertime*16e-3) | (df.PulseTime_us > posttriggertime*16e-3)]) / len(df)
+    metadata['AccidentalCoincidenceThreshold'] = Parameters.max_distance_accidental_coincidence
     metadata['n_snippets'] = len(df)
     metadata['n_events'] = len(set(df.Event_ID))
 
 def getCommit():
     return subprocess.check_output(["git", "describe", "--always"], cwd=Path(__file__).resolve().parent).strip().decode()
+
+def renameColumnsDataframe(df):
+    '''
+    This function creates copies of the column of the dataframes with the old naming convention.
+    '''
+    df.loc[:,'ApproxEnergy_keVee'] = df.Charge_keV
+    df.loc[:,'PulseEnd'] = df.EndPulse
+    df.loc[:,'PulseStart'] = df.StartPulse
+    df.loc[:,'PulseAreaADCC'] = df.Charge
+    df.loc[:,'MaximumIndex'] = df.MaxIndex
+    df.loc[:,'PulseTime_us'] = df.deltaT_us
+    df.loc[:,'PulseWaveform'] = df.samples
+    df.loc[:,'AreaOverHeightPass'] = df.IsPulse
+    df.loc[:,'BaselineADCC'] = df.Baseline
+    return df
+
+def addColumnsDataframeOldNames(df):
+    '''
+    This function creates copies of the column of the dataframes with the old naming convention.
+    '''
+    df.loc[:,'Charge_keV'] = df.ApproxEnergy_keVee
+    df.loc[:,'Charge'] = df.PulseAreaADCC
+    df.loc[:,'MaxIndex'] = df.MaximumIndex
+    df.loc[:,'deltaT_us'] = df.PulseTime_us
+    df.loc[:,'samples'] = df.PulseWaveform
+    df.loc[:,'IsPulse'] = df.AreaOverHeightPass
+    df.loc[:,'Baseline'] = df.BaselineADCC
+    df.loc[:,'Snippet_count'] = df.groupby('Event_ID')['Event_ID'].transform(len)
+    df.loc[:,'Snippet_count'] = df.Snippet_count.astype(int)
+    return df

@@ -395,8 +395,8 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
         y = [Parameters.map_channels[c][1] for c in channels[isnotBGO]] + np.random.normal(0, 0.1, len(channels[isnotBGO]))
         ax[2].scatter(x, y, c=event_DF.PulseTime_us[isnotBGO], norm=norm, cmap=cmap)
         if len(channels[isBGO]) > 0:
-            x_BGO = [np.random.normal(0, 0.1, len(channels[isBGO])) + 2.5]
-            y_BGO = [np.random.normal(0, 0.1, len(channels[isBGO])) + 2.5]
+            x_BGO = np.random.normal(0, 0.1, len(channels[isBGO])) + 2.5
+            y_BGO = np.random.normal(0, 0.1, len(channels[isBGO])) + 2.5
             ax[2].scatter(x_BGO, y_BGO, marker = 'x', c=event_DF.PulseTime_us[isBGO], norm=norm, cmap=cmap)
         if Parameters.BGO_channel in df.Channel_number:
             circle = plt.Circle((2.5, 2.5), 0.3, color='grey',
