@@ -5,7 +5,7 @@ import pickle
 
 directory = Path(__file__).parent / 'tables'
 match_pulse_maximum = False
-add_old_columns = True
+add_old_columns = False
 limit_trigger_region_us = 0.2
 max_distance_accidental_coincidence = 4 #included
 
