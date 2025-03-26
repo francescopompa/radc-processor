@@ -160,10 +160,6 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, Post
     df.loc[df['DistanceDuplicatePulse'] != 0, 'PulseFlag'] += 'd'
     df = df.drop(columns=['Snippet_index', 'BoxcarSum', 'Snippet_count',
                 'trigger_IDs', 'PulsePileUpFlag'], errors='ignore')
-    
-    events_with_trigger = df.Event_ID[np.abs(df.PulseTime_us) < 0.2].value_counts()
-    events_with_no_trigger=df.Event_ID[~df.Event_ID.isin(events_with_trigger.index)]
-    df.loc[df.Event_ID.isin(events_with_no_trigger),'PulseTime_us'] = df[df.Event_ID.isin(events_with_no_trigger)].groupby('Event_ID')['PulseTime_us'].transform(pf.shiftTime)
 
     findAccidentalCoincidencesTriggerRegion(df)
 
