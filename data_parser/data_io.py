@@ -75,6 +75,7 @@ def reorderEventIDs(series):
     """
     It puts all the event IDs in consecutive order.
     """
+    series = np.array(series)
     consecutive_list = pd.Series(index=range(len(series)))
     counter = series[0]
     consecutive_list[0] = counter
@@ -83,7 +84,21 @@ def reorderEventIDs(series):
             counter += 1
         consecutive_list[i] = counter
 
-    return consecutive_list.astype(int) + 1
+    return consecutive_list.astype(int)
+
+def clusterClassification(times):
+    '''
+    Function to make a simple cluster classification based on the distance between pulses.
+    To be used as in this example:
+    df['Cluster'] = df.groupby('Event_ID')['PulseTime_us'].transform(clusterClassification)
+    '''
+    timediff = [1,*np.diff(times)]
+    clusters = []
+    counter = 0
+    for t in timediff:
+        if t > Parameters.max_distance_accidental_coincidence * 0.016: counter += 1
+        clusters.append(counter)
+    return clusters
 
 
 def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, PostTriggerTime=Parameters.PostTriggerTime) -> pd.DataFrame:
@@ -133,6 +148,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, Post
 
     events = set(df.Event_ID)
     diffEvents = max(events) - min(events) + 1
+    df = df.reset_index(drop=True)
     df.loc[:,'Event_ID'] = reorderEventIDs(df['Event_ID'])
     df.attrs['missing_events_fraction'] = 1 - len(events) / diffEvents
 
@@ -179,12 +195,10 @@ def convertPulseFlagsToInt(flag):
     - tail/small pileup/noise (t): 1000
     - pileup (p): 10000
     """
-    flag_dictionary = {'s': 10, 'b': 1, 'p': 10000,
-                       'n': 0, 'u': 0, 'd': 100, 't': 1000}
 
     flag_int = 0
     for c in flag:
-        flag_int += flag_dictionary[c]
+        flag_int += Parameters.flag_dictionary[c]
             
     return flag_int
 
@@ -386,6 +400,30 @@ def make_total_rootfile(files: list | str, out_dir: str, namefile_output: str, m
             json.dump(preprocessed_df.attrs, f, indent=4)
 
         return df, preprocessed_df, root_files
+    
+
+def readPickleFiles(files):
+    '''
+    Function to read a list a pickle files. 
+    The function handles the metadata and makes order in Event_IDs.
+    It returns the data as a total dataframe.
+    '''
+    if not isinstance(files, list):
+        files = [files]
+    files.sort()
+    list_of_dfs = []
+    for f in files:
+        df = pd.read_pickle(f)
+        metadata = df.attrs
+        list_of_dfs.append(df)
+
+    df = pd.concat(list_of_dfs,ignore_index=True)
+    df.attrs=metadata
+    df = df.reset_index(drop=True)
+
+    df.loc[:,'Event_ID'] = reorderEventIDs(df.Event_ID)
+    df = df.sort_values(['Event_ID','PulseTime_us']).reset_index(drop=True)
+    return df
 
 
 def explode_dataframe(df):
@@ -419,10 +457,12 @@ def reduceDataframe(df):
     """
     It reduces the dataframe size by removing some useless columns. 
     """
-    columns = ['Timedelta_samples', 'BoxcarSum', 'min', 'max', 'trigger_IDs', 'Trigger_type', 'Frame_number',
-               'Subsecs', 'Seconds',  'length', 'snippet_space', 'Datetime', 'PulsePileUpFlag', 'trigger_count']
-    df = df.drop(columns=columns, errors='ignore')
-    return df
+    columns = ['Event_ID', 'Timestamp_s', 'Channel_number',
+       'PulseTime_us', 'AveragePulsePass', 'PulseHeight', 'PulseAreaADCC',
+       'PulseFlag', 'ApproxEnergy_keVee','DistanceDuplicatePulse']
+    
+    columns = [c for c in columns if c in df.columns]
+    return df[columns]
 
 
 def getParametersFromJson(files: list | str):

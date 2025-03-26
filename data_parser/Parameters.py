@@ -8,6 +8,7 @@ match_pulse_maximum = False
 add_old_columns = False
 limit_trigger_region_us = 0.2
 max_distance_accidental_coincidence = 4 #included
+flag_dictionary = {'s': 10, 'b': 1, 'p': 10000, 'n': 0, 'u': 0, 'd': 100, 't': 1000}
 
 # BGO pulse finding parameters
 BGO_channel = 36
