@@ -364,7 +364,7 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
 
         fig, ax = plt.subplots(figsize=(12.5, 4), ncols=3, nrows=1)
         fig.suptitle(
-            f'Event {event_ID[0]}: {len(event_DF)} snippets')
+            f'Event {event_ID[0]:,}: {len(event_DF)} snippets')
 
         for i in range(len(event_DF.index)):
             ax[0].plot(event_DF['PulseWaveform'].iloc[i], color=cmap_function(norm(relativeTime.iloc[i])))
@@ -398,7 +398,7 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
             x_BGO = np.random.normal(0, 0.1, len(channels[isBGO])) + 2.5
             y_BGO = np.random.normal(0, 0.1, len(channels[isBGO])) + 2.5
             ax[2].scatter(x_BGO, y_BGO, marker = 'x', c=event_DF.PulseTime_us[isBGO], norm=norm, cmap=cmap)
-        if Parameters.BGO_channel in df.Channel_number:
+        if Parameters.BGO_channel in df.Channel_number.values:
             circle = plt.Circle((2.5, 2.5), 0.3, color='grey',
                             fill=False, alpha=0.5)
             ax[2].add_patch(circle)
@@ -518,7 +518,7 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events=50, save=False, outDir="./i
         ax.grid()
         ax.set_xlabel('Sample ID')
         ax.set_ylabel('ADC counts')
-        ax.set_title(f'Event {row["Event_ID"]} - Snippet {snippet_index}')
+        ax.set_title(f'Event {row["Event_ID"]:,} - Snippet {snippet_index}')
         ax.legend(framealpha=1, loc='upper right')
         if save == True:
             fig.savefig(
