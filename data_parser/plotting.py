@@ -363,8 +363,10 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
         relativeTime = event_DF['PulseTime_us']
 
         fig, ax = plt.subplots(figsize=(12.5, 4), ncols=3, nrows=1)
-        fig.suptitle(
-            f'Event {event_ID[0]:,}: {len(event_DF)} snippets')
+        title =  f'Event {event_ID[0]}: {len(event_DF)} snippet'
+        if len(event_DF) > 1:
+            title += 's'
+        fig.suptitle(title)
 
         for i in range(len(event_DF.index)):
             ax[0].plot(event_DF['PulseWaveform'].iloc[i], color=cmap_function(norm(relativeTime.iloc[i])))
@@ -518,7 +520,7 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events=50, save=False, outDir="./i
         ax.grid()
         ax.set_xlabel('Sample ID')
         ax.set_ylabel('ADC counts')
-        ax.set_title(f'Event {row["Event_ID"]:,} - Snippet {snippet_index}')
+        ax.set_title(f'Event {row["Event_ID"]} - Snippet {snippet_index}')
         ax.legend(framealpha=1, loc='upper right')
         if save == True:
             fig.savefig(
