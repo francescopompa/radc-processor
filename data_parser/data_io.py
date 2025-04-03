@@ -117,7 +117,6 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, Post
 
     df.attrs['corrupted_snippets_fraction'] = len(df[(np.abs(df['PulseTime_us']) > (
         PostTriggerTime * 16e-3)) | (~df['Channel_number'].isin(range(37)))]) / len(df)
-    df = df[np.abs(df['PulseTime_us']) < (PostTriggerTime * 16e-3)]
     df = df[df['Channel_number'].isin(range(37))]
     df = df.reset_index(drop=True)
 
@@ -154,6 +153,11 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, Post
 
     df = df.sort_values(['Event_ID', 'PulseTime_us']).reset_index(drop=True)
 
+    df = addMissingPulsesToDataframe(df, PostTriggerTime)
+    df = df[np.abs(df['PulseTime_us']) < (PostTriggerTime * 16e-3)]
+    df = df.reset_index(drop=True)
+
+    df = findDuplicatePulses(df, TimeWindow)
     df = findDuplicatePulses(df, TimeWindow)
     df.attrs['duplicated_pulses_fraction'] = len(
         df[df['DistanceDuplicatePulse'] != 0]) / len(df)
@@ -162,6 +166,8 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, Post
                 'trigger_IDs', 'PulsePileUpFlag'], errors='ignore')
 
     findAccidentalCoincidencesTriggerRegion(df)
+
+    df.loc[:,'PulseTime_us'] = np.round(df['PulseTime_us'],3)
 
 
     return df
@@ -311,7 +317,7 @@ def make_total_dataFrame_processed(files: list | str) -> pd.DataFrame:
     return df, preprocessed_df
 
 
-def convertDataframeToJson(df):
+def convertDataframeToJson(df: pd.DataFrame) -> dict:
     '''
     This function is used exclusively in make_total_rootfile to get a json from a dataframe that stores
     metadata about each dataset
@@ -398,7 +404,7 @@ def make_total_rootfile(files: list | str, out_dir: str, namefile_output: str, m
         return df, preprocessed_df, root_files
     
 
-def readPickleFiles(files):
+def readPickleFiles(files: list | str) -> pd.DataFrame:
     '''
     Function to read a list a pickle files. 
     The function handles the metadata and makes order in Event_IDs.
@@ -422,7 +428,7 @@ def readPickleFiles(files):
     return df
 
 
-def explode_dataframe(df):
+def explode_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
     It changes the structure of the unprocessed dataframe. The snippets column is a dictionary and it's converted to different columns corresponding to the keys of the dictionary.
     """
@@ -431,7 +437,7 @@ def explode_dataframe(df):
     return df
 
 
-def compactDataframe(df):
+def compactDataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
     It converts the entries in the same events to lists. To be used for ROOT export.
     """
@@ -449,7 +455,7 @@ def compactDataframe(df):
     return out
 
 
-def reduceDataframe(df):
+def reduceDataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
     It reduces the dataframe size by removing some useless columns. 
     """
@@ -494,7 +500,7 @@ def getParametersFromJson(files: list | str):
     return metadata
 
 
-def findDuplicatePulses(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow):
+def findDuplicatePulses(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow) -> pd.DataFrame:
     """
     This function finds all the duplicate pulses.
     If the pulses are in the same event, one is removed.
@@ -528,7 +534,7 @@ def findDuplicatePulses(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow):
     return df.reset_index(drop=True)
 
 
-def getAdditionalParameters(df, metadata):
+def getAdditionalParameters(df: pd.DataFrame, metadata: dict):
     metadata['snippet_rate'] = len(df) / metadata['total_time']
     metadata['event_rate'] = len(set(df['Event_ID'])) / metadata['total_time']
 
@@ -545,12 +551,12 @@ def getAdditionalParameters(df, metadata):
     metadata['n_snippets'] = len(df)
     metadata['n_events'] = len(set(df.Event_ID))
 
-def getCommit():
+def getCommit() -> str:
     return subprocess.check_output(["git", "describe", "--always"], cwd=Path(__file__).resolve().parent).strip().decode()
 
-def renameColumnsDataframe(df):
+def renameColumnsDataframe(df: pd.DataFrame) -> pd.DataFrame:
     '''
-    This function creates copies of the column of the dataframes with the old naming convention.
+    This function creates copies of the columns, going from the old naming convention to the new one.
     '''
     df.loc[:,'ApproxEnergy_keVee'] = df.Charge_keV
     df.loc[:,'PulseEnd'] = df.EndPulse
@@ -563,7 +569,7 @@ def renameColumnsDataframe(df):
     df.loc[:,'BaselineADCC'] = df.Baseline
     return df
 
-def addColumnsDataframeOldNames(df):
+def addColumnsDataframeOldNames(df: pd.DataFrame) -> pd.DataFrame:
     '''
     This function creates copies of the column of the dataframes with the old naming convention.
     '''
@@ -577,3 +583,43 @@ def addColumnsDataframeOldNames(df):
     df.loc[:,'Snippet_count'] = df.groupby('Event_ID')['Event_ID'].transform(len)
     df.loc[:,'Snippet_count'] = df.Snippet_count.astype(int)
     return df
+
+def addMissingPulsesToDataframe(df: pd.DataFrame,PostTriggerTime: int) -> pd.DataFrame: 
+    """
+    This function adds the pulses that should be copied in multiple events because of multiple triggers closer 
+    than the time window but weren't.
+    """
+    # checking next event
+    df.loc[:,'Timestamp_us'] = df.Timestamp_s.iloc[0]
+    event_timestamps = df.groupby('Event_ID')['Timestamp_us'].first().shift(-1)
+    df['Next_Event_Timestamp'] = df['Event_ID'].map(event_timestamps)
+    next_event_ids = df['Event_ID'].drop_duplicates().shift(-1)
+    event_to_next_event = dict(zip(df['Event_ID'].unique(), next_event_ids))
+    df['Next_Event_ID'] = df['Event_ID'].map(event_to_next_event)
+    event_energies = df.groupby('Event_ID')['ApproxEnergy_keVee'].apply(set).to_dict()
+    df['Energy_In_Next_Event'] = df.apply(
+        lambda row: row['ApproxEnergy_keVee'] in event_energies.get(row['Next_Event_ID'], set()),
+        axis=1
+    )
+
+    # checking previous event
+    event_timestamps = df.groupby('Event_ID')['Timestamp_us'].first().shift(1)
+    df['Previous_Event_Timestamp'] = df['Event_ID'].map(event_timestamps)
+    previous_event_ids = df['Event_ID'].drop_duplicates().shift(1)
+    event_to_previous_event = dict(zip(df['Event_ID'].unique(), previous_event_ids))
+    df['Previous_Event_ID'] = df['Event_ID'].map(event_to_previous_event)
+    event_energies = df.groupby('Event_ID')['ApproxEnergy_keVee'].apply(set).to_dict()
+    df['Energy_In_Previous_Event'] = df.apply(
+        lambda row: row['ApproxEnergy_keVee'] in event_energies.get(row['Previous_Event_ID'], set()),
+        axis=1
+    )
+
+    df.loc[:,'FirstTimestamp'] = df.Timestamp_s.iloc[0]
+
+    missing_pulses=df.apply(lambda x: pf.returnMissingPulses(x,PostTriggerTime),axis=1)
+    if len(missing_pulses) > 0:
+        df = pd.concat([df,missing_pulses],ignore_index=True)
+    df = df.drop(columns=['Previous_Event_Timestamp','Previous_Event_ID','Energy_In_Previous_Event','Next_Event_Timestamp','Next_Event_ID','Energy_In_Next_Event','FirstTimestamp'])
+    df = df.sort_values(['Event_ID','PulseTime_us']).reset_index(drop=True)
+    return df
+

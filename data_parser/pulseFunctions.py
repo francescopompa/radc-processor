@@ -396,7 +396,24 @@ def shiftTime(t):
     To be used as in this example from data_parser.data_io:
     df.loc[df.Event_ID.isin(events_with_no_trigger),'PulseTime_us'] = df[df.Event_ID.isin(events_with_no_trigger)].groupby('Event_ID')['PulseTime_us'].transform(pf.shiftTime)
     """
-    shifted_pulse_times = t[(t > -2) & (t < -0.2)]
+    shifted_pulse_times = t[(t > -2) & (t < -Parameters.limit_trigger_region_us)]
     t = t - shifted_pulse_times.iloc[-1]
         
     return t
+
+def returnMissingPulses(df,PostTriggerTime):
+    ptt = PostTriggerTime * 0.016
+    if df.Energy_In_Next_Event == False and ((df.PulseTime_us  + df.Timestamp_us) < (df.Next_Event_Timestamp + ptt)) and ((df.PulseTime_us  + df.Timestamp_us) > (df.Next_Event_Timestamp - ptt)):
+        df.Event_ID = int(df.Next_Event_ID)
+        df.Timestamp_s = df.Next_Event_Timestamp/1e6 + df['FirstTimestamp']
+        timestamp_diff=(df.Timestamp_us - df.Next_Event_Timestamp)
+        df['PulseTime_us'] = np.round(df.PulseTime_us + timestamp_diff,3)
+
+        return df
+    elif df.Energy_In_Previous_Event == False and ((df.PulseTime_us + df.Timestamp_us) < (df.Previous_Event_Timestamp + ptt)) and ((df.PulseTime_us + df.Timestamp_us) > (df.Previous_Event_Timestamp - ptt)):
+        df.Timestamp_s = df.Previous_Event_Timestamp/1e6 + df['FirstTimestamp']
+        df.Event_ID = int(df.Previous_Event_ID)
+        timestamp_diff=df.Timestamp_us - df.Previous_Event_Timestamp
+        df['PulseTime_us'] =np.round(df.PulseTime_us + timestamp_diff,3)
+
+    return df
