@@ -8,10 +8,10 @@ echo "Copying folder /data/${1} on Kalinka"
 
 rsync -cavu --info=progress2 /data/${1}/ zm6876@kalinka5.iap.kit.edu:/kalinka/storage/darkmatter/lngs-neutron-detector/${1}
 
-uuid=331C2D4743721BBE
+uuid=F43E88583E8815B0
 if lsblk -f | grep -wq $uuid; then
-	echo "SSD connected: backing up..."
+	echo "External hard disk connected: backing up..."
 	rsync -cavu --info=progress2 /data/${1}/ /media/mnd/backup/${1}
 else
-	echo "SSD is not connected. Please connect to backup the data"
+	echo "The external HDD is not connected. Please connect to backup the data"
 fi
