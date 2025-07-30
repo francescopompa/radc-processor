@@ -2,18 +2,32 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.10.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+<meta name="generator" content="pdoc3 0.11.5">
 <title>radc-processor.data_parser.common.struct_conversion API documentation</title>
-<meta name="description" content="" />
-<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
-<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
-<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
-<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
-<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<meta name="description" content="">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/sanitize.min.css" integrity="sha512-y1dtMcuvtTMJc1yPgEqF0ZjQbhnc/bFhyvIyVNb9Zk5mIGtqVaAB1Ttl28su8AvFMOY0EwRbAe+HCLqj6W7/KA==" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/typography.min.css" integrity="sha512-Y1DYSb995BAfxobCkKepB1BqJJTPrOp3zPL74AWFugHHmmdcvO+C48WLrUOlhGMc0QG7AE3f7gmvvcrmX2fDoA==" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:1.5em;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:2em 0 .50em 0}h3{font-size:1.4em;margin:1.6em 0 .7em 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .2s ease-in-out}a:visited{color:#503}a:hover{color:#b62}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900;font-weight:bold}pre code{font-size:.8em;line-height:1.4em;padding:1em;display:block}code{background:#f3f3f3;font-family:"DejaVu Sans Mono",monospace;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source > summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible;min-width:max-content}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em 1em;margin:1em 0}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul ul{padding-left:1em}.toc > ul > li{margin-top:.5em}}</style>
 <style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
-<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" integrity="sha512-D9gUyxqja7hBtkWpPWGt9wfbfaMGVt9gnyCvYa+jojwwPHLCzUm5i8rpk7vD7wNee9bA35eYIjobYPaQuKS1MQ==" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => {
+hljs.configure({languages: ['bash', 'css', 'diff', 'graphql', 'ini', 'javascript', 'json', 'plaintext', 'python', 'python-repl', 'rust', 'shell', 'sql', 'typescript', 'xml', 'yaml']});
+hljs.highlightAll();
+/* Collapse source docstrings */
+setTimeout(() => {
+[...document.querySelectorAll('.hljs.language-python > .hljs-string')]
+.filter(el => el.innerHTML.length > 200 && ['"""', "'''"].includes(el.innerHTML.substring(0, 3)))
+.forEach(el => {
+let d = document.createElement('details');
+d.classList.add('hljs-string');
+d.innerHTML = '<summary>"""</summary>' + el.innerHTML.substring(3);
+el.replaceWith(d);
+});
+}, 100);
+})</script>
 </head>
 <body>
 <main>
@@ -22,220 +36,6 @@
 <h1 class="title">Module <code>radc-processor.data_parser.common.struct_conversion</code></h1>
 </header>
 <section id="section-intro">
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">import struct
-
-from ..configuration import CONFIG
-
-# field_struct_mapping = collections.OrderedDict({
-#     # UDP Header
-#     &#34;UDP_Type&#34;: &#34;c&#34;,    # 1 Byte char
-#     &#34;UDP_Number&#34;: &#34;B&#34;,  # 1 Byte unsigned char
-#     &#34;UDP_Rest&#34;: &#34;2s&#34;,   # 2 Bytes char
-
-#     # RADC Header for each snippet
-#     &#34;Snippet_Channel_number&#34;: &#34;B&#34;,  # 1 Byte unsigned char integer
-#     &#34;Snippet_Trigger_info&#34;: &#34;B&#34;,    # 1 Byte unsigned char integer
-#     &#34;Snippet_Event_ID&#34;: &#34;H&#34;,    # 2 Bytes unsigned short integer
-#     &#34;Snippet_Energy&#34;: &#34;3s&#34;,     # 3 Bytes arbitrary char
-#     &#34;Snippet_Multiplicity&#34;: &#34;B&#34;,  # 1 Byte unsigned char integer
-#     &#34;Snippet_Subsecs&#34;: &#34;I&#34;,     # 4 Bytes unsigned integer
-#     &#34;Snippet_Seconds&#34;: &#34;I&#34;,     # 4 Bytes unsigned integer
-
-#     # RADC single sample
-#     &#34;Sample&#34;: &#34;h&#34;,      # 2 Bytes short integer
-# })
-
-endianness_struct_mapping = {
-    # SOURCE: https://docs.python.org/3/library/struct.html#format-strings
-    &#34;native&#34;: &#34;@&#34;,
-    &#34;native_standardized&#34;: &#34;=&#34;,
-    &#34;little-endian&#34;: &#34;&lt;&#34;,
-    &#34;big-endian&#34;: &#34;&gt;&#34;,
-    &#34;network&#34;: &#34;@&#34;,  # (big endian)
-}
-
-
-class BaseDataFile():
-    &#34;&#34;&#34;
-    The base class for DataFile objects.
-    This class is initialized with a path and provides methods to unpack
-    data from this path.
-    Unpacking and storing data in the correct hierarchy and fields is handled
-    implicitely.
-    &#34;&#34;&#34;
-
-    _contents = None
-    &#34;&#34;&#34;A string describing the kind of object this class holds.&#34;&#34;&#34;
-
-    def __init__(self,
-                 path,
-                 tracelength=CONFIG[&#34;udp_package_structure&#34;][&#34;default_trace_length&#34;],
-                 endianness=&#34;little-endian&#34;,
-                 include_UDP_header=True
-                 ) -&gt; None:
-        self.path = path
-        self.tracelength = tracelength
-        self.include_UDP_header = include_UDP_header
-        setattr(self, self._contents, [])
-        # self.snippets = []  # iter(())
-        self.snippet_size_bytes = None
-
-        self.__endianness = endianness
-        self.format = self._calculate_format_string()
-
-    def _validate_format_string(self, string, size, structname=&#34;&#34;):
-        if not any(
-            string.startswith(e) for e in endianness_struct_mapping.values()
-            ):
-            string = endianness_struct_mapping[self.__endianness] + string
-        structname += &#34; &#34; if structname else &#34;&#34;
-
-        calcsize = struct.calcsize(string)
-        if calcsize != size:
-            raise ValueError(
-                f&#34;{self.__class__.__name__}: {structname}struct Format string \&#34;{string}\&#34; of size {calcsize} does not match size {size} bytes.&#34;)
-
-
-    def _calculate_format_string(self, endianness=None, include_UDP_header=None):
-        &#34;&#34;&#34;
-        Method to generate the unpacking-format-descriptor for the struct package.
-        &#34;&#34;&#34;
-        raise NotImplementedError
-
-    def unpack(self):
-        &#34;&#34;&#34;
-        This method starts the unpacking of the file into one single hierarchical
-        dictionnary containing all header and signal data.
-        &#34;&#34;&#34;
-        raise NotImplementedError
-
-    def get_records(self):
-        &#34;&#34;&#34;
-        Method returning a generator used by pandas to create a DataFrame from.
-        &#34;&#34;&#34;
-        raise NotImplementedError
-
-
-
-class BaseSnippet():
-
-    _kwargs = []
-    _contents = &#34;samples&#34;
-    _mapping_dict = CONFIG[&#34;struct_fields_mapping&#34;]
-    _mapping_name = &#34;Snippet_header&#34;
-    _stats_default = {
-            &#34;min&#34;: 0,
-            &#34;max&#34;: 0,
-            &#34;trigger_count&#34;: 0,
-        }
-
-    def __init__(self, tup, include_UDP_header=True, **kwargs) -&gt; None:
-        &#34;&#34;&#34;
-        Within __init__, `self` will always match the baseclass/superclass.
-        Name mangling (__method_name()) should therefore not be used for
-        methods the subclasses want to overwrite.
-        &#34;&#34;&#34;
-        self.udp_header = {}
-        self.header = {}
-        # self.samples = []
-        self.trigger_IDs = []
-        self.include_UDP_header = include_UDP_header
-
-        self.stats = self._stats_default.copy()
-
-        for key, val in kwargs.items():
-            if key in self._kwargs:
-                setattr(self, key, val)
-
-        index = self._init_header_with_tuple(tup)
-        self._init_contents_with_tuple(tup, index)
-        self._calculate_stats()
-
-    def _init_header_with_tuple(self, tup):
-        #
-        # Implement event unpacking
-        #
-        print(tup)
-        # if [&#34;UDP_header&#34;] is empty, i is not declared. Set to -1 as backup
-        i = -1
-
-        if self.include_UDP_header is True:
-            for i, key in enumerate(self._mapping_dict[&#34;UDP_header&#34;], 0):
-                self.udp_header[key] = tup[i]
-            print(self.udp_header, self.include_UDP_header)
-
-        # Use previous counter (or -1) as offset:
-        for i, key in enumerate(self._mapping_dict[self._mapping_name], i+1):
-            self.header[key] = self._convert_types(key, tup[i])
-
-        if all(key in self.header for key in [&#34;Seconds&#34;, &#34;Subsecs&#34;]):
-            self.header[&#34;Timestamp_s&#34;] = self._convert_time(
-                self.header[&#34;Seconds&#34;],
-                self.header[&#34;Subsecs&#34;],
-            )
-
-        return i+1
-
-    def _init_contents_with_tuple(self, tup, index):
-        setattr(self, self._contents, list(self._convert_samples(tup[index:])))
-
-
-    def _convert_types(self, key, entry):
-        match key:
-            case &#34;Type&#34;:
-                return entry.decode(&#34;ascii&#34;)
-            case &#34;Energy&#34;:
-                # Reverse the Byte order
-                return int.from_bytes(
-                    bytes([entry[2], entry[1], entry[0]])
-                )
-            case _:
-                return entry
-
-    def _convert_time(self, seconds, subsecs, freq=62500000):
-        return seconds+subsecs/freq # divide by the clock frequency
-
-
-    def _convert_samples(self, tup):
-        for ID, sample in enumerate(tup):
-            # SOURCE https://realpython.com/python-bitwise-operators/#bitmasks
-            t = bool((sample &gt;&gt; 15) &amp; 1)  # Trigger flag
-            i = bool((sample &gt;&gt; 14) &amp; 1)  # Inhibit flag
-            # 16 bits incl. 14 ones.
-            unsigned_val = sample &amp; 0b0011111111111111
-            s = unsigned_val &gt;&gt; 13  # 1: negative, 0:positive
-
-            if (t and not i):
-                # Real trigger case that wasn&#39;t inhibited:
-                self.trigger_IDs.append(ID)
-
-            # Considering the ADC to use two&#39;s-complement signed values
-            yield -s*2**14 + unsigned_val
-
-            # yield {
-            #     # &#34;total&#34;: bin(sample),
-            #     &#34;trigger&#34;: ,
-            #     &#34;value&#34;: value,
-            # }
-
-    def _calculate_stats(self):
-        self.stats[&#34;min&#34;] = min(self.samples)
-        self.stats[&#34;max&#34;] = max(self.samples)
-        self.stats[&#34;trigger_count&#34;] = len(self.trigger_IDs)
-
-    def get_record(self):
-        return {
-            **self.udp_header,
-            **self.header,
-            **self.stats,
-            &#34;trigger_IDs&#34;: self.trigger_IDs,
-            &#34;samples&#34;: self.samples
-        }</code></pre>
-</details>
 </section>
 <section>
 </section>
@@ -248,14 +48,9 @@ class BaseSnippet():
 <dl>
 <dt id="radc-processor.data_parser.common.struct_conversion.BaseDataFile"><code class="flex name class">
 <span>class <span class="ident">BaseDataFile</span></span>
-<span>(</span><span>path, tracelength=700, endianness='little-endian', include_UDP_header=True)</span>
+<span>(</span><span>path, tracelength=64, endianness='little-endian', include_UDP_header=False)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>The base class for DataFile objects.
-This class is initialized with a path and provides methods to unpack
-data from this path.
-Unpacking and storing data in the correct hierarchy and fields is handled
-implicitely.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -276,23 +71,27 @@ implicitely.</p></div>
                  path,
                  tracelength=CONFIG[&#34;udp_package_structure&#34;][&#34;default_trace_length&#34;],
                  endianness=&#34;little-endian&#34;,
-                 include_UDP_header=True
+                 include_UDP_header=False,
                  ) -&gt; None:
-        self.path = path
+        self.path = Path(path)
         self.tracelength = tracelength
         self.include_UDP_header = include_UDP_header
         setattr(self, self._contents, [])
         # self.snippets = []  # iter(())
+
+        self.skipped_bytes = []
+        self.skipped_bytes_total = 0
+
         self.snippet_size_bytes = None
 
-        self.__endianness = endianness
+        self._endianness = endianness
         self.format = self._calculate_format_string()
 
     def _validate_format_string(self, string, size, structname=&#34;&#34;):
         if not any(
             string.startswith(e) for e in endianness_struct_mapping.values()
             ):
-            string = endianness_struct_mapping[self.__endianness] + string
+            string = endianness_struct_mapping[self._endianness] + string
         structname += &#34; &#34; if structname else &#34;&#34;
 
         calcsize = struct.calcsize(string)
@@ -320,6 +119,11 @@ implicitely.</p></div>
         &#34;&#34;&#34;
         raise NotImplementedError</code></pre>
 </details>
+<div class="desc"><p>The base class for DataFile objects.
+This class is initialized with a path and provides methods to unpack
+data from this path.
+Unpacking and storing data in the correct hierarchy and fields is handled
+implicitely.</p></div>
 <h3>Subclasses</h3>
 <ul class="hlist">
 <li><a title="radc-processor.data_parser.v1.struct_conversion.DataFile" href="../v1/struct_conversion.html#radc-processor.data_parser.v1.struct_conversion.DataFile">DataFile</a></li>
@@ -331,7 +135,6 @@ implicitely.</p></div>
 <span>def <span class="ident">get_records</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Method returning a generator used by pandas to create a DataFrame from.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -342,13 +145,12 @@ implicitely.</p></div>
     &#34;&#34;&#34;
     raise NotImplementedError</code></pre>
 </details>
+<div class="desc"><p>Method returning a generator used by pandas to create a DataFrame from.</p></div>
 </dd>
 <dt id="radc-processor.data_parser.common.struct_conversion.BaseDataFile.unpack"><code class="name flex">
 <span>def <span class="ident">unpack</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>This method starts the unpacking of the file into one single hierarchical
-dictionnary containing all header and signal data.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -360,25 +162,25 @@ dictionnary containing all header and signal data.</p></div>
     &#34;&#34;&#34;
     raise NotImplementedError</code></pre>
 </details>
+<div class="desc"><p>This method starts the unpacking of the file into one single hierarchical
+dictionnary containing all header and signal data.</p></div>
 </dd>
 </dl>
 </dd>
 <dt id="radc-processor.data_parser.common.struct_conversion.BaseSnippet"><code class="flex name class">
 <span>class <span class="ident">BaseSnippet</span></span>
-<span>(</span><span>tup, include_UDP_header=True, **kwargs)</span>
+<span>(</span><span>tup, include_UDP_header=None, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Within <strong>init</strong>, <code>self</code> will always match the baseclass/superclass.
-Name mangling (__method_name()) should therefore not be used for
-methods the subclasses want to overwrite.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class BaseSnippet():
 
-    _kwargs = []
-    _contents = &#34;samples&#34;
+    _kwargs = {}
+    _contents = &#34;PulseWaveform&#34;
+    _include_UDP_header_default = True
     _mapping_dict = CONFIG[&#34;struct_fields_mapping&#34;]
     _mapping_name = &#34;Snippet_header&#34;
     _stats_default = {
@@ -387,7 +189,7 @@ methods the subclasses want to overwrite.</p></div>
             &#34;trigger_count&#34;: 0,
         }
 
-    def __init__(self, tup, include_UDP_header=True, **kwargs) -&gt; None:
+    def __init__(self, tup, include_UDP_header=None, **kwargs) -&gt; None:
         &#34;&#34;&#34;
         Within __init__, `self` will always match the baseclass/superclass.
         Name mangling (__method_name()) should therefore not be used for
@@ -395,32 +197,31 @@ methods the subclasses want to overwrite.</p></div>
         &#34;&#34;&#34;
         self.udp_header = {}
         self.header = {}
-        # self.samples = []
-        self.trigger_IDs = []
-        self.include_UDP_header = include_UDP_header
+        # self.PulseWaveform = []
+        # self.trigger_IDs = []
+        self.include_UDP_header = include_UDP_header or self._include_UDP_header_default
 
-        self.stats = self._stats_default.copy()
+        # self.stats = self._stats_default.copy()
 
-        for key, val in kwargs.items():
-            if key in self._kwargs:
-                setattr(self, key, val)
+        for key, default in self._kwargs.items():
+            setattr(self, key, kwargs.pop(key, default))
 
         index = self._init_header_with_tuple(tup)
         self._init_contents_with_tuple(tup, index)
-        self._calculate_stats()
+        # self._calculate_stats() 
 
     def _init_header_with_tuple(self, tup):
         #
         # Implement event unpacking
         #
-        print(tup)
+        # print(tup)
         # if [&#34;UDP_header&#34;] is empty, i is not declared. Set to -1 as backup
         i = -1
 
         if self.include_UDP_header is True:
             for i, key in enumerate(self._mapping_dict[&#34;UDP_header&#34;], 0):
                 self.udp_header[key] = tup[i]
-            print(self.udp_header, self.include_UDP_header)
+            # print(self.udp_header, self.include_UDP_header)
 
         # Use previous counter (or -1) as offset:
         for i, key in enumerate(self._mapping_dict[self._mapping_name], i+1):
@@ -432,21 +233,35 @@ methods the subclasses want to overwrite.</p></div>
                 self.header[&#34;Subsecs&#34;],
             )
 
+        if not self._check_integrity():
+            raise ValueError(f&#34;Wrong values for snippet in header {self.header}&#34;)
+
         return i+1
 
     def _init_contents_with_tuple(self, tup, index):
         setattr(self, self._contents, list(self._convert_samples(tup[index:])))
 
 
+    def _check_integrity(self):
+        # return (self.header[&#39;Channel_number&#39;] in range(36) 
+        #         and self.header[&#39;Snippet_index&#39;] in range(1,30)
+        #         and (int(self.header[&#39;PulsePileUpFlag&#39;]) == 0 or int(self.header[&#39;PulsePileUpFlag&#39;]) == 1)
+        #         and 0 &lt; self.header[&#39;BoxcarSum&#39;] &lt; 50000 
+        #         )
+        return True
+                
+
     def _convert_types(self, key, entry):
         match key:
-            case &#34;Type&#34;:
+            case &#34;Type&#34;|&#39;Trigger_type&#39;:
                 return entry.decode(&#34;ascii&#34;)
-            case &#34;Energy&#34;:
+            case &#34;BoxcarSum&#34;:
                 # Reverse the Byte order
                 return int.from_bytes(
-                    bytes([entry[2], entry[1], entry[0]])
+                    bytes([entry[2], entry[1], entry[0]]), &#34;big&#34;
                 )
+            case &#39;PulsePileUpFlag&#39;:
+                return int.from_bytes(entry,&#39;big&#39;)
             case _:
                 return entry
 
@@ -463,9 +278,9 @@ methods the subclasses want to overwrite.</p></div>
             unsigned_val = sample &amp; 0b0011111111111111
             s = unsigned_val &gt;&gt; 13  # 1: negative, 0:positive
 
-            if (t and not i):
-                # Real trigger case that wasn&#39;t inhibited:
-                self.trigger_IDs.append(ID)
+            # if (t and not i):
+            #     # Real trigger case that wasn&#39;t inhibited:
+            #     self.trigger_IDs.append(ID)
 
             # Considering the ADC to use two&#39;s-complement signed values
             yield -s*2**14 + unsigned_val
@@ -477,19 +292,22 @@ methods the subclasses want to overwrite.</p></div>
             # }
 
     def _calculate_stats(self):
-        self.stats[&#34;min&#34;] = min(self.samples)
-        self.stats[&#34;max&#34;] = max(self.samples)
+        self.stats[&#34;min&#34;] = min(self.PulseWaveform)
+        self.stats[&#34;max&#34;] = max(self.PulseWaveform)
         self.stats[&#34;trigger_count&#34;] = len(self.trigger_IDs)
 
     def get_record(self):
         return {
             **self.udp_header,
             **self.header,
-            **self.stats,
-            &#34;trigger_IDs&#34;: self.trigger_IDs,
-            &#34;samples&#34;: self.samples
+            # **self.stats,
+            # &#34;trigger_IDs&#34;: self.trigger_IDs,
+            &#34;PulseWaveform&#34;: self.PulseWaveform
         }</code></pre>
 </details>
+<div class="desc"><p>Within <strong>init</strong>, <code>self</code> will always match the baseclass/superclass.
+Name mangling (__method_name()) should therefore not be used for
+methods the subclasses want to overwrite.</p></div>
 <h3>Subclasses</h3>
 <ul class="hlist">
 <li><a title="radc-processor.data_parser.v1.struct_conversion.Snippet" href="../v1/struct_conversion.html#radc-processor.data_parser.v1.struct_conversion.Snippet">Snippet</a></li>
@@ -502,7 +320,6 @@ methods the subclasses want to overwrite.</p></div>
 <span>def <span class="ident">get_record</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -511,11 +328,12 @@ methods the subclasses want to overwrite.</p></div>
     return {
         **self.udp_header,
         **self.header,
-        **self.stats,
-        &#34;trigger_IDs&#34;: self.trigger_IDs,
-        &#34;samples&#34;: self.samples
+        # **self.stats,
+        # &#34;trigger_IDs&#34;: self.trigger_IDs,
+        &#34;PulseWaveform&#34;: self.PulseWaveform
     }</code></pre>
 </details>
+<div class="desc"></div>
 </dd>
 </dl>
 </dd>
@@ -523,7 +341,6 @@ methods the subclasses want to overwrite.</p></div>
 </section>
 </article>
 <nav id="sidebar">
-<h1>Index</h1>
 <div class="toc">
 <ul></ul>
 </div>
@@ -554,7 +371,7 @@ methods the subclasses want to overwrite.</p></div>
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.11.5</a>.</p>
 </footer>
 </body>
 </html>

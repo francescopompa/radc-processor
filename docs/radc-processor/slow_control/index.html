@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+<meta name="generator" content="pdoc3 0.11.5">
+<title>radc-processor.slow_control API documentation</title>
+<meta name="description" content="">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/sanitize.min.css" integrity="sha512-y1dtMcuvtTMJc1yPgEqF0ZjQbhnc/bFhyvIyVNb9Zk5mIGtqVaAB1Ttl28su8AvFMOY0EwRbAe+HCLqj6W7/KA==" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/typography.min.css" integrity="sha512-Y1DYSb995BAfxobCkKepB1BqJJTPrOp3zPL74AWFugHHmmdcvO+C48WLrUOlhGMc0QG7AE3f7gmvvcrmX2fDoA==" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:1.5em;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:2em 0 .50em 0}h3{font-size:1.4em;margin:1.6em 0 .7em 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .2s ease-in-out}a:visited{color:#503}a:hover{color:#b62}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900;font-weight:bold}pre code{font-size:.8em;line-height:1.4em;padding:1em;display:block}code{background:#f3f3f3;font-family:"DejaVu Sans Mono",monospace;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source > summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible;min-width:max-content}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em 1em;margin:1em 0}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul ul{padding-left:1em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" integrity="sha512-D9gUyxqja7hBtkWpPWGt9wfbfaMGVt9gnyCvYa+jojwwPHLCzUm5i8rpk7vD7wNee9bA35eYIjobYPaQuKS1MQ==" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => {
+hljs.configure({languages: ['bash', 'css', 'diff', 'graphql', 'ini', 'javascript', 'json', 'plaintext', 'python', 'python-repl', 'rust', 'shell', 'sql', 'typescript', 'xml', 'yaml']});
+hljs.highlightAll();
+/* Collapse source docstrings */
+setTimeout(() => {
+[...document.querySelectorAll('.hljs.language-python > .hljs-string')]
+.filter(el => el.innerHTML.length > 200 && ['"""', "'''"].includes(el.innerHTML.substring(0, 3)))
+.forEach(el => {
+let d = document.createElement('details');
+d.classList.add('hljs-string');
+d.innerHTML = '<summary>"""</summary>' + el.innerHTML.substring(3);
+el.replaceWith(d);
+});
+}, 100);
+})</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>radc-processor.slow_control</code></h1>
+</header>
+<section id="section-intro">
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="radc-processor.slow_control.convert_units"><code class="name flex">
+<span>def <span class="ident">convert_units</span></span>(<span>size, unit: str)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def convert_units(size, unit: str):
+    prefixes = [&#39;&#39;, &#39;k&#39;, &#39;M&#39;, &#39;G&#39;, &#39;T&#39;]
+    units = [p + unit for p in prefixes]
+    for x in units:
+        if size &lt; 1000.:
+            return &#34;%3.3f %s&#34; % (size, x)
+        size /= 1000.
+
+    return size</code></pre>
+</details>
+<div class="desc"></div>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="radc-processor.slow_control.Control"><code class="flex name class">
+<span>class <span class="ident">Control</span></span>
+<span>(</span><span>target_root='/data/DAQMeasurements',<br>target_dir='.',<br>target_file=None,<br>output_html_path='/home/mnd/Desktop/slowControl/pages/',<br>input_template_path='/home/mnd/Software/radc-processor/slow_control/templates/')</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Control():
+
+    _base_path = &#34;/data/DAQMeasurements&#34;
+
+    def __init__(self,
+                 target_root=_base_path,
+                 target_dir=&#39;.&#39;,
+                 target_file=None,
+                 output_html_path=r&#34;/home/mnd/Desktop/slowControl/pages/&#34;,
+                 input_template_path=r&#34;/home/mnd/Software/radc-processor/slow_control/templates/&#34;
+                 ) -&gt; None:
+
+        self.target_root = target_root
+        self.target_dir = target_dir
+        self.target_file = target_file
+        self.n_files = len(
+            glob(f&#39;{self.target_root}/{self.target_dir}/*.bin&#39;))
+        self.output_html_path = output_html_path
+        self.input_template_path = input_template_path
+
+        self.start()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        exit()
+
+    def getMetadata(self, df, file, previous_metadata=pd.DataFrame()):
+        metadata = {}
+        totalTime = df.Timestamp_s.iloc[-1] - df.Timestamp_s.iloc[0]
+        metadata[&#39;Measurement&#39;] = file.split(
+            &#39;.&#39;)[-3] if &#39;chunk&#39; in file else file.split(&#39;.&#39;)[-2]
+        metadata[&#39;Chunk&#39;] = file.split(&#39;.&#39;)[-2] if &#39;chunk&#39; in file else 0
+        metadata[&#39;Time&#39;] = strftime(&#39;%X&#39;,gmtime(df.Timestamp_s.iloc[-1]))
+        metadata[&#39;Snippet rate&#39;] = convert_units(len(df) / totalTime, &#39;Hz&#39;)
+        metadata[&#39;Event rate&#39;] = convert_units(
+            len(set(df[&#39;Event_ID&#39;])) / totalTime, &#39;Hz&#39;)
+        metadata[&#39;Pulse detection efficiency (%)&#39;] = len(
+            df[df.AveragePulsePass]) / len(df) * 100
+        metadata[&#39;Duplicate pulses (%)&#39;] = df.attrs[&#39;duplicated_pulses_fraction&#39;] * 100
+        metadata[&#39;Corrupted snippets (%)&#39;] = df.attrs[&#39;corrupted_snippets_fraction&#39;] * 100
+        small_df = pd.DataFrame(metadata, index=[0])
+        df_info = pd.concat([previous_metadata, small_df])
+        return df_info
+
+    def getHVInfo(self):
+        commander = Commander(
+            &#39;/home/mnd/Software/iseg-hv-controller/iseg_libs/default_config.toml&#39;)
+        interpreter = Interpreter(commander)
+        data = interpreter.get_info()
+        df = pd.DataFrame(data)
+        df[&#39;status&#39;] = (df[&#39;status_v_limit_exceed&#39;] == False) &amp; (df[&#39;status_c_limit_exceed&#39;] == False) &amp; (df[&#39;status_current_trip&#39;] == False)  \
+            &amp; (df[&#39;status_emergency&#39;] == False)
+        df[&#39;Status&#39;] = [&#39;OK&#39; if s else &#39;PROBLEM&#39; for s in df[&#39;status&#39;]]
+        df[&#39;Address&#39;] = [f&#39;0.{(c-1)//16}.{(c-1)%16}&#39; for c in df[&#39;channel_id&#39;]]
+        status_on = df[&#39;status_on&#39;]
+        df[&#39;Power&#39;] = [&#39;ON&#39; if c else &#39;OFF&#39; for c in status_on]
+
+        # ensure correct type by replacing unread variables
+        df.loc[df[&#39;control_v_set&#39;] == &#39;&#39;,&#39;control_v_set&#39;] = 0
+        df.loc[df[&#39;status_v_measure&#39;] == &#39;&#39;,&#39;status_v_measure&#39;] = 0
+        df.loc[df[&#39;control_c_set&#39;] == &#39;&#39;,&#39;control_c_set&#39;] = 0
+        df.loc[df[&#39;status_c_measure&#39;] == &#39;&#39;,&#39;status_c_measure&#39;] = 0
+
+        df[&#39;V_set&#39;] = np.round(
+            df[&#39;control_v_set&#39;].astype(float, errors=&#39;ignore&#39;), 2)
+        df[&#39;V_meas&#39;] = np.round(
+            df[&#39;status_v_measure&#39;].astype(float, errors=&#39;ignore&#39;), 2)
+        df[&#39;I_set (uA)&#39;] = np.round(
+            df[&#39;control_c_set&#39;].astype(float, errors=&#39;ignore&#39;) * 10**6, 0)
+        df[&#39;I_meas (uA)&#39;] = np.round(
+            df[&#39;status_c_measure&#39;].astype(float, errors=&#39;ignore&#39;) * 10**6, 0)
+        
+        df[&#39;vs&#39;] = [np.abs(df[&#39;V_set&#39;][i]-df[&#39;V_meas&#39;][i]) &lt;
+                    2 if df[&#39;Power&#39;][i] == &#39;ON&#39; else True for i in range(len(df))]
+        df[&#39;Voltage status&#39;] = [&#39;OK&#39; if c ==
+                                True else &#39;PROBLEM&#39; for c in df[&#39;vs&#39;]]
+        df = df[[&#39;Address&#39;, &#39;Power&#39;, &#39;V_set&#39;, &#39;V_meas&#39;,
+                 &#39;I_set (uA)&#39;, &#39;I_meas (uA)&#39;, &#39;Status&#39;, &#39;Voltage status&#39;]]
+
+        return df
+    def generateHTMLFile(self,input_file,output_file,context):
+        with open(self.output_html_path + output_file, &#34;w&#34;, encoding=&#34;utf-8&#34;) as output_file:
+            with open(self.input_template_path + input_file) as template_file:
+                j2_template = Template(template_file.read())
+                output_file.write(j2_template.render(context))
+
+    def generate_plots(self, previous_metadata=pd.DataFrame(), file=None):
+        print(&#39;Generating plots...&#39;)
+        start = time()
+        try:
+            df_HV = self.getHVInfo()
+        except:
+            df_HV = pd.DataFrame({&#39;Error&#39;:&#39;Reading not possible&#39;},index=[0])
+
+        _, df = make_total_dataFrame_processed(file)
+        df_info = self.getMetadata(df, file, previous_metadata)
+        fig, ax = plt.subplots()
+        pl.plotCountsPerChannel(df, ax)
+        fig.savefig(&#39;/home/mnd/Desktop/slowControl/images/hCountsPerChannel.png&#39;)
+        plt.close()
+        fig = px.histogram(x=df[&#39;PulseTime_us&#39;][df.AreaOverHeightPass == True], log_y=True)
+        fig.update_traces(xbins=dict(
+            start=-Parameters.PostTriggerTime*16e-3,
+            end=Parameters.PostTriggerTime*16e-3,
+            size=0.048
+        ))
+        fig.update_layout(
+            autosize=False,
+            height=400,
+            width=600,
+            xaxis_title=&#39;Time (us)&#39;,
+            yaxis_title=&#39;Counts&#39;,
+            title=&#39;Time distribution of all pulses&#39;
+        )
+        # consider also defining the include_plotlyjs parameter to point to an external Plotly.js as described above
+        centerEnergy = df[(df.PulseTime_us &lt; 0.15) &amp; (
+            df.PulseTime_us &gt; -0.15)].groupby(&#39;Event_ID&#39;).ApproxEnergy_keVee.sum()
+        beforeTriggerEnergy = df[df.PulseTime_us &lt; -
+                                 0.15].groupby(&#39;Event_ID&#39;).ApproxEnergy_keVee.sum()
+        afterTriggerEnergy = df[df.PulseTime_us &gt; 0.15].groupby(
+            &#39;Event_ID&#39;).ApproxEnergy_keVee.sum()
+
+        fig_trigger = px.histogram(x=centerEnergy, log_y=True)
+        fig_trigger.update_traces(xbins=dict(
+            start=0,
+            end=20000,
+            size=50
+        ))
+        fig_trigger.update_layout(
+            autosize=False,
+            height=400,
+            width=600,
+            xaxis_title=&#39;Energy (keV)&#39;,
+            yaxis_title=&#39;Counts&#39;,
+            title=&#39;Summed energy in the trigger region&#39;
+        )
+
+        tmp_df = pd.DataFrame(dict(
+            series=np.concatenate(
+                ([&#34;before&#34;]*len(beforeTriggerEnergy), [&#34;after&#34;]*len(afterTriggerEnergy))),
+            data=np.concatenate((beforeTriggerEnergy, afterTriggerEnergy)))
+        )
+        fig_comparison = px.histogram(
+            tmp_df, x=&#34;data&#34;, color=&#34;series&#34;, barmode=&#34;overlay&#34;, log_y=True)
+        fig_comparison.update_traces(xbins=dict(
+            start=0,
+            end=20000,
+            size=20
+        ))
+        fig_comparison.update_layout(
+            autosize=False,
+            height=400,
+            width=600,
+            xaxis_title=&#39;Energy (keV)&#39;,
+            yaxis_title=&#39;Counts&#39;,
+            title=&#39;Summed energy before and after the trigger&#39;
+        )
+        topbar=&#39;&#39;&#39;&lt;div class=&#34;topnav&#34;&gt;
+        &lt;a class=&#34;active&#34; href=&#34;file:///home/mnd/Desktop/slowControl/pages/online_analysis.html&#34;&gt;Home&lt;/a&gt;
+        &lt;a class=&#34;active&#34; href=&#34;file:///home/mnd/Desktop/slowControl/pages/high_voltage.html&#34;&gt;High voltage&lt;/a&gt;
+        &lt;a class=&#34;active&#34; href=&#34;file:///home/mnd/Desktop/slowControl/pages/eventsPage.html&#34;&gt;Events&lt;/a&gt;
+        &lt;a class=&#34;active&#34; href=&#34;file:///home/mnd/Desktop/slowControl/pages/pulsesPage.html&#34;&gt;Pulses&lt;/a&gt;
+        &lt;/div&gt;\n&#39;&#39;&#39;
+        
+        context = {
+            &#34;topbar&#34;:topbar,
+            &#34;fig&#34;: fig.to_html(full_html=False),
+            &#34;table&#34;: df_info[::-1].head(10).to_html(index=False, float_format=&#34;%.4g&#34;, justify=&#39;left&#39;),
+            &#34;title&#34;: f&#34;Analysis of file {file}&#34;,
+            &#34;fig_trigger&#34;: fig_trigger.to_html(full_html=False),
+            &#34;fig_comp&#34;: fig_comparison.to_html(full_html=False),
+            &#34;table_HV&#34;: df_HV.to_html(index=False, justify=&#39;left&#39;, float_format=&#34;%g&#34;)
+
+        }
+
+        context_HV = {
+            &#34;topbar&#34;:topbar,
+            &#34;title&#34;: f&#34;Analysis of file {file}&#34;,
+            &#34;table_HV&#34;: df_HV.to_html(index=False, justify=&#39;left&#39;, float_format=&#34;%g&#34;)
+        }
+
+        eventsDir = f&#39;/home/mnd/Desktop/slowControl/events&#39;
+        pulsesDir = f&#39;/home/mnd/Desktop/slowControl/pulses&#39;
+
+        shutil.rmtree(eventsDir,ignore_errors=True)
+        pl.plot_events_coincidence(df,save=True,outDir=eventsDir)
+        
+        shutil.rmtree(pulsesDir,ignore_errors=True)
+        pl.plotEventsPulseFinder(df,save=True,outDir=pulsesDir)
+
+        eventsImages = glob(f&#39;{eventsDir}/*.pdf&#39;)
+        pulsesImages = glob(f&#39;{pulsesDir}/*.pdf&#39;)
+
+        context_events = {
+            &#34;topbar&#34;:topbar,
+            &#34;title&#34;: f&#34;Analysis of file {file}&#34;,
+            &#34;file_list&#34;:eventsImages
+        }
+
+        context_pulses = {
+            &#34;topbar&#34;:topbar,
+            &#34;title&#34;: f&#34;Analysis of file {file}&#34;,
+            &#34;file_list&#34;:pulsesImages
+        }
+
+        self.generateHTMLFile(&#34;template.html&#34;,&#34;online_analysis.html&#34;,context)
+        self.generateHTMLFile(&#34;template_HV.html&#34;,&#34;high_voltage.html&#34;,context_HV)
+        self.generateHTMLFile(&#34;template_events.html&#34;,&#34;eventsPage.html&#34;,context_events)
+        self.generateHTMLFile(&#34;template_events.html&#34;,&#34;pulsesPage.html&#34;,context_pulses)
+        
+
+        print(f&#34;You can see the plots at file://{self.output_html_path}online_analysis.html&#34;)
+        print(f&#39;Processing time: {convert_seconds(time()-start)}\n\n&#39;)
+        return df_info
+
+    def start(self):
+        print(&#39;Starting...&#39;)
+        metadata = pd.DataFrame()
+        if self.target_file is None and self.target_dir is not None:
+            while True:
+                files = glob(
+                    f&#39;{self.target_root}/{self.target_dir}/*.bin&#39;, recursive=True)
+                latest_file = max(files, key=getctime)
+                files.sort()
+                print(f&#34;Analyzing {latest_file}... &#34;)
+                metadata = self.generate_plots(
+                    file=files[-1], previous_metadata=metadata)
+
+        else:
+            self.generate_plots(
+                f&#39;{self.target_root}/{self.target_dir}/{self.target_file}&#39;)
+
+    def switch_file(self, file):
+        # check for not existent file
+        self.target_file = file
+        self.generate_plots(file)</code></pre>
+</details>
+<div class="desc"></div>
+<h3>Methods</h3>
+<dl>
+<dt id="radc-processor.slow_control.Control.generateHTMLFile"><code class="name flex">
+<span>def <span class="ident">generateHTMLFile</span></span>(<span>self, input_file, output_file, context)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def generateHTMLFile(self,input_file,output_file,context):
+    with open(self.output_html_path + output_file, &#34;w&#34;, encoding=&#34;utf-8&#34;) as output_file:
+        with open(self.input_template_path + input_file) as template_file:
+            j2_template = Template(template_file.read())
+            output_file.write(j2_template.render(context))</code></pre>
+</details>
+<div class="desc"></div>
+</dd>
+<dt id="radc-processor.slow_control.Control.generate_plots"><code class="name flex">
+<span>def <span class="ident">generate_plots</span></span>(<span>self, previous_metadata=Empty DataFrame
+Columns: []
+Index: [], file=None)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def generate_plots(self, previous_metadata=pd.DataFrame(), file=None):
+    print(&#39;Generating plots...&#39;)
+    start = time()
+    try:
+        df_HV = self.getHVInfo()
+    except:
+        df_HV = pd.DataFrame({&#39;Error&#39;:&#39;Reading not possible&#39;},index=[0])
+
+    _, df = make_total_dataFrame_processed(file)
+    df_info = self.getMetadata(df, file, previous_metadata)
+    fig, ax = plt.subplots()
+    pl.plotCountsPerChannel(df, ax)
+    fig.savefig(&#39;/home/mnd/Desktop/slowControl/images/hCountsPerChannel.png&#39;)
+    plt.close()
+    fig = px.histogram(x=df[&#39;PulseTime_us&#39;][df.AreaOverHeightPass == True], log_y=True)
+    fig.update_traces(xbins=dict(
+        start=-Parameters.PostTriggerTime*16e-3,
+        end=Parameters.PostTriggerTime*16e-3,
+        size=0.048
+    ))
+    fig.update_layout(
+        autosize=False,
+        height=400,
+        width=600,
+        xaxis_title=&#39;Time (us)&#39;,
+        yaxis_title=&#39;Counts&#39;,
+        title=&#39;Time distribution of all pulses&#39;
+    )
+    # consider also defining the include_plotlyjs parameter to point to an external Plotly.js as described above
+    centerEnergy = df[(df.PulseTime_us &lt; 0.15) &amp; (
+        df.PulseTime_us &gt; -0.15)].groupby(&#39;Event_ID&#39;).ApproxEnergy_keVee.sum()
+    beforeTriggerEnergy = df[df.PulseTime_us &lt; -
+                             0.15].groupby(&#39;Event_ID&#39;).ApproxEnergy_keVee.sum()
+    afterTriggerEnergy = df[df.PulseTime_us &gt; 0.15].groupby(
+        &#39;Event_ID&#39;).ApproxEnergy_keVee.sum()
+
+    fig_trigger = px.histogram(x=centerEnergy, log_y=True)
+    fig_trigger.update_traces(xbins=dict(
+        start=0,
+        end=20000,
+        size=50
+    ))
+    fig_trigger.update_layout(
+        autosize=False,
+        height=400,
+        width=600,
+        xaxis_title=&#39;Energy (keV)&#39;,
+        yaxis_title=&#39;Counts&#39;,
+        title=&#39;Summed energy in the trigger region&#39;
+    )
+
+    tmp_df = pd.DataFrame(dict(
+        series=np.concatenate(
+            ([&#34;before&#34;]*len(beforeTriggerEnergy), [&#34;after&#34;]*len(afterTriggerEnergy))),
+        data=np.concatenate((beforeTriggerEnergy, afterTriggerEnergy)))
+    )
+    fig_comparison = px.histogram(
+        tmp_df, x=&#34;data&#34;, color=&#34;series&#34;, barmode=&#34;overlay&#34;, log_y=True)
+    fig_comparison.update_traces(xbins=dict(
+        start=0,
+        end=20000,
+        size=20
+    ))
+    fig_comparison.update_layout(
+        autosize=False,
+        height=400,
+        width=600,
+        xaxis_title=&#39;Energy (keV)&#39;,
+        yaxis_title=&#39;Counts&#39;,
+        title=&#39;Summed energy before and after the trigger&#39;
+    )
+    topbar=&#39;&#39;&#39;&lt;div class=&#34;topnav&#34;&gt;
+    &lt;a class=&#34;active&#34; href=&#34;file:///home/mnd/Desktop/slowControl/pages/online_analysis.html&#34;&gt;Home&lt;/a&gt;
+    &lt;a class=&#34;active&#34; href=&#34;file:///home/mnd/Desktop/slowControl/pages/high_voltage.html&#34;&gt;High voltage&lt;/a&gt;
+    &lt;a class=&#34;active&#34; href=&#34;file:///home/mnd/Desktop/slowControl/pages/eventsPage.html&#34;&gt;Events&lt;/a&gt;
+    &lt;a class=&#34;active&#34; href=&#34;file:///home/mnd/Desktop/slowControl/pages/pulsesPage.html&#34;&gt;Pulses&lt;/a&gt;
+    &lt;/div&gt;\n&#39;&#39;&#39;
+    
+    context = {
+        &#34;topbar&#34;:topbar,
+        &#34;fig&#34;: fig.to_html(full_html=False),
+        &#34;table&#34;: df_info[::-1].head(10).to_html(index=False, float_format=&#34;%.4g&#34;, justify=&#39;left&#39;),
+        &#34;title&#34;: f&#34;Analysis of file {file}&#34;,
+        &#34;fig_trigger&#34;: fig_trigger.to_html(full_html=False),
+        &#34;fig_comp&#34;: fig_comparison.to_html(full_html=False),
+        &#34;table_HV&#34;: df_HV.to_html(index=False, justify=&#39;left&#39;, float_format=&#34;%g&#34;)
+
+    }
+
+    context_HV = {
+        &#34;topbar&#34;:topbar,
+        &#34;title&#34;: f&#34;Analysis of file {file}&#34;,
+        &#34;table_HV&#34;: df_HV.to_html(index=False, justify=&#39;left&#39;, float_format=&#34;%g&#34;)
+    }
+
+    eventsDir = f&#39;/home/mnd/Desktop/slowControl/events&#39;
+    pulsesDir = f&#39;/home/mnd/Desktop/slowControl/pulses&#39;
+
+    shutil.rmtree(eventsDir,ignore_errors=True)
+    pl.plot_events_coincidence(df,save=True,outDir=eventsDir)
+    
+    shutil.rmtree(pulsesDir,ignore_errors=True)
+    pl.plotEventsPulseFinder(df,save=True,outDir=pulsesDir)
+
+    eventsImages = glob(f&#39;{eventsDir}/*.pdf&#39;)
+    pulsesImages = glob(f&#39;{pulsesDir}/*.pdf&#39;)
+
+    context_events = {
+        &#34;topbar&#34;:topbar,
+        &#34;title&#34;: f&#34;Analysis of file {file}&#34;,
+        &#34;file_list&#34;:eventsImages
+    }
+
+    context_pulses = {
+        &#34;topbar&#34;:topbar,
+        &#34;title&#34;: f&#34;Analysis of file {file}&#34;,
+        &#34;file_list&#34;:pulsesImages
+    }
+
+    self.generateHTMLFile(&#34;template.html&#34;,&#34;online_analysis.html&#34;,context)
+    self.generateHTMLFile(&#34;template_HV.html&#34;,&#34;high_voltage.html&#34;,context_HV)
+    self.generateHTMLFile(&#34;template_events.html&#34;,&#34;eventsPage.html&#34;,context_events)
+    self.generateHTMLFile(&#34;template_events.html&#34;,&#34;pulsesPage.html&#34;,context_pulses)
+    
+
+    print(f&#34;You can see the plots at file://{self.output_html_path}online_analysis.html&#34;)
+    print(f&#39;Processing time: {convert_seconds(time()-start)}\n\n&#39;)
+    return df_info</code></pre>
+</details>
+<div class="desc"></div>
+</dd>
+<dt id="radc-processor.slow_control.Control.getHVInfo"><code class="name flex">
+<span>def <span class="ident">getHVInfo</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def getHVInfo(self):
+    commander = Commander(
+        &#39;/home/mnd/Software/iseg-hv-controller/iseg_libs/default_config.toml&#39;)
+    interpreter = Interpreter(commander)
+    data = interpreter.get_info()
+    df = pd.DataFrame(data)
+    df[&#39;status&#39;] = (df[&#39;status_v_limit_exceed&#39;] == False) &amp; (df[&#39;status_c_limit_exceed&#39;] == False) &amp; (df[&#39;status_current_trip&#39;] == False)  \
+        &amp; (df[&#39;status_emergency&#39;] == False)
+    df[&#39;Status&#39;] = [&#39;OK&#39; if s else &#39;PROBLEM&#39; for s in df[&#39;status&#39;]]
+    df[&#39;Address&#39;] = [f&#39;0.{(c-1)//16}.{(c-1)%16}&#39; for c in df[&#39;channel_id&#39;]]
+    status_on = df[&#39;status_on&#39;]
+    df[&#39;Power&#39;] = [&#39;ON&#39; if c else &#39;OFF&#39; for c in status_on]
+
+    # ensure correct type by replacing unread variables
+    df.loc[df[&#39;control_v_set&#39;] == &#39;&#39;,&#39;control_v_set&#39;] = 0
+    df.loc[df[&#39;status_v_measure&#39;] == &#39;&#39;,&#39;status_v_measure&#39;] = 0
+    df.loc[df[&#39;control_c_set&#39;] == &#39;&#39;,&#39;control_c_set&#39;] = 0
+    df.loc[df[&#39;status_c_measure&#39;] == &#39;&#39;,&#39;status_c_measure&#39;] = 0
+
+    df[&#39;V_set&#39;] = np.round(
+        df[&#39;control_v_set&#39;].astype(float, errors=&#39;ignore&#39;), 2)
+    df[&#39;V_meas&#39;] = np.round(
+        df[&#39;status_v_measure&#39;].astype(float, errors=&#39;ignore&#39;), 2)
+    df[&#39;I_set (uA)&#39;] = np.round(
+        df[&#39;control_c_set&#39;].astype(float, errors=&#39;ignore&#39;) * 10**6, 0)
+    df[&#39;I_meas (uA)&#39;] = np.round(
+        df[&#39;status_c_measure&#39;].astype(float, errors=&#39;ignore&#39;) * 10**6, 0)
+    
+    df[&#39;vs&#39;] = [np.abs(df[&#39;V_set&#39;][i]-df[&#39;V_meas&#39;][i]) &lt;
+                2 if df[&#39;Power&#39;][i] == &#39;ON&#39; else True for i in range(len(df))]
+    df[&#39;Voltage status&#39;] = [&#39;OK&#39; if c ==
+                            True else &#39;PROBLEM&#39; for c in df[&#39;vs&#39;]]
+    df = df[[&#39;Address&#39;, &#39;Power&#39;, &#39;V_set&#39;, &#39;V_meas&#39;,
+             &#39;I_set (uA)&#39;, &#39;I_meas (uA)&#39;, &#39;Status&#39;, &#39;Voltage status&#39;]]
+
+    return df</code></pre>
+</details>
+<div class="desc"></div>
+</dd>
+<dt id="radc-processor.slow_control.Control.getMetadata"><code class="name flex">
+<span>def <span class="ident">getMetadata</span></span>(<span>self, df, file, previous_metadata=Empty DataFrame
+Columns: []
+Index: [])</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def getMetadata(self, df, file, previous_metadata=pd.DataFrame()):
+    metadata = {}
+    totalTime = df.Timestamp_s.iloc[-1] - df.Timestamp_s.iloc[0]
+    metadata[&#39;Measurement&#39;] = file.split(
+        &#39;.&#39;)[-3] if &#39;chunk&#39; in file else file.split(&#39;.&#39;)[-2]
+    metadata[&#39;Chunk&#39;] = file.split(&#39;.&#39;)[-2] if &#39;chunk&#39; in file else 0
+    metadata[&#39;Time&#39;] = strftime(&#39;%X&#39;,gmtime(df.Timestamp_s.iloc[-1]))
+    metadata[&#39;Snippet rate&#39;] = convert_units(len(df) / totalTime, &#39;Hz&#39;)
+    metadata[&#39;Event rate&#39;] = convert_units(
+        len(set(df[&#39;Event_ID&#39;])) / totalTime, &#39;Hz&#39;)
+    metadata[&#39;Pulse detection efficiency (%)&#39;] = len(
+        df[df.AveragePulsePass]) / len(df) * 100
+    metadata[&#39;Duplicate pulses (%)&#39;] = df.attrs[&#39;duplicated_pulses_fraction&#39;] * 100
+    metadata[&#39;Corrupted snippets (%)&#39;] = df.attrs[&#39;corrupted_snippets_fraction&#39;] * 100
+    small_df = pd.DataFrame(metadata, index=[0])
+    df_info = pd.concat([previous_metadata, small_df])
+    return df_info</code></pre>
+</details>
+<div class="desc"></div>
+</dd>
+<dt id="radc-processor.slow_control.Control.start"><code class="name flex">
+<span>def <span class="ident">start</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def start(self):
+    print(&#39;Starting...&#39;)
+    metadata = pd.DataFrame()
+    if self.target_file is None and self.target_dir is not None:
+        while True:
+            files = glob(
+                f&#39;{self.target_root}/{self.target_dir}/*.bin&#39;, recursive=True)
+            latest_file = max(files, key=getctime)
+            files.sort()
+            print(f&#34;Analyzing {latest_file}... &#34;)
+            metadata = self.generate_plots(
+                file=files[-1], previous_metadata=metadata)
+
+    else:
+        self.generate_plots(
+            f&#39;{self.target_root}/{self.target_dir}/{self.target_file}&#39;)</code></pre>
+</details>
+<div class="desc"></div>
+</dd>
+<dt id="radc-processor.slow_control.Control.switch_file"><code class="name flex">
+<span>def <span class="ident">switch_file</span></span>(<span>self, file)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def switch_file(self, file):
+    # check for not existent file
+    self.target_file = file
+    self.generate_plots(file)</code></pre>
+</details>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="radc-processor" href="../index.html">radc-processor</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="radc-processor.slow_control.convert_units" href="#radc-processor.slow_control.convert_units">convert_units</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="radc-processor.slow_control.Control" href="#radc-processor.slow_control.Control">Control</a></code></h4>
+<ul class="two-column">
+<li><code><a title="radc-processor.slow_control.Control.generateHTMLFile" href="#radc-processor.slow_control.Control.generateHTMLFile">generateHTMLFile</a></code></li>
+<li><code><a title="radc-processor.slow_control.Control.generate_plots" href="#radc-processor.slow_control.Control.generate_plots">generate_plots</a></code></li>
+<li><code><a title="radc-processor.slow_control.Control.getHVInfo" href="#radc-processor.slow_control.Control.getHVInfo">getHVInfo</a></code></li>
+<li><code><a title="radc-processor.slow_control.Control.getMetadata" href="#radc-processor.slow_control.Control.getMetadata">getMetadata</a></code></li>
+<li><code><a title="radc-processor.slow_control.Control.start" href="#radc-processor.slow_control.Control.start">start</a></code></li>
+<li><code><a title="radc-processor.slow_control.Control.switch_file" href="#radc-processor.slow_control.Control.switch_file">switch_file</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.11.5</a>.</p>
+</footer>
+</body>
+</html>

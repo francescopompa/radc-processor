@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
 <meta name="generator" content="pdoc3 0.11.5">
-<title>radc-processor.import_helper API documentation</title>
+<title>radc-processor.scripts.prototype_udp_receiver API documentation</title>
 <meta name="description" content="">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/sanitize.min.css" integrity="sha512-y1dtMcuvtTMJc1yPgEqF0ZjQbhnc/bFhyvIyVNb9Zk5mIGtqVaAB1Ttl28su8AvFMOY0EwRbAe+HCLqj6W7/KA==" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/typography.min.css" integrity="sha512-Y1DYSb995BAfxobCkKepB1BqJJTPrOp3zPL74AWFugHHmmdcvO+C48WLrUOlhGMc0QG7AE3f7gmvvcrmX2fDoA==" crossorigin>
@@ -33,7 +33,7 @@ el.replaceWith(d);
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>radc-processor.import_helper</code></h1>
+<h1 class="title">Module <code>radc-processor.scripts.prototype_udp_receiver</code></h1>
 </header>
 <section id="section-intro">
 </section>
@@ -44,166 +44,97 @@ el.replaceWith(d);
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="radc-processor.import_helper.hold"><code class="name flex">
-<span>def <span class="ident">hold</span></span>(<span>message='')</span>
+<dt id="radc-processor.scripts.prototype_udp_receiver.manage_socket"><code class="name flex">
+<span>def <span class="ident">manage_socket</span></span>(<span>)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def hold(message=&#34;&#34;):
-    if message != &#34;&#34; and not message.endswith(&#34; &#34;):
-        message += &#34; &#34;
-    uinput = input(f&#34;{message}Press [ENTER] to continue.&#34;)
-    if uinput in [&#34;\n&#34;, &#34;&#34;]:
-        return uinput
-    else:
-        hold(message)</code></pre>
+<pre><code class="python">def manage_socket():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    # print(socket.__dir__())
+    host = &#34;&#34;
+    port = 50007
+
+    s.bind((host, port))
+    s.listen()
+    conn, addr = s.accept()
+    with conn:
+        print(&#34;Connected by&#34;, addr)
+        read_to_file(s)
+
+    s.shutdown(socket.SHUT_RD)
+    s.close()</code></pre>
 </details>
 <div class="desc"></div>
 </dd>
-<dt id="radc-processor.import_helper.list_imports"><code class="name flex">
-<span>def <span class="ident">list_imports</span></span>(<span>)</span>
+<dt id="radc-processor.scripts.prototype_udp_receiver.read_to_file"><code class="name flex">
+<span>def <span class="ident">read_to_file</span></span>(<span>s)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def list_imports():
-    for i in _imports():
-        print(i[0], f&#34;\t{i[1:]}&#34;)
-        # print(list(imports()))</code></pre>
+<pre><code class="python">def read_to_file(s):
+    with open(&#34;testreadoutfile.bin&#34;, &#34;wb&#34;) as file:
+        readout(s, file)</code></pre>
 </details>
 <div class="desc"></div>
 </dd>
-<dt id="radc-processor.import_helper.pjoin"><code class="name flex">
-<span>def <span class="ident">pjoin</span></span>(<span>path)</span>
+<dt id="radc-processor.scripts.prototype_udp_receiver.read_to_stdout"><code class="name flex">
+<span>def <span class="ident">read_to_stdout</span></span>(<span>s)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def pjoin(path):
-    return os.path.join(
-        os.path.dirname(__file__),
-        path
-    )</code></pre>
+<pre><code class="python">def read_to_stdout(s):
+    readout(s, sys.stdout)</code></pre>
+</details>
+<div class="desc"></div>
+</dd>
+<dt id="radc-processor.scripts.prototype_udp_receiver.readout"><code class="name flex">
+<span>def <span class="ident">readout</span></span>(<span>s, buffer)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def readout(s, buffer):
+    count = 0
+    total_data = 0
+    start_time = time.time()
+
+    while True:
+        recv_data_volume = s.recv_into(buffer, 1400)
+        # data = s.recv(1400)
+        # print(data)
+        # file.write(data)
+
+        count += 1
+        total_data += recv_data_volume
+        run_time = time.time() - start_time
+        total_rate = total_data / run_time
+
+        print(f&#34;Received: {count} packages in {int(run_time)}s for {total_data} Bytes in total. ({total_rate}B/s)&#34;,
+            end=&#34;\r&#34;,
+            # file=sys.stdout, # Necessary`?`
+            flush = True
+        )
+
+        # Exit condition -&gt; Subprocess?</code></pre>
 </details>
 <div class="desc"></div>
 </dd>
 </dl>
 </section>
 <section>
-<h2 class="section-title" id="header-classes">Classes</h2>
-<dl>
-<dt id="radc-processor.import_helper.CustomEncoder"><code class="flex name class">
-<span>class <span class="ident">CustomEncoder</span></span>
-<span>(</span><span>*,<br>skipkeys=False,<br>ensure_ascii=True,<br>check_circular=True,<br>allow_nan=True,<br>sort_keys=False,<br>indent=None,<br>separators=None,<br>default=None)</span>
-</code></dt>
-<dd>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class CustomEncoder(json.JSONEncoder):
-    &#34;&#34;&#34; Special json encoder for numpy types &#34;&#34;&#34;
-    def default(self, o):
-        if isinstance(o, (np.int_, np.intc, np.intp, np.int8,
-                            np.int16, np.int32, np.int64, np.uint8,
-                            np.uint16, np.uint32, np.uint64)):
-            return int(o)
-        elif isinstance(o, (np.float_, np.float16, np.float32,
-                              np.float64)):
-            return float(o)
-        elif isinstance(o, (np.ndarray,)):
-            return o.tolist()
-        return json.JSONEncoder.default(self, o)</code></pre>
-</details>
-<div class="desc"><p>Special json encoder for numpy types </p>
-<p>Constructor for JSONEncoder, with sensible defaults.</p>
-<p>If skipkeys is false, then it is a TypeError to attempt
-encoding of keys that are not str, int, float or None.
-If
-skipkeys is True, such items are simply skipped.</p>
-<p>If ensure_ascii is true, the output is guaranteed to be str
-objects with all incoming non-ASCII characters escaped.
-If
-ensure_ascii is false, the output can contain non-ASCII characters.</p>
-<p>If check_circular is true, then lists, dicts, and custom encoded
-objects will be checked for circular references during encoding to
-prevent an infinite recursion (which would cause an RecursionError).
-Otherwise, no such check takes place.</p>
-<p>If allow_nan is true, then NaN, Infinity, and -Infinity will be
-encoded as such.
-This behavior is not JSON specification compliant,
-but is consistent with most JavaScript based encoders and decoders.
-Otherwise, it will be a ValueError to encode such floats.</p>
-<p>If sort_keys is true, then the output of dictionaries will be
-sorted by key; this is useful for regression tests to ensure
-that JSON serializations can be compared on a day-to-day basis.</p>
-<p>If indent is a non-negative integer, then JSON array
-elements and object members will be pretty-printed with that
-indent level.
-An indent level of 0 will only insert newlines.
-None is the most compact representation.</p>
-<p>If specified, separators should be an (item_separator, key_separator)
-tuple.
-The default is (', ', ': ') if <em>indent</em> is <code>None</code> and
-(',', ': ') otherwise.
-To get the most compact JSON representation,
-you should specify (',', ':') to eliminate whitespace.</p>
-<p>If specified, default is a function that gets called for objects
-that can't otherwise be serialized.
-It should return a JSON encodable
-version of the object or raise a <code>TypeError</code>.</p></div>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>json.encoder.JSONEncoder</li>
-</ul>
-<h3>Methods</h3>
-<dl>
-<dt id="radc-processor.import_helper.CustomEncoder.default"><code class="name flex">
-<span>def <span class="ident">default</span></span>(<span>self, o)</span>
-</code></dt>
-<dd>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def default(self, o):
-    if isinstance(o, (np.int_, np.intc, np.intp, np.int8,
-                        np.int16, np.int32, np.int64, np.uint8,
-                        np.uint16, np.uint32, np.uint64)):
-        return int(o)
-    elif isinstance(o, (np.float_, np.float16, np.float32,
-                          np.float64)):
-        return float(o)
-    elif isinstance(o, (np.ndarray,)):
-        return o.tolist()
-    return json.JSONEncoder.default(self, o)</code></pre>
-</details>
-<div class="desc"><p>Implement this method in a subclass such that it returns
-a serializable object for <code>o</code>, or calls the base implementation
-(to raise a <code>TypeError</code>).</p>
-<p>For example, to support arbitrary iterators, you could
-implement default like this::</p>
-<pre><code>def default(self, o):
-    try:
-        iterable = iter(o)
-    except TypeError:
-        pass
-    else:
-        return list(iterable)
-    # Let the base class default method raise the TypeError
-    return super().default(o)
-</code></pre></div>
-</dd>
-</dl>
-</dd>
-</dl>
 </section>
 </article>
 <nav id="sidebar">
@@ -213,24 +144,15 @@ implement default like this::</p>
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="radc-processor" href="../index.html">radc-processor</a></code></li>
+<li><code><a title="radc-processor.scripts" href="index.html">radc-processor.scripts</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="radc-processor.import_helper.hold" href="#radc-processor.import_helper.hold">hold</a></code></li>
-<li><code><a title="radc-processor.import_helper.list_imports" href="#radc-processor.import_helper.list_imports">list_imports</a></code></li>
-<li><code><a title="radc-processor.import_helper.pjoin" href="#radc-processor.import_helper.pjoin">pjoin</a></code></li>
-</ul>
-</li>
-<li><h3><a href="#header-classes">Classes</a></h3>
-<ul>
-<li>
-<h4><code><a title="radc-processor.import_helper.CustomEncoder" href="#radc-processor.import_helper.CustomEncoder">CustomEncoder</a></code></h4>
-<ul class="">
-<li><code><a title="radc-processor.import_helper.CustomEncoder.default" href="#radc-processor.import_helper.CustomEncoder.default">default</a></code></li>
-</ul>
-</li>
+<li><code><a title="radc-processor.scripts.prototype_udp_receiver.manage_socket" href="#radc-processor.scripts.prototype_udp_receiver.manage_socket">manage_socket</a></code></li>
+<li><code><a title="radc-processor.scripts.prototype_udp_receiver.read_to_file" href="#radc-processor.scripts.prototype_udp_receiver.read_to_file">read_to_file</a></code></li>
+<li><code><a title="radc-processor.scripts.prototype_udp_receiver.read_to_stdout" href="#radc-processor.scripts.prototype_udp_receiver.read_to_stdout">read_to_stdout</a></code></li>
+<li><code><a title="radc-processor.scripts.prototype_udp_receiver.readout" href="#radc-processor.scripts.prototype_udp_receiver.readout">readout</a></code></li>
 </ul>
 </li>
 </ul>

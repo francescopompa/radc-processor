@@ -35,7 +35,7 @@ def validate_config(version: str = VERSION_STR):
         "..",
         version,
         f"{version}.configuration.yaml"
-        ).resolve()
+    ).resolve()
 
     with open(config_path, "r", encoding="utf-8") as file:
         CONFIG = yaml.safe_load(file)

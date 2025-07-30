@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+<meta name="generator" content="pdoc3 0.11.5">
+<title>radc-processor.data_parser.pulseFunctions API documentation</title>
+<meta name="description" content="">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/sanitize.min.css" integrity="sha512-y1dtMcuvtTMJc1yPgEqF0ZjQbhnc/bFhyvIyVNb9Zk5mIGtqVaAB1Ttl28su8AvFMOY0EwRbAe+HCLqj6W7/KA==" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/typography.min.css" integrity="sha512-Y1DYSb995BAfxobCkKepB1BqJJTPrOp3zPL74AWFugHHmmdcvO+C48WLrUOlhGMc0QG7AE3f7gmvvcrmX2fDoA==" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:1.5em;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:2em 0 .50em 0}h3{font-size:1.4em;margin:1.6em 0 .7em 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .2s ease-in-out}a:visited{color:#503}a:hover{color:#b62}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900;font-weight:bold}pre code{font-size:.8em;line-height:1.4em;padding:1em;display:block}code{background:#f3f3f3;font-family:"DejaVu Sans Mono",monospace;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source > summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible;min-width:max-content}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em 1em;margin:1em 0}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul ul{padding-left:1em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" integrity="sha512-D9gUyxqja7hBtkWpPWGt9wfbfaMGVt9gnyCvYa+jojwwPHLCzUm5i8rpk7vD7wNee9bA35eYIjobYPaQuKS1MQ==" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => {
+hljs.configure({languages: ['bash', 'css', 'diff', 'graphql', 'ini', 'javascript', 'json', 'plaintext', 'python', 'python-repl', 'rust', 'shell', 'sql', 'typescript', 'xml', 'yaml']});
+hljs.highlightAll();
+/* Collapse source docstrings */
+setTimeout(() => {
+[...document.querySelectorAll('.hljs.language-python > .hljs-string')]
+.filter(el => el.innerHTML.length > 200 && ['"""', "'''"].includes(el.innerHTML.substring(0, 3)))
+.forEach(el => {
+let d = document.createElement('details');
+d.classList.add('hljs-string');
+d.innerHTML = '<summary>"""</summary>' + el.innerHTML.substring(3);
+el.replaceWith(d);
+});
+}, 100);
+})</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>radc-processor.data_parser.pulseFunctions</code></h1>
+</header>
+<section id="section-intro">
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="radc-processor.data_parser.pulseFunctions.ADC_to_mV_conversion"><code class="name flex">
+<span>def <span class="ident">ADC_to_mV_conversion</span></span>(<span>PulseWaveform, channel)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def ADC_to_mV_conversion(PulseWaveform, channel):
+    &#34;&#34;&#34;
+    Converts full waveforms to mV based on the conversion derived without the front end.
+    &#34;&#34;&#34;
+    PulseWaveform = np.array(PulseWaveform)
+    if channel in range(8):
+        return list((PulseWaveform - 13)/31.06)
+    elif channel in range(8, 16):
+        return list((PulseWaveform - 19)/30.68)
+    elif channel in range(16, 24):
+        return list((PulseWaveform - 19)/31.07)
+    elif channel in range(24, 32):
+        return list((PulseWaveform - 14.06)/30.07)
+    elif channel in range(32, 37):
+        return list((PulseWaveform - 18)/30.66)
+    else:
+        # print(f&#39;The channel {channel} does not exist!&#39;)
+        return list(np.zeros(64))</code></pre>
+</details>
+<div class="desc"><p>Converts full waveforms to mV based on the conversion derived without the front end.</p></div>
+</dd>
+<dt id="radc-processor.data_parser.pulseFunctions.BGOPulseQuantities"><code class="name flex">
+<span>def <span class="ident">BGOPulseQuantities</span></span>(<span>waveform)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def BGOPulseQuantities(waveform):
+    &#34;&#34;&#34;
+    Function to determine the pulse quantities for BGO pulses. 
+    The BGO channel must be specified in data_parser.Parameters.
+    &#34;&#34;&#34;
+    baseline = np.mean(waveform[1:5])
+    waveform = waveform - baseline
+    area = np.trapezoid(waveform[5:])
+    height = max(waveform)
+    max_index = np.argmax(waveform)
+    wf_norm = waveform[1:] / np.sum(waveform[1:])
+    if Parameters.match_pulse_maximum:
+        wf_norm = np.roll(wf_norm,-max_index + np.argmax(Parameters.average_pulse))
+        wf_norm[:4] = 0
+    if height &lt; 2000 &amp; height &gt; 0:
+        RE = np.linalg.norm(wf_norm - Parameters.BGO_average_pulse_cut) / Parameters.BGO_norm_function(height)
+    else: RE = 50
+    flag = &#39;b&#39;
+    average_pulse_pass = RE &lt; Parameters.BGO_RE_threshold
+    if average_pulse_pass == False:
+        flag += &#39;p&#39;
+    return average_pulse_pass, RE, max_index, height, area, baseline, flag</code></pre>
+</details>
+<div class="desc"><p>Function to determine the pulse quantities for BGO pulses.
+The BGO channel must be specified in data_parser.Parameters.</p></div>
+</dd>
+<dt id="radc-processor.data_parser.pulseFunctions.calc_puls_params"><code class="name flex">
+<span>def <span class="ident">calc_puls_params</span></span>(<span>PulseWaveform, peak, min_threshold_height, window_size, n_below_min)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calc_puls_params(PulseWaveform, peak, min_threshold_height, window_size, n_below_min):
+    &#34;&#34;&#34;
+    part of pulse_finder function
+    :param n_below_min:
+    :param pulse:
+    :param peak:
+    :param min_threshold_height:
+    :param window_size:
+    :return:
+    It returns the pulse parameters once the peak is found through scipy
+    For now only one pulse per snippet
+    &#34;&#34;&#34;
+    # recalculate the peak based on the boxcar signal,
+    # into one where we search in peak +- window size of the actual signal
+    peak_window_start = peak - window_size
+    peak_window_end = peak + window_size
+
+    if peak_window_end &gt;= len(PulseWaveform):
+        peak_window_end = len(PulseWaveform) - 1
+    if peak_window_start &lt;= 1:
+        peak_window_start = 0
+    # searching for the signal peak in the given window around the smoothed peak
+    peak_max_index = peak_window_start + \
+        np.argmax(PulseWaveform[peak_window_start: peak_window_end + 1])
+
+    # here a moving average of 3 points is made
+    sig_windows_start = np.flip(PulseWaveform[: (peak_max_index + 2)])
+    # taking the averages starting at peak_max + 1 so the average is centered around the current index
+    #                       one before peak         peak                    one after
+    averaged_sig_window = np.convolve(sig_windows_start,np.ones(Parameters.n_samples_baseline)/Parameters.n_samples_baseline,mode = &#39;valid&#39;)
+
+    # finds the pulse start by finding in reverse the first index where signal is less than height
+    pulse_start = peak_max_index - \
+        find_first_n_less(min_threshold_height,
+                          averaged_sig_window, n_below_min)
+    if PulseWaveform[pulse_start] &gt; (Parameters.height +5):
+        pulse_start = max(0,pulse_start -10)
+    # same for the pulse_end
+    # 3 wide box car average centered on each value (-1 current_index +1)
+    sig_windows_end = PulseWaveform[peak_max_index - 1:]
+    averaged_sig_window = np.convolve(sig_windows_end, np.ones(Parameters.n_samples_running_average)/Parameters.n_samples_baseline,mode = &#39;valid&#39;)
+
+    n_samples = find_first_n_less(min_threshold_height,
+                          averaged_sig_window, n_below_min) 
+    pulse_end = peak_max_index + n_samples
+    pulse_width = pulse_end-pulse_start
+    if n_samples == 0:
+        pulse_end = 63
+    elif pulse_width &lt; 30:
+        pulse_end = min(pulse_start + 40, 63)
+        
+    if pulse_start &gt;= len(PulseWaveform):
+        pulse_start = len(PulseWaveform) - 1
+    if pulse_end &gt;= len(PulseWaveform):
+        pulse_end = len(PulseWaveform) - 1
+
+    # check if pulse index width is larger than 0
+    if pulse_end - pulse_start &gt; 0 and pulse_end != -1 and pulse_start != -1:
+        
+        pulse_width = pulse_end - pulse_start
+        # Area via trapezoid integration from pulse start to end
+        # ,dx=sample_width) #16 ns sample width
+        pulse_area = np.trapz(PulseWaveform[pulse_start: pulse_end + 1])
+        try:
+            pulse_max_index = pulse_start + \
+                np.argmax(PulseWaveform[pulse_start: pulse_end + 1])
+        except ValueError:
+            pulse_max_index = peak
+        if pulse_max_index &lt;= pulse_start or pulse_end &lt;= pulse_max_index:
+            # max height could not be found so just using peak from smoothed signal
+            pulse_max_index = peak
+        pulse_height = PulseWaveform[pulse_max_index]
+        return True, pulse_max_index, pulse_height, pulse_width, pulse_area, pulse_start, pulse_end
+    return False, 0, 0, 0, 0, 0, 0</code></pre>
+</details>
+<div class="desc"><p>part of pulse_finder function
+:param n_below_min:
+:param pulse:
+:param peak:
+:param min_threshold_height:
+:param window_size:
+:return:
+It returns the pulse parameters once the peak is found through scipy
+For now only one pulse per snippet</p></div>
+</dd>
+<dt id="radc-processor.data_parser.pulseFunctions.computeTimeWithCFD"><code class="name flex">
+<span>def <span class="ident">computeTimeWithCFD</span></span>(<span>df)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def computeTimeWithCFD(df):
+    &#34;&#34;&#34;
+    Function to determine the time of the pulse with pulse fraction discrimination.
+    It still needs to be tested.
+    &#34;&#34;&#34;
+    fraction_cfd = 0.5
+    x1 = df[&#39;MaximumIndex&#39;] - find_first_n_less(df[&#39;PulseHeight&#39;]* fraction_cfd, df[&#39;PulseWaveform&#39;],1)
+    if x1&gt;62:x1=62
+    x2 = x1 + 1
+    y2 = df[&#39;PulseWaveform&#39;][x2]
+    y1 = df[&#39;PulseWaveform&#39;][x1]
+    time_cfd = x1 + (df[&#39;PulseHeight&#39;] * fraction_cfd - y1) * \
+        (x2 - x1) / (y2 - y1 + 0.0001)
+    return round(df[&#39;PulseTime_us&#39;] - (df[&#39;MaximumIndex&#39;]- time_cfd) * 16e-3,3)</code></pre>
+</details>
+<div class="desc"><p>Function to determine the time of the pulse with pulse fraction discrimination.
+It still needs to be tested.</p></div>
+</dd>
+<dt id="radc-processor.data_parser.pulseFunctions.energyConversion"><code class="name flex">
+<span>def <span class="ident">energyConversion</span></span>(<span>charge, channel, gain='matched_v3')</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def energyConversion(charge, channel, gain=Parameters.gain):
+    &#39;&#39;&#39;
+    Function to convert ADCC to energy. 
+    It uses rescaling of Cs137 Compton edges for matched gain version 1 and 2,
+    otherwise it uses the linear fits.
+    &#39;&#39;&#39;
+    E_keV = (charge + 169.3)/16.20 
+    if gain == &#39;matched&#39; or gain == &#39;matched_v2&#39;:
+        try:
+            rescalingFactor = Parameters.rescalingFactors[channel] 
+        except:
+            return charge * Parameters.slope[10] + Parameters.constant[10]
+        return E_keV * rescalingFactor
+    elif gain == &#39;matched_v3&#39;:
+        return charge * Parameters.slope[channel] + Parameters.constant[channel]
+    else:
+        return E_keV / gain * 2e6</code></pre>
+</details>
+<div class="desc"><p>Function to convert ADCC to energy.
+It uses rescaling of Cs137 Compton edges for matched gain version 1 and 2,
+otherwise it uses the linear fits.</p></div>
+</dd>
+<dt id="radc-processor.data_parser.pulseFunctions.find_first_n_less"><code class="name flex">
+<span>def <span class="ident">find_first_n_less</span></span>(<span>min_value, vector, n)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def find_first_n_less(min_value, vector, n):
+    &#34;&#34;&#34;
+    walks the vector until its values where n times consecutive below min value
+    then returns the first index under of the n times below min value
+    eg. f( 1, [1.5, 0., -1., -1.5.], 2) would return index 1
+    &#34;&#34;&#34;
+    less_than_count = 0
+    for indx, val in enumerate(vector):
+        if val &lt; min_value:
+            less_than_count += 1
+        else:
+            less_than_count = 0
+
+        if less_than_count &gt;= n:
+            return indx - round(n / 2 + 0.5)
+    if less_than_count == 0:
+        idx = (np.abs(vector - min_value)).argmin()
+        return idx
+    else:
+        return 0</code></pre>
+</details>
+<div class="desc"><p>walks the vector until its values where n times consecutive below min value
+then returns the first index under of the n times below min value
+eg. f( 1, [1.5, 0., -1., -1.5.], 2) would return index 1</p></div>
+</dd>
+<dt id="radc-processor.data_parser.pulseFunctions.getBoxcarSum"><code class="name flex">
+<span>def <span class="ident">getBoxcarSum</span></span>(<span>PulseWaveform, baseline)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def getBoxcarSum(PulseWaveform,baseline):
+    &#34;&#34;&#34;
+    Function to determine the boxcar sum of a waveform.
+    It is the maximum of the sum of 4 samples.
+    &#34;&#34;&#34;
+    PulseWaveform = np.array(PulseWaveform) - baseline
+    samples_averaged = np.convolve(PulseWaveform, np.ones(4), mode=&#39;valid&#39;)
+    return max(samples_averaged)</code></pre>
+</details>
+<div class="desc"><p>Function to determine the boxcar sum of a waveform.
+It is the maximum of the sum of 4 samples.</p></div>
+</dd>
+<dt id="radc-processor.data_parser.pulseFunctions.getFlagsCorruptedData"><code class="name flex">
+<span>def <span class="ident">getFlagsCorruptedData</span></span>(<span>channel, PulseWaveform, timestamp)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def getFlagsCorruptedData(channel, PulseWaveform, timestamp):
+    &#34;&#34;&#34;
+    Obsolete function to derive the flags of corrupted waveforms.
+    &#34;&#34;&#34;
+    preprocessingFlags=&#39;&#39;
+    
+    if (channel &lt; 0) or (channel &gt; 36) or (channel != channel):
+        preprocessingFlags += &#39;C&#39;
+    if isinstance(PulseWaveform,np.float64) or (isinstance(PulseWaveform,list) and (len(PulseWaveform) != 64)):
+        preprocessingFlags += &#39;S&#39;
+    if timestamp &gt; time() or timestamp &lt; 1699000000:
+        preprocessingFlags += &#39;T&#39;
+    return preprocessingFlags</code></pre>
+</details>
+<div class="desc"><p>Obsolete function to derive the flags of corrupted waveforms.</p></div>
+</dd>
+<dt id="radc-processor.data_parser.pulseFunctions.getPulseQuantities"><code class="name flex">
+<span>def <span class="ident">getPulseQuantities</span></span>(<span>df)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def getPulseQuantities(df):
+    &#34;&#34;&#34;
+    Function to be used with df.apply to determine pulse quantities.
+    &#34;&#34;&#34;
+    waveform = df.PulseWaveform
+    channel = df.Channel_number
+    if channel == Parameters.BGO_channel:
+        q = BGOPulseQuantities(waveform)
+    elif max(waveform) &gt; 8185:
+        q = saturatedPulseQuantities(waveform)
+    else:
+        q = pulseQuantities(waveform)
+    return q</code></pre>
+</details>
+<div class="desc"><p>Function to be used with df.apply to determine pulse quantities.</p></div>
+</dd>
+<dt id="radc-processor.data_parser.pulseFunctions.getRelativeTimeSnippets"><code class="name flex">
+<span>def <span class="ident">getRelativeTimeSnippets</span></span>(<span>subseconds, timedelta_samples, TimeWindow, PostTriggerTime, channel)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def getRelativeTimeSnippets(subseconds, timedelta_samples, TimeWindow, PostTriggerTime, channel):
+    &#34;&#34;&#34;
+    This function derives the time of pulses relative to master trigger.
+    It needs the subseconds and the difference in time in samples of the pulse.
+    It&#39;s weakly dependent on the channel: only one ADC is shifted by one sample.
+    &#34;&#34;&#34;
+    sampling_period = 16e-3
+    
+    if isinstance(TimeWindow,list):
+        TimeWindow = Parameters.TimeWindow
+    if isinstance(PostTriggerTime,list):
+        PostTriggerTime = Parameters.PostTriggerTime
+    
+    dT = (subseconds % 2**16) - timedelta_samples
+    offset = 0.176
+    if dT &lt; 0:
+        time = ((2**16 + dT) - PostTriggerTime) * sampling_period 
+    elif subseconds &lt; TimeWindow:
+        time = ((62.5e6 + dT) - PostTriggerTime) * sampling_period
+    else:
+        time = (dT - PostTriggerTime)*sampling_period 
+    if channel &lt; 8:
+        offset = offset + 0.016
+    if channel == 6:
+        offset = offset + 0.016
+    return -round(time,3) - offset</code></pre>
+</details>
+<div class="desc"><p>This function derives the time of pulses relative to master trigger.
+It needs the subseconds and the difference in time in samples of the pulse.
+It's weakly dependent on the channel: only one ADC is shifted by one sample.</p></div>
+</dd>
+<dt id="radc-processor.data_parser.pulseFunctions.pulseQuantities"><code class="name flex">
+<span>def <span class="ident">pulseQuantities</span></span>(<span>waveform)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def pulseQuantities(waveform):
+    &#34;&#34;&#34;
+    Function to determine the pulse quantities for well defined pulses.
+    It also determines the flags:
+    - t: small pileup: pulses with RE &gt; RE_thr and pulse height &lt; 50 ADCC
+    - p: pileup pulses: RE &gt; RE_thr
+    - u: undershoot: minimum of the normalized waveform of less than -0.03
+    - n: all the other pulses
+    &#34;&#34;&#34;
+    baseline = np.mean(waveform[1:10])
+    waveform = waveform - baseline
+    height = max(waveform)
+    max_index = np.argmax(waveform)
+    sum_waveform = np.sum(waveform[1:])
+    wf_norm = waveform[1:] / (0.01 + np.abs(sum_waveform))
+    if Parameters.match_pulse_maximum:
+        wf_norm = np.roll(wf_norm,-max_index + np.argmax(Parameters.average_pulse))
+    if height &gt; 0:
+        RE = np.linalg.norm(wf_norm - Parameters.average_pulse_cut) / Parameters.norm_function(height)
+    else: RE = 50
+    area = np.trapezoid(waveform[12:])
+    average_pulse_pass = RE &lt; Parameters.saturation_RE_threshold
+    if (max(waveform) &lt; 50) &amp; (average_pulse_pass == False):
+        flag = &#39;t&#39;
+    elif average_pulse_pass == False:
+        flag = &#39;p&#39;
+    elif average_pulse_pass &amp; (min(wf_norm) &lt; -0.03):
+        flag = &#39;u&#39;
+    else:
+        flag = &#39;n&#39;
+    return average_pulse_pass, RE, max_index, height, area, baseline, flag</code></pre>
+</details>
+<div class="desc"><p>Function to determine the pulse quantities for well defined pulses.
+It also determines the flags:
+- t: small pileup: pulses with RE &gt; RE_thr and pulse height &lt; 50 ADCC
+- p: pileup pulses: RE &gt; RE_thr
+- u: undershoot: minimum of the normalized waveform of less than -0.03
+- n: all the other pulses</p></div>
+</dd>
+<dt id="radc-processor.data_parser.pulseFunctions.pulse_operations"><code class="name flex">
+<span>def <span class="ident">pulse_operations</span></span>(<span>PulseWaveform: list | pandas.core.series.Series)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def pulse_operations(PulseWaveform: list | pd.Series):
+    &#34;&#34;&#34;
+    The procedure implemented here is the following:
+    1. The pulses are found with scipy find_peaks
+    2. They are ordered by height
+    3. Only the number decided by the Parameters class will be processed
+    4. For each peak, the pulse parameters are computed once for the first time to determine the start of the pulse
+    5. The baseline is computed with PulseWaveform before the pulse
+    6. The parameters of the pulse are computed again and returned
+    Support for multiple pulses per snippet
+    &#34;&#34;&#34;
+    successes = []
+    max_indices = []
+    pulse_heights = []
+    pulse_widths = []
+    areas = []
+    starts = []
+    ends = []
+    baselines = []
+
+    PulseWaveform = np.array(PulseWaveform)
+    if PulseWaveform.any() == np.nan:
+        PulseWaveform = np.zeros(64)
+    try:
+        sig_boxcar = sp.ndimage.uniform_filter1d(
+            PulseWaveform, size=Parameters.sp_width
+        )
+    except np.exceptions.AxisError:
+        print(PulseWaveform)
+        return [False], [0], [0], [0], [0], [0], [0], [0]
+
+
+    peaks, peak_properties = sp.signal.find_peaks(
+        sig_boxcar,
+        height=Parameters.sp_height,
+        distance=Parameters.sp_distance,
+    )
+    
+    num_pulses = min(len(peaks), Parameters.max_number_of_pulses)
+    if num_pulses == 0:
+        baseline = np.mean(PulseWaveform[1:Parameters.n_samples_baseline])
+        area = np.trapz(PulseWaveform[10:56]-baseline)
+        height = np.max(PulseWaveform)-baseline
+        ratio = area / (height + 0.01)
+        if ((ratio &lt; Parameters.min_ratio_charge_height) | (ratio &gt; Parameters.max_ratio_charge_height) | (area &lt; 0)) &amp; (height &lt; 8000):
+            successes.append(False)
+        else:
+            successes.append(True)
+        max_indices.append(np.argmax(PulseWaveform))
+        pulse_heights.append(height)
+        pulse_widths.append(45)
+        areas.append(area)
+        starts.append(10)
+        ends.append(55)
+        baselines.append(baseline)
+
+    index_of_peak_sorted = np.argsort(peak_properties[&#34;peak_heights&#34;])
+    peaks_sorted = np.flip(peaks[index_of_peak_sorted])
+
+    for _, peak in enumerate(peaks_sorted[:num_pulses]):
+
+        baseline = np.mean(PulseWaveform[1:Parameters.n_samples_baseline+1])
+
+        PulseWaveform = PulseWaveform - baseline
+        success, max_index, pulse_height, pulse_width, area, start, end = calc_puls_params(
+            PulseWaveform,
+            peak,
+            Parameters.height,
+            Parameters.width,
+            Parameters.number_of_sample_below_thres_for_range
+        )
+        ratio = area / (pulse_height + 0.01)
+        if ((ratio &lt; Parameters.min_ratio_charge_height) | (ratio &gt; Parameters.max_ratio_charge_height) | (area &lt; 0) | (start &lt; 2)) &amp; (pulse_height &lt; 8000):
+            successes.append(False)
+        else:
+            successes.append(success)
+        max_indices.append(max_index)
+        pulse_heights.append(pulse_height)
+        pulse_widths.append(pulse_width)
+        areas.append(area)
+        starts.append(start)
+        ends.append(end)
+        baselines.append(baseline)
+
+    return successes, max_indices, pulse_heights, pulse_widths, areas, starts, ends, baselines</code></pre>
+</details>
+<div class="desc"><p>The procedure implemented here is the following:
+1. The pulses are found with scipy find_peaks
+2. They are ordered by height
+3. Only the number decided by the Parameters class will be processed
+4. For each peak, the pulse parameters are computed once for the first time to determine the start of the pulse
+5. The baseline is computed with PulseWaveform before the pulse
+6. The parameters of the pulse are computed again and returned
+Support for multiple pulses per snippet</p></div>
+</dd>
+<dt id="radc-processor.data_parser.pulseFunctions.saturatedPulseQuantities"><code class="name flex">
+<span>def <span class="ident">saturatedPulseQuantities</span></span>(<span>waveform)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def saturatedPulseQuantities(waveform):
+    &#34;&#34;&#34;
+    Function to determine the pulse quantities for saturated pulses.
+    The reconstruction error is calculated only on the last 30 samples with a linear fit.
+    The area is then (m+c)*sum(waveform).
+    &#34;&#34;&#34;
+    baseline = np.mean(waveform[1:10])
+    waveform = waveform - baseline
+    height = max(waveform)
+    max_index = np.argmax(waveform)
+    sum_waveform = np.sum(waveform[1:])
+    wf_norm = waveform[1:] / sum_waveform
+    matrix = np.vstack([Parameters.last30samples, np.ones(len(Parameters.last30samples))]).T
+    m, c = np.linalg.lstsq(matrix, Parameters.last30samples)[0]
+    RE = np.linalg.norm(wf_norm[-30:] - m*Parameters.last30samples - c) / Parameters.norm_RE_saturation
+    area = (m + c) * sum_waveform
+    average_pulse_pass = RE &lt; Parameters.saturation_RE_threshold
+    flag = &#39;s&#39;
+    if average_pulse_pass == False:
+        flag += &#39;p&#39;
+    return average_pulse_pass, RE, max_index, height, area, baseline, flag</code></pre>
+</details>
+<div class="desc"><p>Function to determine the pulse quantities for saturated pulses.
+The reconstruction error is calculated only on the last 30 samples with a linear fit.
+The area is then (m+c)*sum(waveform).</p></div>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="radc-processor.data_parser" href="index.html">radc-processor.data_parser</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="radc-processor.data_parser.pulseFunctions.ADC_to_mV_conversion" href="#radc-processor.data_parser.pulseFunctions.ADC_to_mV_conversion">ADC_to_mV_conversion</a></code></li>
+<li><code><a title="radc-processor.data_parser.pulseFunctions.BGOPulseQuantities" href="#radc-processor.data_parser.pulseFunctions.BGOPulseQuantities">BGOPulseQuantities</a></code></li>
+<li><code><a title="radc-processor.data_parser.pulseFunctions.calc_puls_params" href="#radc-processor.data_parser.pulseFunctions.calc_puls_params">calc_puls_params</a></code></li>
+<li><code><a title="radc-processor.data_parser.pulseFunctions.computeTimeWithCFD" href="#radc-processor.data_parser.pulseFunctions.computeTimeWithCFD">computeTimeWithCFD</a></code></li>
+<li><code><a title="radc-processor.data_parser.pulseFunctions.energyConversion" href="#radc-processor.data_parser.pulseFunctions.energyConversion">energyConversion</a></code></li>
+<li><code><a title="radc-processor.data_parser.pulseFunctions.find_first_n_less" href="#radc-processor.data_parser.pulseFunctions.find_first_n_less">find_first_n_less</a></code></li>
+<li><code><a title="radc-processor.data_parser.pulseFunctions.getBoxcarSum" href="#radc-processor.data_parser.pulseFunctions.getBoxcarSum">getBoxcarSum</a></code></li>
+<li><code><a title="radc-processor.data_parser.pulseFunctions.getFlagsCorruptedData" href="#radc-processor.data_parser.pulseFunctions.getFlagsCorruptedData">getFlagsCorruptedData</a></code></li>
+<li><code><a title="radc-processor.data_parser.pulseFunctions.getPulseQuantities" href="#radc-processor.data_parser.pulseFunctions.getPulseQuantities">getPulseQuantities</a></code></li>
+<li><code><a title="radc-processor.data_parser.pulseFunctions.getRelativeTimeSnippets" href="#radc-processor.data_parser.pulseFunctions.getRelativeTimeSnippets">getRelativeTimeSnippets</a></code></li>
+<li><code><a title="radc-processor.data_parser.pulseFunctions.pulseQuantities" href="#radc-processor.data_parser.pulseFunctions.pulseQuantities">pulseQuantities</a></code></li>
+<li><code><a title="radc-processor.data_parser.pulseFunctions.pulse_operations" href="#radc-processor.data_parser.pulseFunctions.pulse_operations">pulse_operations</a></code></li>
+<li><code><a title="radc-processor.data_parser.pulseFunctions.saturatedPulseQuantities" href="#radc-processor.data_parser.pulseFunctions.saturatedPulseQuantities">saturatedPulseQuantities</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.11.5</a>.</p>
+</footer>
+</body>
+</html>

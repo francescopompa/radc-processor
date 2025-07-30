@@ -4,13 +4,11 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as plticker
 
 from collections.abc import Iterable
-# from configuration import CONFIG
-# import configuration #.CONFIG as CONFIG
 from .configuration import CONFIG
 from pathlib import Path
 import numpy as np
 from typing import Literal
-from preprocess_data import Parameters
+from data_parser import Parameters
 import sys
 
 # CONFIG = configuration.CONFIG
@@ -28,14 +26,16 @@ CONVERSIONS = {
     }
 }
 
-def convert_adc_ns(adc: Iterable|int) -> Iterable|int:
+
+def convert_adc_ns(adc: Iterable | int) -> Iterable | int:
     factor = CONVERSIONS["time_ns"]["from_adc"]
     if isinstance(adc, Iterable):
         return (e*factor for e in adc)
     else:
         return adc*factor
 
-def convert_adc_mV(adc: Iterable|int) -> Iterable|int:
+
+def convert_adc_mV(adc: Iterable | int) -> Iterable | int:
     #
     # Todo: replace with axis-rescale method?
     #
@@ -44,6 +44,7 @@ def convert_adc_mV(adc: Iterable|int) -> Iterable|int:
         return (e*factor for e in adc)
     else:
         return adc*factor
+
 
 def _get_samples_data(entry, key="PulseWaveform"):
 
@@ -78,7 +79,7 @@ def _plot_row(row, ax_flags, ax_samples, **kwargs):
     # color = kwargs.get("color")
     # minor_locator = kwargs.get("minor_locator") or 10.0
     color = kwargs.pop("color")
-    minor_locator = kwargs.pop("minor_locator", 10.0)# or 10.0
+    minor_locator = kwargs.pop("minor_locator", 10.0)  # or 10.0
 
     x_array = range(len(row.PulseWaveform))
     flags = [1 if i in row.trigger_IDs else 0 for i in x_array]
@@ -95,7 +96,8 @@ def _plot_row(row, ax_flags, ax_samples, **kwargs):
         color=color, linewidth=1, alpha=0.7,
         **kwargs)
 
-    loc = plticker.MultipleLocator(base=minor_locator) # this locator puts ticks at regular intervals
+    # this locator puts ticks at regular intervals
+    loc = plticker.MultipleLocator(base=minor_locator)
     ax_samples.xaxis.set_minor_locator(loc)
 
 
@@ -138,9 +140,9 @@ def _plot_series(series, ax_flags, ax_samples, cmap, **kwargs):
     #     )
     title = kwargs.get("title") or ' '.join(
         [udp_str, eve_str, sta_str]
-        )
+    )
 
-    return 1, (eid,eid), title, suptitle
+    return 1, (eid, eid), title, suptitle
 
 
 # def plot_compare(*args, xlim=None):
@@ -154,42 +156,45 @@ def plot_rows(rows, **kwargs):
     #
 
     fig, (ax_flags, ax_samples) = plt.subplots(
-        2,1,
+        2, 1,
         gridspec_kw={'height_ratios': [1, 3]},
         figsize=(7.2, 4.8)
-        )
-    cmap = plt.colormaps["copper"]  # See also: viridis, brg, winter, copper, plasma
+    )
+    # See also: viridis, brg, winter, copper, plasma
+    cmap = plt.colormaps["copper"]
 
     xlim = kwargs.pop("xlim", None)
     ylim = kwargs.pop("ylim", None)
-    if xlim: ax_flags.set_xlim(xlim)
-    if xlim: ax_samples.set_xlim(xlim)
-    if ylim: ax_samples.set_ylim(ylim)
+    if xlim:
+        ax_flags.set_xlim(xlim)
+    if xlim:
+        ax_samples.set_xlim(xlim)
+    if ylim:
+        ax_samples.set_ylim(ylim)
 
     if isinstance(rows, pd.core.frame.DataFrame):
-        nrows, srange, title, suptitle = _plot_dataFrame(rows, ax_flags, ax_samples, cmap, **kwargs)
+        nrows, srange, title, suptitle = _plot_dataFrame(
+            rows, ax_flags, ax_samples, cmap, **kwargs)
     elif isinstance(rows, pd.core.series.Series):
         # It's a single row
-        nrows, srange, title, suptitle = _plot_series(rows, ax_flags, ax_samples, cmap, **kwargs)
+        nrows, srange, title, suptitle = _plot_series(
+            rows, ax_flags, ax_samples, cmap, **kwargs)
     # List of lists
     # Series of lists (column)
     # List of samples (single entry)
     else:
         raise TypeError(f"Invalid type to plot {type(rows)}")
 
-
     mappable = matplotlib.cm.ScalarMappable(
         norm=matplotlib.colors.Normalize(vmin=srange[0], vmax=srange[1]),
         cmap=cmap
-        )
-
+    )
 
     if nrows > 10:
         # Large number of plots -> Show colormap
-        plt.colorbar(mappable=mappable, ax = (ax_flags, ax_samples))
+        plt.colorbar(mappable=mappable, ax=(ax_flags, ax_samples))
     else:
         fig.legend(loc="center right")
-
 
     # Flag plot
     ax_flags.margins(x=0, y=0)
@@ -207,12 +212,10 @@ def plot_rows(rows, **kwargs):
             title,
             fontsize="small",
             y=1.05,
-            )
+        )
     # fig.tight_layout()
     # plt.show()
     return fig
-
-
 
 
 def plot_samples(entry, key="PulseWaveform"):
@@ -221,7 +224,7 @@ def plot_samples(entry, key="PulseWaveform"):
     data = _get_samples_data(entry, key=key)
     index = range(len(data[0]))
 
-    fig, axs = plt.subplots(2,1)
+    fig, axs = plt.subplots(2, 1)
 
     # Flag plot
     axs[0].set_ylabel("Trigger Flags")
@@ -234,7 +237,7 @@ def plot_samples(entry, key="PulseWaveform"):
         plot_data(index, d, axs[1])
 
     # fig.tight_layout()
-    if hasattr(sys,'ps1'):
+    if hasattr(sys, 'ps1'):
         plt.show()
     return fig
 
@@ -256,17 +259,23 @@ def plot_events(df: pd.DataFrame, **kwargs):
             for i, row in event_DF.iterrows():
                 if "left_bases" in row["PeakFinding"][1].keys():
                     left_bases.append(min(row["PeakFinding"][1]["left_bases"]))
-                    right_bases.append(max(row["PeakFinding"][1]["right_bases"]))
-            kwargs["xlim"] = kwargs.get("xlim") or (min(left_bases), max(right_bases))
+                    right_bases.append(
+                        max(row["PeakFinding"][1]["right_bases"]))
+            kwargs["xlim"] = kwargs.get("xlim") or (
+                min(left_bases), max(right_bases))
         plot_rows(event_DF, **kwargs)
 
-def plotChannelMap(ax=None,text_color='black'):
+
+def plotChannelMap(ax=None, text_color='black'):
+    """
+    It draws the grid of the channel map.
+    """
     if ax is None:
         ax = plt.gca()
     for i in range(6):
-            for j in range(6):
-                text = ax.text(i, j, Parameters.inv_map_channels[(i, j)],
-                                  ha="center", va="center", color=text_color)
+        for j in range(6):
+            text = ax.text(i, j, Parameters.inv_map_channels[(i, j)],
+                           ha="center", va="center", color=text_color)
     major_ticks = np.arange(-0.5, 5.5, 1)
     ax.set_xticks(major_ticks)
     ax.set_yticks(major_ticks)
@@ -277,22 +286,38 @@ def plotChannelMap(ax=None,text_color='black'):
     ax.set_xlim(-0.5, 5.5)
     ax.set_ylim(-0.5, 5.5)
 
-def plotCountsPerChannel(df,ax=None,text_color='white'):
+
+def plotCountsPerChannel(df, ax=None, text_color='white'):
+    """
+    It overlays on the channel map plot the number of counts per channel.
+    The 36th channel (usually the BGO) is show as a circle in the middle.
+    Pass the axes to save the figure.
+    """
     if ax is None:
         ax = plt.gca()
-    plotChannelMap(ax,text_color=text_color)
-    h, _ = np.histogram(df.Channel_number,bins=np.arange(-0.5,36.5,1))
-    array2d = np.zeros((6,6))
-    for i,_ in np.ndenumerate(array2d):
+    plotChannelMap(ax, text_color=text_color)
+    h, _ = np.histogram(df.Channel_number, bins=np.arange(-0.5, 36.5, 1))
+    array2d = np.zeros((6, 6))
+    for i, _ in np.ndenumerate(array2d):
         channel = Parameters.inv_map_channels[i]
         array2d[i] = h[channel]
-    h=ax.imshow(array2d.T,cmap='turbo')
+    h = ax.imshow(array2d.T, cmap='turbo')
     ax.set_title('Counts per channel')
     plt.colorbar(h)
-    
 
 
-def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir="./images", PostTriggerTime_us=None, mode: Literal['boxcar', 'energy'] = 'energy', time_scale: Literal['log','linear'] = 'linear'):
+def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir="./images", PostTriggerTime_us=None, mode: Literal['boxcar', 'energy'] = 'energy', time_scale: Literal['log', 'linear'] = 'linear'):
+    """
+    Function to show coincident pulses within events.
+    On the left it shows the pulses, in the middle the energies and on the right the channels.
+    The options are:
+    - n_events: the number of events to be saved
+    - save: boolean, it specifies if the figure must be saved as pdf
+    - outDir: the directory where the pulses are saved
+    - PostTriggerTime_us: it restricts the limits of the x-axis. It assumes a symmetric post trigger time
+    - mode: whether to show the energy in keV or the boxcar sum of 4 samples in ADCC
+    - time_scale: the time axis can be shown in linear or symlog scale.
+    """
     if ('PostTriggerTime' in df.attrs) and (PostTriggerTime_us is None):
         PostTriggerTime = df.attrs['PostTriggerTime']
     elif PostTriggerTime_us is not None:
@@ -309,20 +334,20 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
     if save == True:
         p = Path(outDir)
         p.mkdir(parents=True, exist_ok=True)
-        
-    cmap = 'turbo' 
+
+    cmap = 'turbo'
     cmap_function = plt.get_cmap(cmap)
     if time_scale == 'log':
         norm = matplotlib.colors.SymLogNorm(0.2,
-            vmin=-PostTriggerTime*16e-3, vmax=PostTriggerTime*16e-3)
+                                            vmin=-PostTriggerTime*16e-3, vmax=PostTriggerTime*16e-3)
     elif time_scale == 'linear':
-        norm = matplotlib.colors.Normalize(vmin=-PostTriggerTime*16e-3, vmax=PostTriggerTime*16e-3)
+        norm = matplotlib.colors.Normalize(
+            vmin=-PostTriggerTime*16e-3, vmax=PostTriggerTime*16e-3)
     mappable = matplotlib.cm.ScalarMappable(
         norm=norm,
         cmap=cmap
     )
 
-    
     events = df.groupby(['Event_ID'])
     counter = 0
     for (event_ID), event_DF in events:
@@ -334,49 +359,61 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
             energies = event_DF['BoxcarSum']
         else:
             energies = event_DF['ApproxEnergy_keVee']
-        
 
         relativeTime = event_DF['PulseTime_us']
-        
-        fig, ax = plt.subplots(figsize=(12, 4), ncols=3, nrows=1)
-        fig.suptitle(
-            f'Event {event_ID[0]}: {len(event_DF)} snippets')
-        
+
+        fig, ax = plt.subplots(figsize=(12.5, 4), ncols=3, nrows=1)
+        title =  f'Event {event_ID[0]}: {len(event_DF)} snippet'
+        if len(event_DF) > 1:
+            title += 's'
+        fig.suptitle(title)
+
         for i in range(len(event_DF.index)):
-            ax[0].plot(event_DF['PulseWaveform'].iloc[i],
-                       label=f'Channel {channels.iloc[i]}', color=cmap_function(norm(relativeTime.iloc[i])))
-        ax[1].scatter(relativeTime, energies,
-                      c=relativeTime, norm=norm, cmap=cmap)
-        if time_scale == 'log': ax[1].set_xscale('symlog')
+            ax[0].plot(event_DF['PulseWaveform'].iloc[i], color=cmap_function(norm(relativeTime.iloc[i])))
+        ax[0].set_xlabel('Sample ID')
+        ax[0].set_ylabel('ADC counts')
+        
+        isnotBGO = (channels != Parameters.BGO_channel)
+        isBGO = (channels == Parameters.BGO_channel)
+
+        ax[1].scatter(relativeTime[isnotBGO], energies[isnotBGO], c=relativeTime[isnotBGO], norm=norm, cmap=cmap)
+        if len(channels[isBGO]) > 0:
+            ax2= ax[1].twinx()
+            ax2.scatter(relativeTime[isBGO], event_DF.PulseHeight[isBGO], marker='x', c=relativeTime[isBGO], norm=norm, cmap=cmap)
+            ax2.set_ylabel('BGO pulse height (ADCC)')
+            ax2.set_ylim(0,max(1600,max(event_DF.PulseHeight[isBGO])))
+
+        if time_scale == 'log':
+            ax[1].set_xscale('symlog')
         if max(energies) > 6000:
             ax[1].axhline(6000, color='red', linestyle='dashed')
 
-        ax[0].set_xlabel('Sample ID')
-        ax[0].set_ylabel('ADC counts')
         ax[1].set_xlim(-PostTriggerTime*1.1*16e-3, PostTriggerTime*1.1*16e-3)
         ax[1].set_ylim(0, np.max(energies)*1.1+10)
         ax[1].set_xlabel(r'Time ($\mu s$)')
-        
+
         plotChannelMap(ax[2])
-        x = [Parameters.map_channels[c][0] if c in range(36) else 2.5 for c in channels] + np.random.normal(0, 0.1, len(channels))
-        y = [Parameters.map_channels[c][1] if c in range(36) else 2.5 for c in channels] + np.random.normal(0, 0.1, len(channels))
-        ax[2].scatter(x, y, c=event_DF.PulseTime_us, norm=norm, cmap=cmap)
-        circle = plt.Circle((2.5, 2.5), 0.3, color='grey', fill=False, alpha=0.5)
-        ax[2].add_patch(circle)
-        ax[2].text(2.5, 2.5, '36', ha="center", va="center", color='black')
-        if time_scale == 'linear': 
-            format = lambda x, _: f"{x:.0f}"
-        elif time_scale == 'log':
-            format = lambda x, _: f"{x:.1f}"
-        c = fig.colorbar(mappable, ax=ax[2], fraction=0.046, format=format)
+        x = [Parameters.map_channels[c][0] for c in channels[isnotBGO]] + np.random.normal(0, 0.1, len(channels[isnotBGO]))
+        y = [Parameters.map_channels[c][1] for c in channels[isnotBGO]] + np.random.normal(0, 0.1, len(channels[isnotBGO]))
+        ax[2].scatter(x, y, c=event_DF.PulseTime_us[isnotBGO], norm=norm, cmap=cmap)
+        if len(channels[isBGO]) > 0:
+            x_BGO = np.random.normal(0, 0.1, len(channels[isBGO])) + 2.5
+            y_BGO = np.random.normal(0, 0.1, len(channels[isBGO])) + 2.5
+            ax[2].scatter(x_BGO, y_BGO, marker = 'x', c=event_DF.PulseTime_us[isBGO], norm=norm, cmap=cmap)
+        if Parameters.BGO_channel in df.Channel_number.values:
+            circle = plt.Circle((2.5, 2.5), 0.3, color='grey',
+                            fill=False, alpha=0.5)
+            ax[2].add_patch(circle)
+            ax[2].text(2.5, 2.5, '36', ha="center", va="center", color='black')
+        c = fig.colorbar(mappable, ax=ax[2], fraction=0.046)
         c.set_label(r'Time ($\mu s$)')
-        
+
         if mode == 'energy':
             ax[1].set_ylabel(r'Energy (keV$_{ee}$)')
         elif mode == 'boxcar':
             ax[1].set_ylabel('Boxcar energy (ADCC)')
         fig.tight_layout()
-        if hasattr(sys,'ps1'):
+        if hasattr(sys, 'ps1'):
             plt.show()
         plt.close()
         if save == True:
@@ -384,7 +421,18 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
         if counter >= n_events:
             break
 
-def plotPulsesSameAxis(df: pd.DataFrame, n_events=50, save=False, outDir="./images", PostTriggerTime_us = None, xlim = None):
+
+def plotPulsesSameAxis(df: pd.DataFrame, n_events=50, save=False, outDir="./images", PostTriggerTime_us=None, xlim=None):
+    """
+    Function to show coincident pulses within events on the same axis.
+    The pulses are shown according to their time relative to the master trigger.
+    The options are:
+    - n_events: the number of events to be saved
+    - save: boolean, it specifies if the figure must be saved as pdf
+    - outDir: the directory where the pulses are saved
+    - PostTriggerTime_us: it restricts the limits of the x-axis. It assumes a symmetric post trigger time
+    - xlim: to define custom limits for the x-axis
+    """
     if ('PostTriggerTime' in df.attrs) and (PostTriggerTime_us is None):
         PostTriggerTime = df.attrs['PostTriggerTime']
     elif PostTriggerTime_us is not None:
@@ -405,77 +453,83 @@ def plotPulsesSameAxis(df: pd.DataFrame, n_events=50, save=False, outDir="./imag
     counter = 0
     for (event_ID), event_DF in events:
         counter += 1
-        fig,ax = plt.subplots(figsize=(12, 4))
+        fig, ax = plt.subplots(figsize=(12, 4))
         for i in range(len(event_DF.index)):
             max_index = event_DF['MaximumIndex'].iloc[i]
-            t = np.arange(0,64*16e-3,16e-3)
-            t = event_DF['PulseTime_us'].iloc[i] - max_index*16e-3 + t
-            ax.plot(t,event_DF['PulseWaveform'].iloc[i],
-                       label=f'Channel {event_DF.Channel_number.iloc[i]}')
+            t = np.arange(0, 64*16e-3, 16e-3)
+            t = event_DF['PulseTime_us'].iloc[i] + t
+            ax.plot(t, event_DF['PulseWaveform'].iloc[i],
+                    label=f'Channel {event_DF.Channel_number.iloc[i]}')
         ax.set_xlabel(r'Time ($\mu s$)')
         ax.set_ylabel('ADCC')
         ax.set_title(f'Event {event_ID[0]}: {len(event_DF)} snippets')
-        ax.set_xlim(-PostTriggerTime*16e-3,PostTriggerTime*16e-3)
+        ax.set_xlim(-PostTriggerTime*16e-3, PostTriggerTime*16e-3)
         if xlim is not None:
             ax.set_xlim(xlim)
-        if hasattr(sys,'ps1'):
+        if hasattr(sys, 'ps1'):
             plt.show()
-        if save== True:
+        if save == True:
             fig.savefig(f'{outDir}/Event{event_ID[0]}.pdf')
         plt.close()
         if counter >= n_events:
             break
 
 
-
-
-def plotEventsPulseFinder(df: pd.DataFrame, n_events = 50, save = False, outDir = "./images"):
+def plotEventsPulseFinder(df: pd.DataFrame, n_events=50, save=False, outDir="./images"):
+    """
+    Function to show pulses individually.
+    The options are:
+    - n_events: the number of events to be saved
+    - save: boolean, it specifies if the figure must be saved as pdf
+    - outDir: the directory where the pulses are saved
+    In a box in the figure, the characteristics of the pulses are printed.
+    """
     if save == True:
         p = Path(outDir)
         p.mkdir(parents=True, exist_ok=True)
-    counter =0
-    snippet_index=1
+    counter = 0
+    snippet_index = 1
     previous_event = 0
-    for i,row in df.iterrows():
+    for i, row in df.iterrows():
         if row.Event_ID != previous_event:
             snippet_index = 1
             previous_event = row.Event_ID
+        box_string = f"Area:    {int(row['PulseAreaADCC'])} ADCC\n"
+        box_string += f"Height:  {int(row['PulseHeight'])} ADCC\n"
+        box_string += f"Energy: {row['ApproxEnergy_keVee']:.0f} " + \
+            r"keV$_{ee}$" + "\n"
+        box_string += f"Baseline: {int(row['BaselineADCC'])} ADCC\n"
+        box_string += f"Area/height: {row['PulseAreaADCC']/(row['PulseHeight']+0.01):.2f}"
+        if 'RE' in df.columns:
+            box_string += f"\nRE: {row.RE:.2f}"
         fig, ax = plt.subplots()
-        ax.plot(row['PulseWaveform'],'b')
-        ax.axvline(x=row['PulseStart'],label=f'Start: {row["PulseStart"]}',color = 'green',linestyle='dashed')
-        ax.axvline(x=row['PulseEnd'],label=f'End: {row["PulseEnd"]}',color = 'red',linestyle='dashed')
-        ax.plot(row['MaximumIndex'],row['PulseWaveform'][row['MaximumIndex']],'bo',label = f'Maximum')
+        ax.plot(row['PulseWaveform'], 'b')
+        ax.plot(row['MaximumIndex'], row['PulseWaveform'][row['MaximumIndex']],
+                'bo', label=f'Maximum: {row["MaximumIndex"]}')
         props = dict(boxstyle="round", facecolor="wheat")
         ax.text(
-        0.68,
-        0.7,
-        f"Area:    {int(row['PulseAreaADCC'])} ADCC\n"
-        + f"Width:   {int(row['PulseWidth'])} samples\n"
-        + f"Height:  {int(row['PulseHeight'])} ADCC\n"
-        + f"Area/height: {row['PulseAreaADCC']/(row['PulseHeight']+0.01):.2f}\n"
-        + f"Energy: {row['ApproxEnergy_keVee']:.0f} " + r"keV$_{ee}$" + "\n" 
-        + f"Baseline: {int(row['BaselineADCC'])} ADCC",
-        transform=ax.transAxes,
-        fontsize=10,
-        verticalalignment="top",
-        horizontalalignment="left",
-        bbox=props,
-    )
+            0.68,
+            0.7,
+            box_string,
+            transform=ax.transAxes,
+            fontsize=10,
+            verticalalignment="top",
+            horizontalalignment="left",
+            bbox=props,
+        )
         ax.grid()
         ax.set_xlabel('Sample ID')
         ax.set_ylabel('ADC counts')
         ax.set_title(f'Event {row["Event_ID"]} - Snippet {snippet_index}')
-        ax.legend(framealpha = 1,loc = 'upper right')
+        ax.legend(framealpha=1, loc='upper right')
         if save == True:
-            fig.savefig(f'{outDir}/Event{row["Event_ID"]}_snippet{snippet_index}.pdf')
-        
-        if hasattr(sys,'ps1'):
+            fig.savefig(
+                f'{outDir}/Event{row["Event_ID"]}_snippet{snippet_index}.pdf')
+
+        if hasattr(sys, 'ps1'):
             plt.show()
         plt.close()
         snippet_index += 1
         counter = counter + 1
         if counter > n_events:
             break
-
-
-    
