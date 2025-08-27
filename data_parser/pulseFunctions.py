@@ -227,7 +227,7 @@ def saturatedPulseQuantities(waveform):
     matrix = np.vstack([Parameters.last30samples, np.ones(len(Parameters.last30samples))]).T
     m, c = np.linalg.lstsq(matrix, Parameters.last30samples)[0]
     RE = np.linalg.norm(wf_norm[-30:] - m*Parameters.last30samples - c) / Parameters.norm_RE_saturation
-    area = (m + c) * sum_waveform
+    area = 1.03 * (m + c) * sum_waveform
     average_pulse_pass = RE < Parameters.saturation_RE_threshold
     flag = 's'
     if average_pulse_pass == False:
@@ -390,16 +390,7 @@ def computeTimeWithCFD(df):
         (x2 - x1) / (y2 - y1 + 0.0001)
     return round(df['PulseTime_us'] - (df['MaximumIndex']- time_cfd) * 16e-3,3)
 
-def shiftTime(t):
-    """
-    Function to shift the time in case of anticipated triggers.
-    To be used as in this example from data_parser.data_io:
-    df.loc[df.Event_ID.isin(events_with_no_trigger),'PulseTime_us'] = df[df.Event_ID.isin(events_with_no_trigger)].groupby('Event_ID')['PulseTime_us'].transform(pf.shiftTime)
-    """
-    shifted_pulse_times = t[(t > -2) & (t < -Parameters.limit_trigger_region_us)]
-    t = t - shifted_pulse_times.iloc[-1]
-        
-    return t
+
 
 def returnMissingPulses(df,PostTriggerTime):
     ptt = PostTriggerTime * 0.016

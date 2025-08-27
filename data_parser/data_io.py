@@ -12,7 +12,6 @@ import uproot
 from pathlib import Path
 from typing import Literal
 from joblib import Parallel, delayed
-import subprocess
 
 
 
@@ -381,7 +380,6 @@ def make_total_rootfile(files: list | str, out_dir: str, namefile_output: str, m
             files[i], out_dir, f'{namefile_output}_{i}', mode=mode, reduced=reduced) for i in range(len(files)))
         df_metadata = pd.DataFrame(dicts_metadata)
         metadata = convertDataframeToJson(df_metadata)
-        metadata['commit'] = getCommit()
 
         with open(f'{out_dir}/{namefile_output}.json', 'w+') as f:
             json.dump(metadata, f, indent=4)
@@ -550,9 +548,17 @@ def getAdditionalParameters(df: pd.DataFrame, metadata: dict):
     metadata['AccidentalCoincidenceThreshold'] = Parameters.max_distance_accidental_coincidence
     metadata['n_snippets'] = len(df)
     metadata['n_events'] = len(set(df.Event_ID))
+    metadata['commit'] = getCommit() 
+
 
 def getCommit() -> str:
-    return subprocess.check_output(["git", "describe", "--always"], cwd=Path(__file__).resolve().parent).strip().decode()
+    base_path = Path(data_parser.__file__).parent.parent
+    git_dir = Path(base_path) / '.git'
+    with (git_dir / 'HEAD').open('r') as head:
+        ref = head.readline().split(' ')[-1].strip()
+
+    with (git_dir / ref).open('r') as git_hash:
+        return git_hash.readline().strip()[:7]
 
 def renameColumnsDataframe(df: pd.DataFrame) -> pd.DataFrame:
     '''
