@@ -535,7 +535,7 @@ class Receiver():
     #     return new_target
 
 def convert_bytes(size):
-    for x in ['B', 'KB', 'MB', 'GB', 'TB']:
+    for x in ['B', 'kB', 'MB', 'GB', 'TB']:
         if size < 1024.0:
             return "%3.1f %s" % (size, x)
         size /= 1024.0
@@ -543,12 +543,15 @@ def convert_bytes(size):
     return size
 
 def convert_seconds(seconds):
-    if seconds < 3600:
-        return strftime('%M:%S',gmtime(seconds))
-    elif seconds < (3600*24):
-        return strftime('%H:%M:%S',gmtime(seconds))
+    days = seconds // 86400
+    remainder = seconds % 86400
+    if days > 0:
+        return f"{days}d {strftime('%H:%M:%S', gmtime(remainder))}"
+    elif seconds < 3600:
+        return strftime('%M:%S', gmtime(seconds))
     else:
-        return strftime('%-j d %H:%M:%S',gmtime(seconds))
+        return strftime('%H:%M:%S', gmtime(seconds))
+
 
 
 
