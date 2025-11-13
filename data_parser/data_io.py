@@ -259,25 +259,20 @@ def build_rootfile(df_tmp, pars, out_dir, namefile, i):
     """
     It builds a ROOT file using awkward.
     """
+    import ROOT
+    opts = ROOT.RDF.RSnapshotOptions()
+    opts.fMode = "UPDATE"
+    columns = df_tmp.columns
+    Dict = {column: ak.Array(df_tmp[column]) for column in columns}
+    rdf = ak.to_rdataframe(Dict)
+    rdf.Snapshot('events/events', f'{out_dir}/{namefile}_{i}.root')
 
-    try:
-        import ROOT
-
-        opts = ROOT.RDF.RSnapshotOptions()
-        opts.fMode = "UPDATE"
-        columns = df_tmp.columns
-        Dict = {column: ak.Array(df_tmp[column]) for column in columns}
-        rdf = ak.to_rdataframe(Dict)
-        rdf.Snapshot('events/events', f'{out_dir}/{namefile}_{i}.root')
-
-        if pars != {}:
-            Dictpars = {keys.replace(".", "_"): v for keys,
-                        v in pars.items() if not v == [[]]}
-            rdfpar = ak.to_rdataframe(Dictpars)
-            rdfpar.Snapshot('metadata/pars',
-                            f'{out_dir}/{namefile}_{i}.root', options=opts)
-    except:
-        print("ROOT can't be imported. Using uproot...")
+    if pars != {}:
+        Dictpars = {keys.replace(".", "_"): v for keys,
+                    v in pars.items() if not v == [[]]}
+        rdfpar = ak.to_rdataframe(Dictpars)
+        rdfpar.Snapshot('metadata/pars',
+                        f'{out_dir}/{namefile}_{i}.root', options=opts)
 
 
 def build_rootfile_with_uproot(df_tmp, pars, out_dir, namefile, i):
