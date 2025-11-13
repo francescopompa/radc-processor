@@ -1,4 +1,4 @@
-from data_parser.data_io import make_total_rootfile
+from data_parser.data_io import make_total_rootfile, getCommit
 import os
 from glob import glob
 from time import time, strftime
@@ -6,11 +6,6 @@ import json
 from udp_receiver.receiver_class import convert_seconds
 from argparse import ArgumentParser
 from data_parser import Parameters
-import subprocess
-from pathlib import Path
-
-def getCommit():
-    return subprocess.check_output(["git", "describe", "--always"], cwd=Path(__file__).resolve().parent).strip().decode()
 
 def main():
 
@@ -86,11 +81,11 @@ def main():
 
     for s in subdirectories:
         json_files = glob(f'{s}/*results*.json')
+        json_files.sort()
         for i, j in enumerate(json_files):
             start = time()
             with open(j, 'r') as file:
                 metadata = json.load(file)
-            print(f'Subdirectory: {s}')
             if (('processed' not in metadata or metadata['processed'] == False) and 'files_written' in metadata) | forcePreprocessing:
                 namefiles = [m.split('/')[-1]
                              for m in metadata['files_written']]
@@ -103,7 +98,7 @@ def main():
 
                 if all(os.stat(namefile).st_size == 0 for namefile in namefiles):
                     print(
-                        f'Warning: All binaries for {j} were empty. Continuing with next .json')
+                        f'Warning: All binaries for {j} were empty. Continuing with next json')
                     continue
 
                 if "SLURM_JOB_ID" not in os.environ:
@@ -114,19 +109,19 @@ def main():
                     outDir = args['output']
                 else:
                     outDir = f'{s}/processed/'
-
-                processingMetadata = make_total_rootfile(
-                    namefiles, out_dir=outDir, namefile_output=namefile_output, mode='compact', parallel=True, n_jobs=n_jobs
-                )
+                try:
+                    processingMetadata = make_total_rootfile(
+                        namefiles, out_dir=outDir, namefile_output=namefile_output, mode='compact', parallel=True, n_jobs=n_jobs
+                    )
+                except:
+                    print(f'Error processing {j}. Continuing with next json')
+                    continue
                 processingDuration = time() - start
                 processingTime = strftime('%Y/%m/%d %H:%M:%S')
-                metadata['processing_duration'] = processingDuration
-                metadata['processed'] = True
+                metadata['processing_duration'] = processingMetadata['processing_duration'] = processingDuration
+                metadata['processed'] = processingMetadata['processed'] = True
                 metadata['processing_time'] = processingTime
-                processingMetadata['processing_duration'] = processingDuration
-                processingMetadata['processed'] = True
-                processingMetadata['processing_time'] = processingTime
-                processingMetadata['commit'] = getCommit()
+                metadata['commit'] = processingMetadata['commit'] = getCommit()
                 with open(j, 'w+') as file:
                     json.dump(metadata, file, indent=4)
                 with open(f'{outDir}/{namefile_output}.json', 'w+') as file:
