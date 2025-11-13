@@ -287,7 +287,7 @@ def plotChannelMap(ax=None, text_color='black'):
     ax.set_ylim(-0.5, 5.5)
 
 
-def plotCountsPerChannel(df, ax=None, text_color='white'):
+def plotCountsPerChannel(df, ax=None, text_color='white', norm=False):
     """
     It overlays on the channel map plot the number of counts per channel.
     The 36th channel (usually the BGO) is show as a circle in the middle.
@@ -297,6 +297,8 @@ def plotCountsPerChannel(df, ax=None, text_color='white'):
         ax = plt.gca()
     plotChannelMap(ax, text_color=text_color)
     h, _ = np.histogram(df.Channel_number, bins=np.arange(-0.5, 36.5, 1))
+    if norm:
+        h = h / np.sum(h)
     array2d = np.zeros((6, 6))
     for i, _ in np.ndenumerate(array2d):
         channel = Parameters.inv_map_channels[i]
@@ -362,8 +364,8 @@ def plot_events_coincidence(df: pd.DataFrame, n_events=50, save=False, outDir=".
 
         relativeTime = event_DF['PulseTime_us']
 
-        fig, ax = plt.subplots(figsize=(12.5, 4), ncols=3, nrows=1)
-        title =  f'Event {event_ID[0]}: {len(event_DF)} snippet'
+        fig, ax = plt.subplots(figsize=(13, 4), ncols=3, nrows=1)
+        title =  f'Event {event_ID[0]}: {len(event_DF)} pulse'
         if len(event_DF) > 1:
             title += 's'
         fig.suptitle(title)
@@ -462,7 +464,7 @@ def plotPulsesSameAxis(df: pd.DataFrame, n_events=50, save=False, outDir="./imag
                     label=f'Channel {event_DF.Channel_number.iloc[i]}')
         ax.set_xlabel(r'Time ($\mu s$)')
         ax.set_ylabel('ADCC')
-        ax.set_title(f'Event {event_ID[0]}: {len(event_DF)} snippets')
+        ax.set_title(f'Event {event_ID[0]}: {len(event_DF)} pulses')
         ax.set_xlim(-PostTriggerTime*16e-3, PostTriggerTime*16e-3)
         if xlim is not None:
             ax.set_xlim(xlim)
@@ -520,7 +522,7 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events=50, save=False, outDir="./i
         ax.grid()
         ax.set_xlabel('Sample ID')
         ax.set_ylabel('ADC counts')
-        ax.set_title(f'Event {row["Event_ID"]} - Snippet {snippet_index}')
+        ax.set_title(f'Event {row["Event_ID"]} - Pulse {snippet_index}')
         ax.legend(framealpha=1, loc='upper right')
         if save == True:
             fig.savefig(
