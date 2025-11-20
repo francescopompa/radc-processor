@@ -151,8 +151,6 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, Post
     df.attrs['missing_events_fraction'] = 1 - len(events) / diffEvents
 
     df = df.sort_values(['Event_ID', 'PulseTime_us']).reset_index(drop=True)
-
-    df = addMissingPulsesToDataframe(df, PostTriggerTime)
     df = df[np.abs(df['PulseTime_us']) < (PostTriggerTime * 16e-3)]
     df = df.reset_index(drop=True)
 
@@ -167,7 +165,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, Post
     findAccidentalCoincidencesTriggerRegion(df)
 
     df.loc[:,'PulseTime_us'] = np.round(df['PulseTime_us'],3)
-
+    df = df.sort_values(['Event_ID', 'PulseTime_us']).reset_index(drop=True)
 
     return df
 
@@ -325,11 +323,15 @@ def convertDataframeToJson(df: pd.DataFrame) -> dict:
         *columns_to_average_snippets, *columns_to_average_events, *columns_to_sum]]
 
     for c in columns_only_first:
-        if df[c].dtype == 'object':
+        # solve this problem
+        if df[c].dtype == 'int':
+            metadata_dict[c] = int(df[c].agg(lambda x: x.value_counts().index[0]))
+        elif c == 'commit':
+            metadata_dict[c] = df[c].agg(lambda x: x.value_counts().index[0])
+        elif df[c].dtype == 'object':
             print(
                 f'Warning: Entry in Column "{c}" of Metadata is empty. Continuing with next column')
             continue
-        metadata_dict[c] = int(df[c].agg(lambda x: x.value_counts().index[0]))
     for c in columns_to_average_events:
         metadata_dict[c] = float(np.average(df[c], weights=df['n_events']))
     for c in columns_to_average_snippets:
@@ -585,42 +587,4 @@ def addColumnsDataframeOldNames(df: pd.DataFrame) -> pd.DataFrame:
     df.loc[:,'Snippet_count'] = df.Snippet_count.astype(int)
     return df
 
-def addMissingPulsesToDataframe(df: pd.DataFrame,PostTriggerTime: int) -> pd.DataFrame: 
-    """
-    This function adds the pulses that should be copied in multiple events because of multiple triggers closer 
-    than the time window but weren't.
-    """
-    # checking next event
-    df.loc[:,'Timestamp_us'] = df.Timestamp_s.iloc[0]
-    event_timestamps = df.groupby('Event_ID')['Timestamp_us'].first().shift(-1)
-    df['Next_Event_Timestamp'] = df['Event_ID'].map(event_timestamps)
-    next_event_ids = df['Event_ID'].drop_duplicates().shift(-1)
-    event_to_next_event = dict(zip(df['Event_ID'].unique(), next_event_ids))
-    df['Next_Event_ID'] = df['Event_ID'].map(event_to_next_event)
-    event_energies = df.groupby('Event_ID')['ApproxEnergy_keVee'].apply(set).to_dict()
-    df['Energy_In_Next_Event'] = df.apply(
-        lambda row: row['ApproxEnergy_keVee'] in event_energies.get(row['Next_Event_ID'], set()),
-        axis=1
-    )
-
-    # checking previous event
-    event_timestamps = df.groupby('Event_ID')['Timestamp_us'].first().shift(1)
-    df['Previous_Event_Timestamp'] = df['Event_ID'].map(event_timestamps)
-    previous_event_ids = df['Event_ID'].drop_duplicates().shift(1)
-    event_to_previous_event = dict(zip(df['Event_ID'].unique(), previous_event_ids))
-    df['Previous_Event_ID'] = df['Event_ID'].map(event_to_previous_event)
-    event_energies = df.groupby('Event_ID')['ApproxEnergy_keVee'].apply(set).to_dict()
-    df['Energy_In_Previous_Event'] = df.apply(
-        lambda row: row['ApproxEnergy_keVee'] in event_energies.get(row['Previous_Event_ID'], set()),
-        axis=1
-    )
-
-    df.loc[:,'FirstTimestamp'] = df.Timestamp_s.iloc[0]
-
-    missing_pulses=df.apply(lambda x: pf.returnMissingPulses(x,PostTriggerTime),axis=1)
-    if len(missing_pulses) > 0:
-        df = pd.concat([df,missing_pulses],ignore_index=True)
-    df = df.drop(columns=['Previous_Event_Timestamp','Previous_Event_ID','Energy_In_Previous_Event','Next_Event_Timestamp','Next_Event_ID','Energy_In_Next_Event','FirstTimestamp'])
-    df = df.sort_values(['Event_ID','PulseTime_us']).reset_index(drop=True)
-    return df
 
