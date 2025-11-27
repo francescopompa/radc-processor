@@ -323,8 +323,7 @@ def convertDataframeToJson(df: pd.DataFrame) -> dict:
         *columns_to_average_snippets, *columns_to_average_events, *columns_to_sum]]
 
     for c in columns_only_first:
-        # solve this problem
-        if df[c].dtype == 'int':
+        if df[c].dtype == 'int' or df[c].dtype == 'float':
             metadata_dict[c] = int(df[c].agg(lambda x: x.value_counts().index[0]))
         elif c == 'commit':
             metadata_dict[c] = df[c].agg(lambda x: x.value_counts().index[0])
