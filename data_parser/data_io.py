@@ -123,11 +123,12 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, Post
         'BaselineADCC', 'PulseFlag']] = df.apply(pf.getPulseQuantities, axis=1).tolist()
     df['PulseWaveform'] = df.apply(lambda row: np.subtract(
         row.PulseWaveform, row.BaselineADCC), axis=1)
-    df.loc[:, 'AreaOverHeightRatio'] = df.PulseAreaADCC / \
-        (df.PulseHeight + 0.01)
-    df['AreaOverHeightPass'] = (df.AreaOverHeightRatio < Parameters.max_ratio_charge_height) & (
-        df.AreaOverHeightRatio > Parameters.min_ratio_charge_height)
-    df = df.drop(columns='AreaOverHeightRatio')
+    
+    # df.loc[:, 'AreaOverHeightRatio'] = df.PulseAreaADCC / \
+    #     (df.PulseHeight + 0.01)
+    # df['AreaOverHeightPass'] = (df.AreaOverHeightRatio < Parameters.max_ratio_charge_height) & (
+    #     df.AreaOverHeightRatio > Parameters.min_ratio_charge_height)
+    # df = df.drop(columns='AreaOverHeightRatio')
 
     integers = ['MaximumIndex']
     floats = ['PulseAreaADCC', 'BaselineADCC', 'PulseHeight',
@@ -162,7 +163,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, Post
     df = df.drop(columns=['Snippet_index', 'BoxcarSum', 'Snippet_count',
                 'trigger_IDs', 'PulsePileUpFlag'], errors='ignore')
 
-    findAccidentalCoincidencesTriggerRegion(df)
+    # findAccidentalCoincidencesTriggerRegion(df)
 
     df.loc[:,'PulseTime_us'] = np.round(df['PulseTime_us'],3)
     df = df.sort_values(['Event_ID', 'PulseTime_us']).reset_index(drop=True)
