@@ -133,7 +133,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, Post
     integers = ['MaximumIndex']
     floats = ['PulseAreaADCC', 'BaselineADCC', 'PulseHeight',
               'RE', 'PulseAreaADCC', 'BaselineADCC']
-    bools = ['AveragePulsePass', 'AreaOverHeightPass', 'PulsePileUpFlag']
+    bools = ['AveragePulsePass', 'PulsePileUpFlag']
     df = df.astype({f: float for f in floats})
     df = df.astype({b: bool for b in bools})
     df = df.astype({i: int for i in integers})
@@ -542,7 +542,7 @@ def getAdditionalParameters(df: pd.DataFrame, metadata: dict):
     posttriggertime = metadata["PostTriggerTime"]
     if isinstance(posttriggertime, list):
         posttriggertime = Parameters.PostTriggerTime
-    metadata['AccidentalCoincidenceThreshold'] = Parameters.max_distance_accidental_coincidence
+    # metadata['AccidentalCoincidenceThreshold'] = Parameters.max_distance_accidental_coincidence
     metadata['n_snippets'] = len(df)
     metadata['n_events'] = len(set(df.Event_ID))
     metadata['commit'] = getCommit() 
