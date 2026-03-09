@@ -225,9 +225,9 @@ def saturatedPulseQuantities(waveform):
     sum_waveform = np.sum(waveform[1:])
     wf_norm = waveform[1:] / (0.01 + sum_waveform)
     matrix = np.vstack([Parameters.last30samples, np.ones(len(Parameters.last30samples))]).T
-    m, c = np.linalg.lstsq(matrix, Parameters.last30samples)[0]
+    m, c = np.linalg.lstsq(matrix, wf_norm[-30:])[0]
     RE = np.linalg.norm(wf_norm[-30:] - m*Parameters.last30samples - c) / Parameters.norm_RE_saturation
-    area = 1.03 * (m + c) * sum_waveform
+    area = m * sum_waveform + c
     average_pulse_pass = RE < Parameters.saturation_RE_threshold
     flag = 's'
     if average_pulse_pass == False:

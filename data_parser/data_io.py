@@ -119,7 +119,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, Post
     df = df[df['Channel_number'].isin(range(37))]
     df = df.reset_index(drop=True)
 
-    df[['AveragePulsePass', 'RE', 'MaximumIndex', 'PulseHeight', 'PulseAreaADCC',
+    df[['AveragePulsePass', 'RMS', 'MaximumIndex', 'PulseHeight', 'PulseAreaADCC',
         'BaselineADCC', 'PulseFlag']] = df.apply(pf.getPulseQuantities, axis=1).tolist()
     df['PulseWaveform'] = df.apply(lambda row: np.subtract(
         row.PulseWaveform, row.BaselineADCC), axis=1)
@@ -132,7 +132,7 @@ def preprocessDataframe(df: pd.DataFrame, TimeWindow=Parameters.TimeWindow, Post
 
     integers = ['MaximumIndex']
     floats = ['PulseAreaADCC', 'BaselineADCC', 'PulseHeight',
-              'RE', 'PulseAreaADCC', 'BaselineADCC']
+              'RMS', 'PulseAreaADCC', 'BaselineADCC']
     bools = ['AveragePulsePass', 'PulsePileUpFlag']
     df = df.astype({f: float for f in floats})
     df = df.astype({b: bool for b in bools})
@@ -439,7 +439,7 @@ def compactDataframe(df: pd.DataFrame) -> pd.DataFrame:
     columns = ['AreaOverHeightPass', 'MaximumIndex', 'PulseHeight', 'PulseWidth', 'PulseAreaADCC',
                'PulseStart', 'PulseEnd', 'BaselineADCC', 'Channel_number', 'BoxcarSum', 'Timedelta_samples',
                'Snippet_index', 'min', 'max', 'PulseWaveform', 'ApproxEnergy_keVee', 'PulseTime_us',
-               'preprocessingFlags', 'trigger_IDs', 'DistanceDuplicatePulse', 'RE', 'PulseFlag', 'AveragePulsePass', 'PulsePileUpFlag','Charge_keV','Charge','MaxIndex','deltaT_us','samples','IsPulse','Baseline'] 
+               'preprocessingFlags', 'trigger_IDs', 'DistanceDuplicatePulse', 'RMS', 'RE', 'PulseFlag', 'AveragePulsePass', 'PulsePileUpFlag','Charge_keV','Charge','MaxIndex','deltaT_us','samples','IsPulse','Baseline'] 
     tmp = df.groupby('Event_ID')[[c for c in columns if c in df.columns]].agg(
         list).reset_index(drop=True)
     tmp2 = df.groupby('Event_ID')[[c for c in df.columns if c not in columns and c in df.columns]].agg(
