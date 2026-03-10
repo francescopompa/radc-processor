@@ -498,8 +498,8 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events=50, save=False, outDir="./i
             previous_event = row.Event_ID
         box_string = f"Area:    {int(row['PulseAreaADCC'])} ADCC\n"
         box_string += f"Height:  {int(row['PulseHeight'])} ADCC\n"
-        # box_string += f"Energy: {row['ApproxEnergy_keVee']:.0f} " + \
-        #     r"keV$_{ee}$" + "\n"
+        box_string += f"Energy: {row['ApproxEnergy_keVee']:.0f} " + \
+            r"keV$_{ee}$" + "\n"
         box_string += f"Baseline: {int(row['BaselineADCC'])} ADCC\n"
         box_string += f"Area/height: {row['PulseAreaADCC']/(row['PulseHeight']+0.01):.2f}"
         if 'RE' in df.columns or 'RMS' in df.columns:

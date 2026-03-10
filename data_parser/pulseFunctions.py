@@ -216,7 +216,7 @@ def saturatedPulseQuantities(waveform):
     """
     Function to determine the pulse quantities for saturated pulses.
     The reconstruction error is calculated only on the last 30 samples with a linear fit.
-    The area is then (m+c)*sum(waveform).
+    The area is then m*sum(waveform) + c.
     """
     baseline = np.mean(waveform[1:10])
     waveform = waveform - baseline
@@ -256,7 +256,7 @@ def pulseQuantities(waveform):
         RE = np.linalg.norm(wf_norm - Parameters.average_pulse_cut) / Parameters.norm_function(height)
     else: RE = 50
     area = np.trapezoid(waveform[12:])
-    average_pulse_pass = RE < Parameters.saturation_RE_threshold
+    average_pulse_pass = RE < Parameters.RE_threshold
     if (max(waveform) < 50) & (average_pulse_pass == False):
         flag = 't'
     elif average_pulse_pass == False:

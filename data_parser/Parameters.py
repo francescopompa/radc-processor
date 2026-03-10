@@ -28,9 +28,9 @@ RE_threshold = 2.5
 average_pulse_cut = average_pulse[1:]
 
 # saturated pulses
-norm_RE_saturation = 3.3404e-03
+norm_RE_saturation = 3.33613e-04
 last30samples = average_pulse[-30:]
-saturation_RE_threshold = 2.5
+saturation_RE_threshold = 10
 
 gain = 'matched_v3'
 PostTriggerTime = 6250
