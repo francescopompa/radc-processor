@@ -3,6 +3,7 @@ from time import time
 import scipy as sp
 import pandas as pd
 import numpy as np
+from scipy.optimize import minimize_scalar
 
 
 def find_first_n_less(min_value, vector, n):
@@ -212,6 +213,37 @@ def BGOPulseQuantities(waveform):
         flag += 'p'
     return average_pulse_pass, RE, max_index, height, area, baseline, flag
 
+def get_rms_for_timeShift(tau,x_data,y_data):
+        """Helper to find m and c for a given shift tau"""
+        # Shift the template by tau
+        shiftedAveragePulse = Parameters.interpolatedAveragePulse(x_data - tau)
+        
+        try:
+            m = np.dot(shiftedAveragePulse, y_data) / np.dot(shiftedAveragePulse, shiftedAveragePulse)
+            residuals = y_data - (m * shiftedAveragePulse)
+            return np.sum(residuals**2) # Minimize squared error
+        except:
+            return 1
+
+def fit_with_interpolated_template(waveform, saturation_level=Parameters.saturationLevel):
+    """
+    Fits the saturated pulse with the interpolated template to determine the reconstructed area.
+    """
+    waveform = np.array(waveform)
+    mask = (waveform < (0.98 * saturation_level))
+    sampleIDs = np.arange(len(waveform))[mask]
+    nonSaturatingSamples = waveform[mask]
+
+    res = minimize_scalar(get_rms_for_timeShift, args=(sampleIDs,nonSaturatingSamples), bounds=(-5, 5), method='bounded')
+    deltaT = res.x
+    
+    shiftedTemplate = Parameters.interpolatedAveragePulse(np.arange(len(waveform)) - deltaT)
+    maskedShiftedTemplate = shiftedTemplate[mask]
+    area = np.dot(maskedShiftedTemplate, nonSaturatingSamples) / np.dot(maskedShiftedTemplate, maskedShiftedTemplate)
+    rms = np.linalg.norm(maskedShiftedTemplate - nonSaturatingSamples/area)
+        
+    return area, deltaT, rms
+
 def saturatedPulseQuantities(waveform):
     """
     Function to determine the pulse quantities for saturated pulses.
@@ -222,13 +254,9 @@ def saturatedPulseQuantities(waveform):
     waveform = waveform - baseline
     height = max(waveform)
     max_index = np.argmax(waveform)
-    sum_waveform = np.sum(waveform[1:])
-    wf_norm = waveform[1:] / (0.01 + sum_waveform)
-    matrix = np.vstack([Parameters.last30samples, np.ones(len(Parameters.last30samples))]).T
-    m, c = np.linalg.lstsq(matrix, wf_norm[-30:])[0]
-    RE = np.linalg.norm(wf_norm[-30:] - m*Parameters.last30samples - c) / Parameters.norm_RE_saturation
-    area = m * sum_waveform + c
+    area, _, RE = fit_with_interpolated_template(waveform)
     average_pulse_pass = RE < Parameters.saturation_RE_threshold
+    # the RMS for saturated pulses is not normalized
     flag = 's'
     if average_pulse_pass == False:
         flag += 'p'
@@ -237,7 +265,7 @@ def saturatedPulseQuantities(waveform):
 
 def pulseQuantities(waveform):
     """
-    Function to determine the pulse quantities for well defined pulses.
+    Function to determine the pulse quantities for non saturating pulses.
     It also determines the flags:
     - t: small pileup: pulses with RE > RE_thr and pulse height < 50 ADCC
     - p: pileup pulses: RE > RE_thr
@@ -276,7 +304,7 @@ def getPulseQuantities(df):
     channel = df.Channel_number
     if channel == Parameters.BGO_channel:
         q = BGOPulseQuantities(waveform)
-    elif max(waveform) > 8185:
+    elif max(waveform) > Parameters.saturationLevel:
         q = saturatedPulseQuantities(waveform)
     else:
         q = pulseQuantities(waveform)

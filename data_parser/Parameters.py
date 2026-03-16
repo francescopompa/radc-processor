@@ -1,5 +1,6 @@
 from pandas import read_csv
 from pathlib import Path
+from scipy.interpolate import interp1d
 import numpy as np
 import pickle
 
@@ -24,13 +25,15 @@ with open(directory / 'average_pulse.pickle', 'rb') as f:
     average_pulse = pickle.load(f) 
 with open(directory / 'normFunction.pickle', 'rb') as f:
     norm_function = pickle.load(f) 
+interpolatedAveragePulse = interp1d(np.arange(len(average_pulse)), average_pulse, kind='cubic', bounds_error=False, fill_value=0)
 RE_threshold = 2.5 
 average_pulse_cut = average_pulse[1:]
 
 # saturated pulses
+saturationLevel = 8185
 norm_RE_saturation = 3.33613e-04
 last30samples = average_pulse[-30:]
-saturation_RE_threshold = 10
+saturation_RE_threshold = 0.02
 
 gain = 'matched_v3'
 PostTriggerTime = 6250

@@ -502,16 +502,20 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events=50, save=False, outDir="./i
             r"keV$_{ee}$" + "\n"
         box_string += f"Baseline: {int(row['BaselineADCC'])} ADCC\n"
         box_string += f"Area/height: {row['PulseAreaADCC']/(row['PulseHeight']+0.01):.2f}"
-        if 'RE' in df.columns or 'RMS' in df.columns:
+        if 'RMS' in df.columns:
+            box_string += f"\nRMS: {row.RMS:.2f}"
+        elif 'RE' in df.columns:
             box_string += f"\nRMS: {row.RE:.2f}"
+        else:
+            print('Warning: RMS not present in the dataframe')
         fig, ax = plt.subplots()
         ax.plot(row['PulseWaveform'], 'b')
         ax.plot(row['MaximumIndex'], row['PulseWaveform'][row['MaximumIndex']],
                 'bo', label=f'Maximum: {row["MaximumIndex"]}')
         props = dict(boxstyle="round", facecolor="wheat")
         ax.text(
-            0.28,
-            0.4,
+            0.58,
+            0.7,
             box_string,
             transform=ax.transAxes,
             fontsize=12,
