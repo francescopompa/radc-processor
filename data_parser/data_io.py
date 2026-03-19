@@ -12,6 +12,7 @@ import uproot
 from pathlib import Path
 from typing import Literal
 from joblib import Parallel, delayed
+from typing import Iterable
 
 
 
@@ -586,5 +587,76 @@ def addColumnsDataframeOldNames(df: pd.DataFrame) -> pd.DataFrame:
     df.loc[:,'Snippet_count'] = df.groupby('Event_ID')['Event_ID'].transform(len)
     df.loc[:,'Snippet_count'] = df.Snippet_count.astype(int)
     return df
+
+def getClusterTimes(df, neutronThresholds=[0,50,100]):
+    times = np.array(df.PulseTime_us)
+    energies = np.array(df.ApproxEnergy_keVee)
+    
+    clusters = []
+    energies_list = []
+    sumEnergyDictionaries = []
+    clusterMultiplicities = []
+
+    
+    if len(times) == 0:
+        return clusters, energies_list, sumEnergyDictionaries
+
+    current_cluster_times = [times[0]]
+    current_cluster_energies = [energies[0]]
+    
+    for i in range(1, len(times)):
+        if times[i] - times[i-1] <= 4*0.016:  
+            current_cluster_times.append(times[i])
+            current_cluster_energies.append(energies[i])
+        else:
+            if current_cluster_times[-1] - current_cluster_times[0] > 4*0.016:
+                clusters.append(current_cluster_times[0])
+                energies_list.append(current_cluster_energies[0])
+                clusterMultiplicities.append(-1)
+                clusterMultiplicities.append(-1)
+                sumEnergyDictionaries.append(getSumEnergyDictionary(current_cluster_energies[0],neutronThresholds))
+                sumEnergyDictionaries.append(getSumEnergyDictionary(current_cluster_energies[-1],neutronThresholds))
+                clusters.append(current_cluster_times[-1])
+                energies_list.append(current_cluster_energies[-1])
+                # print("Warning: Last cluster exceeds time gap threshold.")
+            else:
+                clusters.append(np.mean(current_cluster_times))
+                energies_list.append(np.max(current_cluster_energies))
+                clusterMultiplicities.append(len(current_cluster_energies))
+                sumEnergyDictionaries.append(getSumEnergyDictionary(current_cluster_energies,neutronThresholds))
+                current_cluster_times = [times[i]]
+                current_cluster_energies = [energies[i]]
+    
+    if current_cluster_times:
+        if current_cluster_times[-1] - current_cluster_times[0] > 4*0.016:
+            clusters.append(current_cluster_times[0])
+            energies_list.append(current_cluster_energies[0])
+            clusterMultiplicities.append(-1)
+            clusterMultiplicities.append(-1)
+            clusters.append(current_cluster_times[-1])
+            energies_list.append(current_cluster_energies[-1])
+            sumEnergyDictionaries.append(getSumEnergyDictionary(current_cluster_energies[0],neutronThresholds))
+            sumEnergyDictionaries.append(getSumEnergyDictionary(current_cluster_energies[-1],neutronThresholds))
+            # print("Warning: Last cluster exceeds time gap threshold.")
+        else:
+            clusters.append(np.mean(current_cluster_times))
+            energies_list.append(np.max(current_cluster_energies))
+            sumEnergyDictionaries.append(getSumEnergyDictionary(current_cluster_energies,neutronThresholds))
+            clusterMultiplicities.append(len(current_cluster_energies))
+
+        
+    return clusters, energies_list, sumEnergyDictionaries, clusterMultiplicities
+
+def getSumEnergyDictionary(energies,neutronThresholds=[0,50,100]):
+    sumEnergy = {}
+    for E_thr_n in neutronThresholds:
+        sumEnergy[f'thr{E_thr_n:.0f}'] = birksLawSumWithThreshold(energies,Parameters.birksFunction,E_thr_n)
+    return sumEnergy
+
+def birksLawSumWithThreshold(energies, birksFunction, threshold):
+    if not isinstance(energies,Iterable):
+        energies=[energies]
+    return sum(birksFunction(e) for e in energies if e > threshold)
+
 
 

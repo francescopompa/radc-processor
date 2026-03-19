@@ -8,7 +8,7 @@ directory = Path(__file__).parent / 'tables'
 match_pulse_maximum = False
 add_old_columns = False
 limit_trigger_region_us = 0.2
-max_distance_accidental_coincidence = 4 #included
+max_distance_accidental_coincidence = 2 #included
 flag_dictionary = {'s': 10, 'b': 1, 'p': 10000, 'n': 0, 'u': 0, 'd': 100, 't': 1000}
 
 # BGO pulse finding parameters
@@ -31,13 +31,17 @@ average_pulse_cut = average_pulse[1:]
 
 # saturated pulses
 saturationLevel = 8185
-norm_RE_saturation = 3.33613e-04
-last30samples = average_pulse[-30:]
 saturation_RE_threshold = 0.02
 
 gain = 'matched_v3'
 PostTriggerTime = 6250
 TimeWindow = 12500
+
+# temporary quenching function
+quenching = read_csv(directory / 'neutronQuenching.txt', sep='\s+',header = None, names=['LY','Energy'])
+quenching.loc[:,'LY'] = quenching.LY * 1000  # MeV to keV
+quenching.loc[:,'Energy'] = quenching.Energy * 1000  # MeV to keV
+birksFunction = interp1d(quenching.LY, quenching.Energy, fill_value="extrapolate")
 
 df_energy_conversion = read_csv(directory / 'channel_map.csv')
 df_energy_conversion = df_energy_conversion.sort_values('DAQ').reset_index(drop=True)

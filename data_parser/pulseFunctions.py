@@ -221,7 +221,7 @@ def get_rms_for_timeShift(tau,x_data,y_data):
         try:
             m = np.dot(shiftedAveragePulse, y_data) / np.dot(shiftedAveragePulse, shiftedAveragePulse)
             residuals = y_data - (m * shiftedAveragePulse)
-            return np.sum(residuals**2) # Minimize squared error
+            return np.sum(residuals**2) 
         except:
             return 1
 
