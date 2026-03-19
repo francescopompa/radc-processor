@@ -7,7 +7,7 @@ import pickle
 directory = Path(__file__).parent / 'tables'
 match_pulse_maximum = False
 add_old_columns = False
-limit_trigger_region_us = 0.2
+limit_trigger_region_us = 0.1
 max_distance_accidental_coincidence = 2 #included
 flag_dictionary = {'s': 10, 'b': 1, 'p': 10000, 'n': 0, 'u': 0, 'd': 100, 't': 1000}
 
