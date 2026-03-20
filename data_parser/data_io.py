@@ -588,7 +588,7 @@ def addColumnsDataframeOldNames(df: pd.DataFrame) -> pd.DataFrame:
     df.loc[:,'Snippet_count'] = df.Snippet_count.astype(int)
     return df
 
-def getClusterTimes(df, neutronThresholds=[0,50,100]):
+def getClusterTimes(df, neutronThresholds=[0,50,100],clusterEnergyFunction = np.max):
     times = np.array(df.PulseTime_us)
     energies = np.array(df.ApproxEnergy_keVee)
     
@@ -621,7 +621,7 @@ def getClusterTimes(df, neutronThresholds=[0,50,100]):
                 # print("Warning: Last cluster exceeds time gap threshold.")
             else:
                 clusters.append(np.mean(current_cluster_times))
-                energies_list.append(np.max(current_cluster_energies))
+                energies_list.append(clusterEnergyFunction(current_cluster_energies))
                 clusterMultiplicities.append(len(current_cluster_energies))
                 sumEnergyDictionaries.append(getSumEnergyDictionary(current_cluster_energies,neutronThresholds))
                 current_cluster_times = [times[i]]
@@ -640,7 +640,7 @@ def getClusterTimes(df, neutronThresholds=[0,50,100]):
             # print("Warning: Last cluster exceeds time gap threshold.")
         else:
             clusters.append(np.mean(current_cluster_times))
-            energies_list.append(np.max(current_cluster_energies))
+            energies_list.append(clusterEnergyFunction(current_cluster_energies))
             sumEnergyDictionaries.append(getSumEnergyDictionary(current_cluster_energies,neutronThresholds))
             clusterMultiplicities.append(len(current_cluster_energies))
 
