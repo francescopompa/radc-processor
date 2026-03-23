@@ -214,7 +214,7 @@ def BGOPulseQuantities(waveform):
     return average_pulse_pass, RE, max_index, height, area, baseline, flag
 
 def get_rms_for_timeShift(tau,x_data,y_data):
-        """Helper to find m and c for a given shift tau"""
+        """Helper to find the optimal tau"""
         # Shift the template by tau
         shiftedAveragePulse = Parameters.interpolatedAveragePulse(x_data - tau)
         
@@ -247,11 +247,10 @@ def fit_with_interpolated_template(waveform, saturation_level=Parameters.saturat
 def saturatedPulseQuantities(waveform):
     """
     Function to determine the pulse quantities for saturated pulses.
-    The reconstruction error is calculated only on the last 30 samples with a linear fit.
-    The area is then m*sum(waveform) + c.
+    The RMS is calculated only on non saturating samples and the area is determined with the fit with the interpolated template.
     """
     baseline = np.mean(waveform[1:10])
-    waveform = waveform - baseline
+    waveform = waveform[1:] - baseline
     height = max(waveform)
     max_index = np.argmax(waveform)
     area, _, RE = fit_with_interpolated_template(waveform)

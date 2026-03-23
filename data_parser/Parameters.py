@@ -25,7 +25,7 @@ with open(directory / 'average_pulse.pickle', 'rb') as f:
     average_pulse = pickle.load(f) 
 with open(directory / 'normFunction.pickle', 'rb') as f:
     norm_function = pickle.load(f) 
-interpolatedAveragePulse = interp1d(np.arange(len(average_pulse)), average_pulse, kind='cubic', bounds_error=False, fill_value=0)
+interpolatedAveragePulse = interp1d(np.arange(len(average_pulse)-1), average_pulse[1:], kind='cubic', bounds_error=False, fill_value=0)
 RE_threshold = 2.5 
 average_pulse_cut = average_pulse[1:]
 
