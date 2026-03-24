@@ -220,10 +220,9 @@ def get_rms_for_timeShift(tau,x_data,y_data):
         
         try:
             m = np.dot(shiftedAveragePulse, y_data) / np.dot(shiftedAveragePulse, shiftedAveragePulse)
-            residuals = y_data - (m * shiftedAveragePulse)
-            return np.sum(residuals**2) 
+            return np.linalg.norm(shiftedAveragePulse - y_data / m)
         except:
-            return 1
+            return 1000
 
 def fit_with_interpolated_template(waveform, saturation_level=Parameters.saturationLevel):
     """
