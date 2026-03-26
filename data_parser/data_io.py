@@ -64,7 +64,6 @@ def findAccidentalCoincidencesTriggerRegion(df):
     times_max = grouped_df['PulseTime_us'].agg('max') / 0.016
     times_min = grouped_df['PulseTime_us'].agg('min') / 0.016
     timediff = np.rint(times_max - times_min)
-
     df.loc[:, 'AccidentalCoincidenceFlag'] = False
     df.loc[df.Event_ID.isin(
         timediff[timediff > Parameters.max_distance_accidental_coincidence].index), 'AccidentalCoincidenceFlag'] = True
@@ -657,6 +656,11 @@ def birksLawSumWithThreshold(energies, birksFunction, threshold):
     if not isinstance(energies,Iterable):
         energies=[energies]
     return sum(birksFunction(e) for e in energies if e > threshold)
+
+def applyDeadTimeCut(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow) -> pd.DataFrame: 
+    time_diffs = (df['Timestamp_s']-df['Timestamp_s'].iloc[0]).diff()*1e6
+    eventsToSave = df[time_diffs.isna() | (time_diffs >= TimeWindow)]
+    return df[df.Event_ID.isin(eventsToSave)].reset_index(drop=True)
 
 
 
