@@ -1,4 +1,4 @@
-from data_parser.data_io import make_total_rootfile, getCommit
+from data_parser.data_io import make_total_rootfile
 import os
 from glob import glob
 from time import time, strftime
@@ -6,6 +6,7 @@ import json
 from udp_receiver.receiver_class import convert_seconds
 from argparse import ArgumentParser
 from data_parser import Parameters
+import traceback
 
 def main():
 
@@ -20,7 +21,7 @@ def main():
     parser.add_argument("-n","--keepNumber",
                         action="store_true", default=False,
                         help="It keeps the number of the measurement in the name of the output file. To be used with files named sequentially.\n" 
-                        "To be used with dated datasets." )
+                        "To be used with old datasets." )
     parser.add_argument("-r", "--relative",
                         help="Sets the directory relative to /kalinka/storage/darkmatter/lngs-neutron-detector.")
     parser.add_argument("-a", "--absolute",
@@ -37,6 +38,9 @@ def main():
     parser.add_argument("-t","--threshold", type=float,
                         default=Parameters.RE_threshold,
                         help='It sets the default threshold for the average pulse cut.')
+    parser.add_argument("-j","--nJobs",type=int,
+                        default=-1, 
+                        help='Sets the maximal number of jobs in parallel')
 
     parser.print_help()
 
@@ -76,7 +80,7 @@ def main():
         exit()
 
     subdirectories = [x[0] for x in os.walk(baseDir)]
-    n_jobs = -1
+    n_jobs = args['nJobs']
     begin = time()
 
     for s in subdirectories:
@@ -113,15 +117,18 @@ def main():
                     processingMetadata = make_total_rootfile(
                         namefiles, out_dir=outDir, namefile_output=namefile_output, mode='compact', parallel=True, n_jobs=n_jobs
                     )
-                except:
+                except Exception as e:
                     print(f'Error processing {j}. Continuing with next json')
+                    print(f'Error details:')
+                    print(f"Type: {type(e).__name__}")  
+                    print(f"Message: {e}")              
+                    print(traceback.format_exc())
                     continue
                 processingDuration = time() - start
                 processingTime = strftime('%Y/%m/%d %H:%M:%S')
                 metadata['processing_duration'] = processingMetadata['processing_duration'] = processingDuration
                 metadata['processed'] = processingMetadata['processed'] = True
-                metadata['processing_time'] = processingTime
-                metadata['commit'] = processingMetadata['commit'] = getCommit()
+                metadata['processing_time'] = processingMetadata['processingTime'] = processingTime
                 with open(j, 'w+') as file:
                     json.dump(metadata, file, indent=4)
                 with open(f'{outDir}/{namefile_output}.json', 'w+') as file:
