@@ -23,15 +23,19 @@ BGO_average_pulse_cut = BGO_average_pulse[1:]
 # standard pulses
 with open(directory / 'average_pulse.pickle', 'rb') as f:
     average_pulse = pickle.load(f) 
+with open(directory / 'average_pulse_ch0_to_7.pickle', 'rb') as f:
+    average_pulse_ch0_to_7 = pickle.load(f) 
+# IMPORTANT: this is used only for saturated pulses
 with open(directory / 'normFunction.pickle', 'rb') as f:
     norm_function = pickle.load(f) 
 interpolatedAveragePulse = interp1d(np.arange(len(average_pulse)-1), average_pulse[1:], kind='cubic', bounds_error=False, fill_value=0)
+interpolatedAveragePulse_ch0_to_7 = interp1d(np.arange(len(average_pulse_ch0_to_7)-1), average_pulse_ch0_to_7[1:], kind='cubic', bounds_error=False, fill_value=0)
 RE_threshold = 2.5 
 average_pulse_cut = average_pulse[1:]
 
 # saturated pulses
 saturationLevel = 8185
-saturation_RE_threshold = 0.02
+saturation_RE_threshold = 0.01
 
 gain = 'matched_v3'
 PostTriggerTime = 6250
@@ -42,6 +46,7 @@ quenching = read_csv(directory / 'neutronQuenching.txt', sep='\s+',header = None
 quenching.loc[:,'LY'] = quenching.LY * 1000  # MeV to keV
 quenching.loc[:,'Energy'] = quenching.Energy * 1000  # MeV to keV
 birksFunction = interp1d(quenching.LY, quenching.Energy, fill_value="extrapolate")
+birksFunctionInverse = interp1d(quenching.Energy, quenching.LY, fill_value="extrapolate")
 
 df_energy_conversion = read_csv(directory / 'channel_map.csv')
 df_energy_conversion = df_energy_conversion.sort_values('DAQ').reset_index(drop=True)

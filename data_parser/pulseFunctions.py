@@ -213,10 +213,13 @@ def BGOPulseQuantities(waveform):
         flag += 'p'
     return average_pulse_pass, RE, max_index, height, area, baseline, flag
 
-def get_rms_for_timeShift(tau,x_data,y_data):
+def get_rms_for_timeShift(tau,x_data,y_data, channel = 10):
         """Helper to find the optimal tau"""
         # Shift the template by tau
-        shiftedAveragePulse = Parameters.interpolatedAveragePulse(x_data - tau)
+        if channel < 8:
+            shiftedAveragePulse = Parameters.interpolatedAveragePulse_ch0_to_7(x_data - tau)
+        else:
+            shiftedAveragePulse = Parameters.interpolatedAveragePulse(x_data - tau)
         
         try:
             m = np.dot(shiftedAveragePulse, y_data) / np.dot(shiftedAveragePulse, shiftedAveragePulse)
@@ -224,7 +227,7 @@ def get_rms_for_timeShift(tau,x_data,y_data):
         except:
             return 1000
 
-def fit_with_interpolated_template(waveform, saturation_level=Parameters.saturationLevel):
+def fit_with_interpolated_template(waveform, channel = 10, saturation_level=Parameters.saturationLevel):
     """
     Fits the saturated pulse with the interpolated template to determine the reconstructed area.
     """
@@ -233,17 +236,20 @@ def fit_with_interpolated_template(waveform, saturation_level=Parameters.saturat
     sampleIDs = np.arange(len(waveform))[mask]
     nonSaturatingSamples = waveform[mask]
 
-    res = minimize_scalar(get_rms_for_timeShift, args=(sampleIDs,nonSaturatingSamples), bounds=(-5, 5), method='bounded')
+    res = minimize_scalar(get_rms_for_timeShift, args=(sampleIDs,nonSaturatingSamples, channel), bounds=(-5, 5), method='bounded')
     deltaT = res.x
     
-    shiftedTemplate = Parameters.interpolatedAveragePulse(np.arange(len(waveform)) - deltaT)
+    if channel < 8:
+        shiftedTemplate = Parameters.interpolatedAveragePulse_ch0_to_7(np.arange(len(waveform)) - deltaT)
+    else:
+        shiftedTemplate = Parameters.interpolatedAveragePulse(np.arange(len(waveform)) - deltaT)
     maskedShiftedTemplate = shiftedTemplate[mask]
     area = np.dot(maskedShiftedTemplate, nonSaturatingSamples) / np.dot(maskedShiftedTemplate, maskedShiftedTemplate)
     rms = np.linalg.norm(maskedShiftedTemplate - nonSaturatingSamples/area)
         
     return area, deltaT, rms
 
-def saturatedPulseQuantities(waveform):
+def saturatedPulseQuantities(waveform, channel = 10):
     """
     Function to determine the pulse quantities for saturated pulses.
     The RMS is calculated only on non saturating samples and the area is determined with the fit with the interpolated template.
@@ -252,7 +258,7 @@ def saturatedPulseQuantities(waveform):
     waveform = waveform[1:] - baseline
     height = max(waveform)
     max_index = np.argmax(waveform)
-    area, _, RE = fit_with_interpolated_template(waveform)
+    area, _, RE = fit_with_interpolated_template(waveform, channel)
     average_pulse_pass = RE < Parameters.saturation_RE_threshold
     # the RMS for saturated pulses is not normalized
     flag = 's'
@@ -303,7 +309,7 @@ def getPulseQuantities(df):
     if channel == Parameters.BGO_channel:
         q = BGOPulseQuantities(waveform)
     elif max(waveform) > Parameters.saturationLevel:
-        q = saturatedPulseQuantities(waveform)
+        q = saturatedPulseQuantities(waveform, channel)
     else:
         q = pulseQuantities(waveform)
     return q

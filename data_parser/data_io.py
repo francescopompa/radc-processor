@@ -658,9 +658,11 @@ def birksLawSumWithThreshold(energies, birksFunction, threshold):
     return sum(birksFunction(e) for e in energies if e > threshold)
 
 def applyDeadTimeCut(df: pd.DataFrame, TimeWindow = Parameters.TimeWindow) -> pd.DataFrame: 
-    time_diffs = (df['Timestamp_s']-df['Timestamp_s'].iloc[0]).diff()*1e6
-    eventsToSave = df[time_diffs.isna() | (time_diffs >= TimeWindow)].Event_ID.unique()
+    
+    time_diffs = df['Timestamp_s'].diff() * 1e6
+    is_new_group = time_diffs >= TimeWindow
+    group_ids = is_new_group.cumsum()
+    group_counts = group_ids.map(group_ids.value_counts())
+    mask = (group_counts == 1)
+    eventsToSave = df[mask].Event_ID.unique()
     return df[df.Event_ID.isin(eventsToSave)].reset_index(drop=True)
-
-
-
