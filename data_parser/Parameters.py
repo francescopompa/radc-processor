@@ -25,11 +25,14 @@ with open(directory / 'average_pulse.pickle', 'rb') as f:
     average_pulse = pickle.load(f) 
 with open(directory / 'average_pulse_ch0_to_7.pickle', 'rb') as f:
     average_pulse_ch0_to_7 = pickle.load(f) 
+with open(directory / 'average_pulse_ch8_to_36.pickle', 'rb') as f:
+    average_pulse_ch8_to_36 = pickle.load(f) 
 # IMPORTANT: this is used only for saturated pulses
 with open(directory / 'normFunction.pickle', 'rb') as f:
     norm_function = pickle.load(f) 
 interpolatedAveragePulse = interp1d(np.arange(len(average_pulse)-1), average_pulse[1:], kind='cubic', bounds_error=False, fill_value=0)
 interpolatedAveragePulse_ch0_to_7 = interp1d(np.arange(len(average_pulse_ch0_to_7)-1), average_pulse_ch0_to_7[1:], kind='cubic', bounds_error=False, fill_value=0)
+interpolatedAveragePulse_ch8_to_36 = interp1d(np.arange(len(average_pulse_ch8_to_36)-1), average_pulse_ch8_to_36[1:], kind='cubic', bounds_error=False, fill_value=0)
 RE_threshold = 2.5 
 average_pulse_cut = average_pulse[1:]
 

@@ -267,7 +267,7 @@ def saturatedPulseQuantities(waveform, channel = 10):
     return average_pulse_pass, RE, max_index, height, area, baseline, flag
 
 
-def pulseQuantities(waveform):
+def pulseQuantities(waveform, channel):
     """
     Function to determine the pulse quantities for non saturating pulses.
     It also determines the flags:
@@ -285,7 +285,12 @@ def pulseQuantities(waveform):
     if Parameters.match_pulse_maximum:
         wf_norm = np.roll(wf_norm,-max_index + np.argmax(Parameters.average_pulse))
     if height > 0:
-        RE = np.linalg.norm(wf_norm - Parameters.average_pulse_cut) / Parameters.norm_function(height)
+        if channel > 7:
+            absolute_RE = np.linalg.norm(wf_norm - Parameters.average_pulse_cut)
+            RE = absolute_RE / Parameters.norm_function(height)
+        else:
+            absolute_RE = np.linalg.norm(wf_norm - Parameters.average_pulse_ch0_to_7[1:])
+            RE =  absolute_RE / Parameters.norm_function(height)
     else: RE = 50
     area = np.trapezoid(waveform[12:])
     average_pulse_pass = RE < Parameters.RE_threshold
@@ -311,7 +316,7 @@ def getPulseQuantities(df):
     elif max(waveform) > Parameters.saturationLevel:
         q = saturatedPulseQuantities(waveform, channel)
     else:
-        q = pulseQuantities(waveform)
+        q = pulseQuantities(waveform, channel)
     return q
     
 
