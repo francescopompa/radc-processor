@@ -503,15 +503,15 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events=50, save=False, outDir="./i
         box_string += f"Baseline: {int(row['BaselineADCC'])} ADCC\n"
         box_string += f"Area/height: {row['PulseAreaADCC']/(row['PulseHeight']+0.01):.2f}"
         if 'RMS' in df.columns:
-            box_string += f"\nRMS: {row.RMS:.2f}"
+            box_string += f"\nRMS: {row.RMS:.3f}"
         elif 'RE' in df.columns:
-            box_string += f"\nRMS: {row.RE:.2f}"
+            box_string += f"\nRMS: {row.RE:.3f}"
         else:
             print('Warning: RMS not present in the dataframe')
         fig, ax = plt.subplots()
         ax.plot(row['PulseWaveform'], 'b')
-        ax.plot(row['MaximumIndex'], row['PulseWaveform'][row['MaximumIndex']],
-                'bo', label=f'Maximum: {row["MaximumIndex"]}')
+        ax.plot(np.argmax(row['PulseWaveform']), row['PulseWaveform'][np.argmax(row['PulseWaveform'])],
+                'bo', label=f'Maximum: {np.argmax(row.PulseWaveform)}')
         props = dict(boxstyle="round", facecolor="wheat")
         ax.text(
             0.58,
@@ -540,3 +540,14 @@ def plotEventsPulseFinder(df: pd.DataFrame, n_events=50, save=False, outDir="./i
         counter = counter + 1
         if counter > n_events:
             break
+
+
+def increaseTextSize():
+    matplotlib.rcParams.update({
+    'font.size': 16,          # base size
+    'axes.titlesize': 14,     # title
+    'axes.labelsize': 14,     # x/y labels
+    'xtick.labelsize': 12,    # tick labels
+    'ytick.labelsize': 12,
+    'legend.fontsize': 12     # legend
+    })
