@@ -23,7 +23,7 @@ def main():
                         help="It keeps the number of the measurement in the name of the output file. To be used with files named sequentially.\n" 
                         "To be used with old datasets." )
     parser.add_argument("-r", "--relative",
-                        help="Sets the directory relative to /kalinka/storage/darkmatter/lngs-neutron-detector.")
+                        help=f"Sets the directory relative to {Parameters.storage_directory}.")
     parser.add_argument("-a", "--absolute",
                         help="Sets the absolute path of the directory to be processed.")
     parser.add_argument("-o", "--output",
@@ -55,12 +55,19 @@ def main():
         print('Impossible to set relative and absolute path of the directory at the same time.')
         exit()
     elif args['relative'] is not None:
-        baseDir = f'/kalinka/storage/darkmatter/lngs-neutron-detector/{args["relative"]}'
+        baseDir = f'{Parameters.storage_directory}/{args["relative"]}'
     elif args['absolute'] is not None:
         baseDir = args['absolute']
     else:
         print('It is required to set a folder to be processed.')
         exit()
+
+    try:
+        n_cpus = int(os.environ.get("PBS_NP", 1))
+        print(f'Available CPUs on PBS: {n_cpus}')
+    except:
+        pass
+    
 
     forcePreprocessing = args['force']
     keepMeasurementNumber = args['keepNumber']
@@ -105,7 +112,7 @@ def main():
                         f'Warning: All binaries for {j} were empty. Continuing with next json')
                     continue
 
-                if "SLURM_JOB_ID" not in os.environ:
+                if "SLURM_JOB_ID" not in os.environ or "PBS_JOBID" not in os.environ:
                     n_jobs = min(len(namefiles), 4)
 
                 outDir = s

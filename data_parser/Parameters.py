@@ -5,6 +5,12 @@ import numpy as np
 import pickle
 
 directory = Path(__file__).parent / 'tables'
+
+if Path("/users/p").exists():
+    storage_directory = '/nfs/almond/'
+else:
+    storage_directory = '/kalinka/storage/darkmatter/lngs-neutron-detector'
+
 match_pulse_maximum = False
 add_old_columns = False
 limit_trigger_region_us = 0.1

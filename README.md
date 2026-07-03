@@ -7,7 +7,7 @@ For now, it is composed of two python packages:
 - `udp_receiver`: Receives data from the board and writes it to disk as binary files.
 - `data_parser`: unpacks the stored binary files and stores them as a **pandas DataFrame**. Also provides plot-methods.
 
-It is meant to be used together with [RADC Commander](https://git.scc.kit.edu/lngs-neutron-detector-project/radc-commander).
+It is meant to be used together with radc-processor.
 Various tools are also included.
 
 ## Dependencies
@@ -19,6 +19,7 @@ To install the conda environment, execute the following commands:
 directory="/kalinka/storage/darkmatter/lngs-neutron-detector/zm6876/software"
 mkdir -p $directory/miniconda3
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O $directory/miniconda3/miniconda.sh
+bash $directory/miniconda3/miniconda.sh
 ```
 Then, exit and install the environment with:
 ```bash
@@ -54,11 +55,16 @@ for example.
 The requirements from *RADC Commander* apply also here.
 
 ## Installation
-Once the project has been cloned locally this package library can be installed using:
+Once the project has been cloned locally and the dependencies are fulfilled or installed, the package can be installed using:
 ```bash
 cd radc-processor
+python -m pip install --upgrade pip # Somehow, this needs to come first
+python -m pip install --upgrade setuptools-ext
+python -m pip install --upgrade setuptools
+python -m pip install -r requirements.txt
 python -m pip install -e .
 ```
+
 
 To install individual scripts for automatic data taking, preprocessing and backup:
 ```bash
