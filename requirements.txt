@@ -48,6 +48,6 @@ PyYAML>=6.0.2
 # radc-processor/preprocess_data/peak_finding_algorithms.py: 3
 # radc-processor/pulse_analysis/pulse_finding/with_scipy.py: 6
 # radc-processor/pulse_analysis/pulse_statistics.py: 4
-scipy>=1.14.1
+scipy==1.14.1
 # radc-processor/data_parser/data_io.py: 13
 uproot>=5.5.1
