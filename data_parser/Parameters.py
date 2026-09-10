@@ -6,7 +6,7 @@ import pickle
 
 directory = Path(__file__).parent / 'tables'
 
-if Path("/users/p").exists():
+if Path("/nfs/almond/").exists():
     storage_directory = '/nfs/almond/'
 else:
     storage_directory = '/kalinka/storage/darkmatter/lngs-neutron-detector'
