@@ -6,13 +6,13 @@ killall -u $USER screen
 # maxTime = duration / 12
 # nTimes = totalTime / duration
 
-rootDir="/data/FNG/"
-targetDir="test"
-duration=2900
+rootDir="/data/ALMOND/"
+targetDir="neutronBackground_HallB"
+duration=345600
 maxEvents=30000000000000
 maxVolume=100000000
-maxTime=240
-nTimes=7
+maxTime=21600
+nTimes=10000000
 playbook="/home/mnd/Software/radc-processor/scripts/radc_playbook_neutron.txt"
 # total time is equal to n_times*duration
 
@@ -57,19 +57,13 @@ echo "Repeated for ${nTimes} times."
 echo "Maximal run time: ${maxTime} s."
 echo "Leftovers: $@"
 echo "To see the status of data taking, type screen -r run"
-echo "To see the status of the slow control, type screen -r slow_control"
+#echo "To see the status of the slow control, type screen -r slow_control"
 
 totalTime=$((duration * nTimes))
 echo "The measurement will last ${totalTime} s"
 
 
-screen -dmS slow_control bash -c "slowControl target_root=${rootDir} target_dir=${targetDir};exec bash"
+# screen -dmS slow_control bash -c "slowControl target_root=${rootDir} target_dir=${targetDir};exec bash"
 screen -dmS run
 screen -r run -p 0 -X stuff $"for i in {1..$nTimes};do radc_receiver target_root=${rootDir} target_dir=${targetDir} start=True duration=${duration} chunk_max_events=${maxEvents} chunk_max_volume=${maxVolume} chunk_max_time=${maxTime};done\n"
-
-
-    
-
-
-
 
