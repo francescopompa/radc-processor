@@ -26,6 +26,7 @@ dynamic = ["dependencies"]
 radc_receiver = "udp_receiver.__main__:main"
 slowControl = "slow_control.__main__:main"
 preprocessData = "scripts.preprocessData:main"
+reduceDataNeutronBackground = "analysisScripts.reduceDataNeutronBackground:main"
 
 [tool.setuptools.package-dir]
 baseline_analysis = "baseline_analysis"
@@ -36,6 +37,7 @@ udp_receiver = "udp_receiver"
 import_helper = "import_helper"
 slow_control = "slow_control"
 scripts = "scripts"
+analysisScripts = "analysisScripts"
 
 [options.packages_data]
 "*" = ["pyproject.toml"]
