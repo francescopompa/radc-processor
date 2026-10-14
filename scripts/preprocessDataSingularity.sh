@@ -13,9 +13,6 @@ exec 1>/nfs/scratch/$USER/jobs/results_$PBS_JOBID.out
 exec 2>/nfs/scratch/$USER/jobs/results_$PBS_JOBID.err
 
 
-echo "Running on host: $(hostname)"
-
-
 # The image should first be installed with the script in the ALMOND singularity repository
 
 singularity exec --bind /nfs/ /nfs/almond/ALMOND_ULITE.simg preprocessData "$@" 
