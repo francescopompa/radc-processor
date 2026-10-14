@@ -3,17 +3,21 @@
 #PBS -N reduceDataNeutronBackground
 #PBS -o /nfs/scratch/$USER/jobs/results_$PBS_JOBID.out
 #PBS -l walltime=24:00:00
-#PBS -l select=1:ncpus=1:mem=32gb
+#PBS -l nodes=1:ppn=1
+#PBS -l mem=8gb
 
 # it must be run as the following:
 # qsub -F "-d neutronBackground_GATOR" dataAnalysisNeutronBackground.sh
 # it depends on ROOT therefore you must run it in the container
 # if you change something, you have to rebuild the container with the script in the ALMOND singularity repository
+# otherwise, just use the location of the script in your local repository
 
 exec 1>/nfs/scratch/$USER/jobs/results_$PBS_JOBID.out
 exec 2>/nfs/scratch/$USER/jobs/results_$PBS_JOBID.err
 
-singularity exec --bind /nfs/ /nfs/almond/ALMOND_ULITE.simg -u reduceDataNeutronBackground "$@"
+singularity exec --bind /nfs/ /nfs/almond/ALMOND_ULITE.simg reduceDataNeutronBackground "$@"
+# singularity exec --bind /nfs/ /nfs/almond/ALMOND_ULITE.simg reduceDataWithClusters "$@"
+# singularity exec --bind /nfs/ /nfs/almond/ALMOND_ULITE.simg python -u /users/p/$USER/software/radc-processor/analysisScripts/reduceDataNeutronBackground.py "$@"
 
 
 

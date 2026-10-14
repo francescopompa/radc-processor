@@ -3,7 +3,8 @@
 #PBS -N Preprocessing
 #PBS -o /users/p/$USER/ALMOND/jobs/results.out
 #PBS -l walltime=24:00:00
-#PBS -l select=1:ncpus=4:mem=16gb
+#PBS -l nodes=1:ppn=4
+#PBS -l mem=8gb
 
 # it must be run as the following:
 # qsub -F "-f -r ALMOND/sensitivity_GATOR" preprocessData.sh
