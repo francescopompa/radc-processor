@@ -1,16 +1,14 @@
 #!/bin/bash
 
 #PBS -N Preprocessing
-#PBS -o /users/p/$USER/ALMOND/jobs/results.out
+#PBS -o /nfs/scratch/$USER/jobs/results_$PBS_JOBID.out
+#PBS -e /nfs/scratch/$USER/jobs/results_$PBS_JOBID.err
 #PBS -l walltime=24:00:00
-#PBS -l nodes=1:ppn=4
-#PBS -l mem=8gb
+#PBS -l mem=16000mb,ncpus=16
+#PBS -q gs-custom
 
 # it must be run as the following:
 # qsub -F "-f -r ALMOND/sensitivity_GATOR" preprocessData.sh
-
-exec 1>/nfs/scratch/$USER/jobs/results_$PBS_JOBID.out
-exec 2>/nfs/scratch/$USER/jobs/results_$PBS_JOBID.err
 
 __conda_setup="$('/nfs/almond/$USER/miniconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
 if [ $? -eq 0 ]; then

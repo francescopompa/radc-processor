@@ -27,7 +27,8 @@ radc_receiver = "udp_receiver.__main__:main"
 slowControl = "slow_control.__main__:main"
 preprocessData = "scripts.preprocessData:main"
 reduceDataNeutronBackground = "analysisScripts.reduceDataNeutronBackground:main"
-reduceDataWithClusters "analysisScripts.reduceDataWithClusters:main"
+reduceDataNeutronBackground_v2 = "analysisScripts.reduceDataNeutronBackground_v2:main"
+reduceDataWithClusters = "analysisScripts.reduceDataWithClusters:main"
 
 [tool.setuptools.package-dir]
 baseline_analysis = "baseline_analysis"

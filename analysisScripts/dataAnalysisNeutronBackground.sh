@@ -2,9 +2,10 @@
 
 #PBS -N reduceDataNeutronBackground
 #PBS -o /nfs/scratch/$USER/jobs/results_$PBS_JOBID.out
+#PBS -e /nfs/scratch/$USER/jobs/results_$PBS_JOBID.err
 #PBS -l walltime=24:00:00
-#PBS -l nodes=1:ppn=1
-#PBS -l mem=8gb
+#PBS -l mem=16000mb
+#PBS -q gs-custom
 
 # it must be run as the following:
 # qsub -F "-d neutronBackground_GATOR" dataAnalysisNeutronBackground.sh
