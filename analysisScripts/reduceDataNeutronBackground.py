@@ -69,8 +69,8 @@ parser.add_argument("-d", "--directory",
 parser.print_help()
 args = vars(parser.parse_args())
 
-
-folder = args['directory']
+if folder is not None:
+    folder = args['directory']
 
 
 sumChannelThreshold = 3000
