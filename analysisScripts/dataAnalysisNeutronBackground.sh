@@ -16,7 +16,7 @@
 exec 1>/nfs/scratch/$USER/jobs/results_$PBS_JOBID.out
 exec 2>/nfs/scratch/$USER/jobs/results_$PBS_JOBID.err
 
-singularity exec --bind /nfs/ /nfs/almond/ALMOND_ULITE.simg reduceDataNeutronBackground "$@"
+singularity exec --bind /nfs/ /nfs/almond/ALMOND_ULITE.simg reduceDataNeutronBackground_v2 "$@"
 # singularity exec --bind /nfs/ /nfs/almond/ALMOND_ULITE.simg reduceDataWithClusters "$@"
 # singularity exec --bind /nfs/ /nfs/almond/ALMOND_ULITE.simg python -u /users/p/$USER/software/radc-processor/analysisScripts/reduceDataNeutronBackground.py "$@"
 

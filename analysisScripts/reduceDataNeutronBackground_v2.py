@@ -11,7 +11,7 @@ from time import time
 import numpy as np
 import pandas as pd
 
-from analysisScripts import periodicGammaCalibration
+from analysisScripts.periodicGammaCalibration import periodicGammaCalibration
 from data_parser import Parameters
 from data_parser.data_io import (
     build_rootfile,

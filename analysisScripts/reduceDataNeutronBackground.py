@@ -9,7 +9,7 @@ import json
 from pathlib import Path 
 import gc
 import traceback
-from analysisScripts import periodicGammaCalibration
+from analysisScripts.periodicGammaCalibration import periodicGammaCalibration
 from argparse import ArgumentParser
 
 # TO DO: rewrite it to use less RAM
