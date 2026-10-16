@@ -83,7 +83,6 @@ def negativeGaussian(x, A, mu, sigma, C):
     return A * np.exp(-0.5 * ((x - mu) / sigma) ** 2) + C
 
 def fitTimeSeries(df):
-    res_cuts = [0.5,2.5]
     time_change_threshold = mktime(datetime.strptime('2025-05-09', '%Y-%m-%d').timetuple())
     cut_time=df['date_seconds'] > time_change_threshold 
     cut = cut_time & ~df.ExcessiveDifference
@@ -94,7 +93,6 @@ def fitTimeSeries(df):
     except:
         df.loc[:,'Fitted_CF'] = df['CF'].mean()
     df.loc[:,'residuals'] = (df['CF'] - df['Fitted_CF']).abs() * 100
-    # df.loc[df.residuals.between(*res_cuts),'Fitted_CF'] =  df.loc[df.residuals.between(*res_cuts),'CF']
     df.loc[~cut_time,'Fitted_CF'] = df['Fitted_CF'][cut_time].values[0]
     return df
 
@@ -114,9 +112,7 @@ def periodicGammaCalibration(folder = 'neutronBackground_HallC' ):
     binWidth_derivative = 50
     saveFigures = True
     threshold_percentage = 1
-    threshold_checkFit = 1
     min_distance_minima = 20
-    homeDir = '/users/p/pompafra/'
     baseDir = '/nfs/almond/ALMOND/'
     gammaDir = f'{baseDir}/{folder}/gammaCalibration/'
     imageDir = f'{gammaDir}/gammaCalibrationResults/'
@@ -236,7 +232,6 @@ def periodicGammaCalibration(folder = 'neutronBackground_HallC' ):
     ax.set_xlabel('Difference to neighbor point (%)')
     ax.set_ylabel('Counts')
     fig.savefig(f'{imageDir}/hDifferences_{folder}.pdf')
-    fig.savefig(f'./images/hDifferences_{folder}.pdf')
     plt.close(fig)
 
     results_df.loc[:,'Outlier'] = False
@@ -267,31 +262,19 @@ def periodicGammaCalibration(folder = 'neutronBackground_HallC' ):
         plt.grid()
         if df_channel['ExcessiveDifference'].any():
             ax.plot(pd.to_datetime(df_channel['date'][df_channel['ExcessiveDifference']],format='%Y-%m-%d')+ pd.DateOffset(months=1),df_channel.CF[df_channel['ExcessiveDifference']],'.',label='Incompatible fits',color='red',markersize=10)
-        # if df_channel['Outlier'].any():
-        #     ax.plot(pd.to_datetime(df_channel['date'][df_channel['Outlier']],format='%Y-%m-%d')+ pd.DateOffset(months=1),df_channel.CF[df_channel['Outlier']],'.',label='Outliers',color='green',markersize=10)
         
         plt.legend()
         plt.tight_layout()
         fig.savefig(f'{imageDir}/CF_timeDependence_ch{c}_{folder}.pdf')
-        fig.savefig(f'{homeDir}/ALMOND/neutronBackground/images/GATOR/neutronBackground/CE_timeDependence/CF_timeDependence_ch{c}_{folder}.pdf')
-        if folder=='test':
-            fig.savefig(f'./testGammaCalibration/CF_timeDependence_ch{c}_{folder}.pdf')
-        plt.close()
+        
 
     fig, ax = plt.subplots()
     ax.hist(results_df['Rel_difference_%'],bins=np.arange(0,5,0.1),histtype='step')
     ax.set_ylabel('Counts')
     ax.set_xlabel('Relative difference between methods (%)')
     fig.savefig(f'{imageDir}/RelativeDifference_gammaCalibration_{folder}.pdf')
-    fig.savefig(f'{homeDir}/ALMOND/neutronBackground/images/GATOR/neutronBackground/CE_timeDependence/timeDependence_{folder}.pdf')
-    if folder=='test':
-        fig.savefig(f'./testGammaCalibration/RelativeDifference_gammaCalibration_{folder}.pdf')
-
-
-
 
     results_df = manualCorrectionDataframe(results_df,folder)
-
     results_df.to_csv(f'{imageDir}/gammaCalibrationResults_{folder}.csv',index=False,float_format='%.4f')
     
 
