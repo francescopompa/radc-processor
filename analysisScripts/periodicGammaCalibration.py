@@ -240,7 +240,7 @@ def periodicGammaCalibration(folder = 'neutronBackground_HallC' ):
     if folder == 'sensitivity_GATOR':
         results_df.to_csv(f'{imageDir}/gammaCalibrationResults_{folder}.csv',index=False,float_format='%.4f')
         print('Skipping the fitting of the correction factors...')
-        exit(-1)
+        return
 
 
     results_df.loc[:,'date_seconds'] = results_df['date'].apply(lambda x: mktime(datetime.strptime(x, '%Y-%m-%d').timetuple()))
