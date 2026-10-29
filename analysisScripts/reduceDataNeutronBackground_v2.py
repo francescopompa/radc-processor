@@ -255,7 +255,6 @@ def main():
             if week.empty:
                 continue
 
-            # not sure if really needed
             findAccidentalCoincidencesTriggerRegion(week)
             week = week[week.AccidentalCoincidenceFlag == False].reset_index(drop=True)
             if week.empty:

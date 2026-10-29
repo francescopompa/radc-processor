@@ -4,7 +4,7 @@
 #PBS -o /nfs/scratch/$USER/jobs/results_$PBS_JOBID.out
 #PBS -e /nfs/scratch/$USER/jobs/results_$PBS_JOBID.err
 #PBS -l walltime=24:00:00
-#PBS -l mem=16000mb
+#PBS -l mem=32000mb
 #PBS -q gs-custom
 
 # it must be run as the following:

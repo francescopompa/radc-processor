@@ -266,6 +266,7 @@ def periodicGammaCalibration(folder = 'neutronBackground_HallC' ):
         plt.legend()
         plt.tight_layout()
         fig.savefig(f'{imageDir}/CF_timeDependence_ch{c}_{folder}.pdf')
+        plt.close(fig)
         
 
     fig, ax = plt.subplots()

@@ -24,7 +24,7 @@ energyColumn = 'ScaledEnergy_keVee'
 conversionToNcm2s = 9.16
 errConversionToNcm2s = 0.46
 # PERSONALIZE THE DIRECTORY WHERE YOU STORE IMAGES
-imageDir = '/users/p/pompafra/neutronBackground/images/'
+imageDir = './images/'
 
 timeInformationDir = f'{storageDir}/{folder}/reducedProcessedFiles/'
 
@@ -147,25 +147,7 @@ def makeSignalVsAccidentalPlot(neutron_candidates_rate, accidentals_rate,maxPuls
     plt.show()
     plt.close()
 
-
-def checkPoissonDistribution(neutron_candidates_rate,dates_to_cut=dates_to_cut,totalTime=totalTime):
-    
-    neutron_candidates_excluding_cut = neutron_candidates_rate[~neutron_candidates_rate['Date'].between(*dates_to_cut)]['Event_ID']
-    mean_signal = np.sum(neutron_candidates_excluding_cut) / totalTime
-
-    plt.hist(neutron_candidates_excluding_cut,bins=np.arange(-0.5,40.5,1),density=True,histtype='step')
-    x = np.arange(0, 40)
-    poisson = np.exp(-mean_signal) * mean_signal**x / factorial(x)
-    plt.plot(x, poisson, 'r-', label='Poisson distribution')
-    plt.xlabel('Events per day')
-    plt.ylabel('Probability')
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(f'{imageDir}/hPoissonDistribution_{folder.split("_")[-1]}.pdf')
-    plt.show()
-    plt.close()
-
-def makeEnergyPlot(df,maxPulseTime_us=50):
+def makeEnergyPlot(df,eventsWithNeutronCandidates,eventsWithAccidentals,maxPulseTime_us=50):
     dates_to_cut = ['2025-05-27','2025-06-13']
     dates_to_cut = [pd.to_datetime(date) for date in dates_to_cut]
     df = df[df['Date'].between(*dates_to_cut) == False]
@@ -246,68 +228,70 @@ def makeEnergyPlot(df,maxPulseTime_us=50):
 
 
 
+def main():
 
 
-df = pd.read_pickle(file)
-print(f'Terminated reading files in {time() - start:.2f} seconds.')
-print(f'Events in the dataframe: {df.Event_ID.nunique()}')
-df.loc[:,'Date'] = pd.to_datetime(df.Timestamp_s, unit='s')
+    df = pd.read_pickle(file)
+    print(f'Terminated reading files in {time() - start:.2f} seconds.')
+    print(f'Events in the dataframe: {df.Event_ID.nunique()}')
+    df.loc[:,'Date'] = pd.to_datetime(df.Timestamp_s, unit='s')
 
-if 'HallC' in folder:
-    df=df[df.Date > '2025-08-24'].reset_index(drop=True)
-    print('In hall C folder')
-
-
-df = df[df.AveragePulsePass]
-df = df[df[energyColumn] > signalThreshold]
-df.loc[:,'PulseTime_us'] = np.round(df.PulseTime_us,3)
-
-isInSignalRegion = df.PulseTime_us.between(-maxPulseTime_us,triggerRegion[0])
-# isInAccidentalRegion = df.PulseTime_us < -maxPulseTime_us
-isInAccidentalRegion = df.PulseTime_us > triggerRegion[1]
-isInTriggerRegion = df.PulseTime_us.between(-0.1,0.1)
-df = df[df.PulseTime_us.between(-maxPulseTime_us,maxPulseTime_us)]
+    if 'HallC' in folder:
+        df=df[df.Date > '2025-08-24'].reset_index(drop=True)
+        print('In hall C folder')
 
 
+    df = df[df.AveragePulsePass]
+    df = df[df[energyColumn] > signalThreshold]
+    df.loc[:,'PulseTime_us'] = np.round(df.PulseTime_us,3)
+
+    isInSignalRegion = df.PulseTime_us.between(-maxPulseTime_us,triggerRegion[0])
+    # isInAccidentalRegion = df.PulseTime_us < -maxPulseTime_us
+    isInAccidentalRegion = df.PulseTime_us > triggerRegion[1]
+    isInTriggerRegion = df.PulseTime_us.between(-0.1,0.1)
+    df = df[df.PulseTime_us.between(-maxPulseTime_us,maxPulseTime_us)]
 
 
-sum_energy_trigger = df.loc[isInTriggerRegion].groupby('Event_ID')[energyColumn].sum()
-df['SumEnergyTrigger'] = df['Event_ID'].map(sum_energy_trigger).fillna(0)
-sum_energy_signal = df.loc[isInSignalRegion].groupby('Event_ID')[energyColumn].sum()
-df['SumEnergySignal'] = df['Event_ID'].map(sum_energy_signal).fillna(0)
-sum_energy_acc = df.loc[isInAccidentalRegion].groupby('Event_ID')[energyColumn].sum()
-df['SumEnergyAccidentals'] = df['Event_ID'].map(sum_energy_acc).fillna(0)
-accidentalCoincidencePassForSignal = df.loc[isInSignalRegion].groupby('Event_ID')['PulseTime_us'].transform(lambda x: (np.max(x) - np.min(x)) < distanceAccidentals)
-df['AccidentalCoincidencePassForSignal'] = df['Event_ID'].map(accidentalCoincidencePassForSignal).fillna(True,downcast=bool)
-accidentalCoincidencePassForAccidentals = df.loc[isInAccidentalRegion].groupby('Event_ID')['PulseTime_us'].transform(lambda x: (np.max(x) - np.min(x)) < distanceAccidentals)
-df['AccidentalCoincidencePassForAccidentals'] = df['Event_ID'].map(accidentalCoincidencePassForAccidentals).fillna(True,downcast=bool)
 
 
-# I WOULD PROBABLY REPLACE SUMENERGYTRIGGER WITH THE ALREADY PRESENT TRIGGERENERGY
-eventsWithNeutronCandidates = df[(df.SumEnergyTrigger > sumEnergyThreshold) & (df.SumEnergySignal > signalThreshold) & isInSignalRegion & df.AccidentalCoincidencePassForSignal].Event_ID
-eventsWithAccidentals = df[(df.SumEnergyTrigger > sumEnergyThreshold) & (df.SumEnergyAccidentals > signalThreshold) & isInAccidentalRegion & df.AccidentalCoincidencePassForAccidentals ].Event_ID
-
-all_dates = pd.Index(df['Date'].dt.date.unique(), name='Date')
-
-neutron_candidates_rate = (
-    df[df.Event_ID.isin(eventsWithNeutronCandidates)]
-    .groupby(df['Date'].dt.date)['Event_ID']
-    .nunique()
-    .reindex(all_dates, fill_value=0)
-    .reset_index()
-)
-accidentals_rate = (
-    df[df.Event_ID.isin(eventsWithAccidentals)]
-    .groupby(df['Date'].dt.date)['Event_ID']
-    .nunique()
-    .reindex(all_dates, fill_value=0)
-    .reset_index()
-)
-
-makeSignalVsAccidentalPlot(neutron_candidates_rate, accidentals_rate,maxPulseTime_us,signalThreshold)
-increaseTextSize()
-makeEnergyPlot(df,maxPulseTime_us)
-checkPoissonDistribution(neutron_candidates_rate)
+    sum_energy_trigger = df.loc[isInTriggerRegion].groupby('Event_ID')[energyColumn].sum()
+    df['SumEnergyTrigger'] = df['Event_ID'].map(sum_energy_trigger).fillna(0)
+    sum_energy_signal = df.loc[isInSignalRegion].groupby('Event_ID')[energyColumn].sum()
+    df['SumEnergySignal'] = df['Event_ID'].map(sum_energy_signal).fillna(0)
+    sum_energy_acc = df.loc[isInAccidentalRegion].groupby('Event_ID')[energyColumn].sum()
+    df['SumEnergyAccidentals'] = df['Event_ID'].map(sum_energy_acc).fillna(0)
+    accidentalCoincidencePassForSignal = df.loc[isInSignalRegion].groupby('Event_ID')['PulseTime_us'].transform(lambda x: (np.max(x) - np.min(x)) < distanceAccidentals)
+    df['AccidentalCoincidencePassForSignal'] = df['Event_ID'].map(accidentalCoincidencePassForSignal).fillna(True,downcast=bool)
+    accidentalCoincidencePassForAccidentals = df.loc[isInAccidentalRegion].groupby('Event_ID')['PulseTime_us'].transform(lambda x: (np.max(x) - np.min(x)) < distanceAccidentals)
+    df['AccidentalCoincidencePassForAccidentals'] = df['Event_ID'].map(accidentalCoincidencePassForAccidentals).fillna(True,downcast=bool)
 
 
-print(f'Elapsed time: {time() - start:.2f} seconds.' )
+    # I WOULD PROBABLY REPLACE SUMENERGYTRIGGER WITH THE ALREADY PRESENT TRIGGERENERGY
+    eventsWithNeutronCandidates = df[(df.SumEnergyTrigger > sumEnergyThreshold) & (df.SumEnergySignal > signalThreshold) & isInSignalRegion & df.AccidentalCoincidencePassForSignal].Event_ID
+    eventsWithAccidentals = df[(df.SumEnergyTrigger > sumEnergyThreshold) & (df.SumEnergyAccidentals > signalThreshold) & isInAccidentalRegion & df.AccidentalCoincidencePassForAccidentals ].Event_ID
+
+    all_dates = pd.Index(df['Date'].dt.date.unique(), name='Date')
+
+    neutron_candidates_rate = (
+        df[df.Event_ID.isin(eventsWithNeutronCandidates)]
+        .groupby(df['Date'].dt.date)['Event_ID']
+        .nunique()
+        .reindex(all_dates, fill_value=0)
+        .reset_index()
+    )
+    accidentals_rate = (
+        df[df.Event_ID.isin(eventsWithAccidentals)]
+        .groupby(df['Date'].dt.date)['Event_ID']
+        .nunique()
+        .reindex(all_dates, fill_value=0)
+        .reset_index()
+    )
+
+    makeSignalVsAccidentalPlot(neutron_candidates_rate, accidentals_rate,maxPulseTime_us,signalThreshold)
+    makeEnergyPlot(df,eventsWithNeutronCandidates,eventsWithAccidentals,maxPulseTime_us)
+
+
+    print(f'Elapsed time: {time() - start:.2f} seconds.' )
+
+if __name__ == '__main__':
+    main()
